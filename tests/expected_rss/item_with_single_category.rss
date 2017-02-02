@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0">
+    <channel>
+        <title>Title</title>
+        <link>http://example.com/feed</link>
+        <description>Description</description>
+        <item>
+               <title>Title of item with single category</title>
+               <category>Category 1</category>
+        </item>
+    </channel>
+</rss>

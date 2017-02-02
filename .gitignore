@@ -1,0 +1,12 @@
+__pycache__
+.idea
+build
+dist
+.tox
+*.pyc
+*.cover
+tests/tmp/*
+coverage_report/*
+.coverage
+*.egg-info
+.python-version

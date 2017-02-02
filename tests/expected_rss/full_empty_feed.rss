@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0">
+    <channel>
+        <title>Title</title>
+        <description>Description</description>
+        <link>http://example.com/feed</link>
+        <language>en-US</language>
+        <copyright>Data</copyright>
+        <managingEditor>m@dot.com (Manager Name)</managingEditor>
+        <webMaster>web@dot.com (Webmaster Name)</webMaster>
+        <pubdate>Tue, 01 Feb 2000 00:10:30 </pubdate>
+        <lastBuildDate>Tue, 01 Feb 2000 05:10:30 </lastBuildDate>
+        <generator>tester</generator>
+        <category>some category</category>
+        <docs>http://example.com/rss_docs</docs>
+        <ttl>60</ttl>
+    </channel>
+</rss>

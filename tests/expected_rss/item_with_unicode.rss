@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0">
+    <channel>
+        <title>Title</title>
+        <link>http://example.com/feed</link>
+        <description>Description</description>
+        <item>
+               <title>Title of item with unicode and special characters</title>
+               <description>[Testing «ταБЬℓσ»: 1&lt;2 &amp; 4+1&gt;3, now 20% off!]</description>
+        </item>
+    </channel>
+</rss>
