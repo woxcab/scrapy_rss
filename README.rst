@@ -59,7 +59,8 @@ Add parameters to the Scrapy project settings (settings.py file)
 or to the :code:`custom_settings` attribute of the spider:
 
 1. Add item pipeline that export items to rss feed:
-   ::
+
+   .. code:: python
 
      ITEM_PIPELINES = {
          # ...
@@ -79,7 +80,8 @@ or to the :code:`custom_settings` attribute of the spider:
        phrase or sentence describing the channel (feed),
    FEED_LINK
        the URL to the HTML website corresponding to the channel (feed)
-   ::
+
+   .. code:: python
 
      FEED_FILE = 'path/to/feed.rss'
      FEED_TITLE = 'Some title of the channel'
