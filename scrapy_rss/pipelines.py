@@ -24,7 +24,7 @@ class RssExportPipeline(object):
             file = open(spider.settings.get('FEED_FILE'), 'wb')
         except TypeError:
             raise NotConfigured('FEED_FILE parameter does not string or does not exist')
-        except IOError as e:
+        except (IOError, OSError) as e:
             raise CloseSpider('Cannot open file {}: {}'.format(spider.settings.get('FEED_FILE', None), e))
         self.files[spider] = file
         feed_title = spider.settings.get('FEED_TITLE')
