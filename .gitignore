@@ -5,8 +5,9 @@ dist
 .tox
 *.pyc
 *.cover
-tests/tmp/*
 coverage_report/*
 .coverage
+coverage.xml
 *.egg-info
 .python-version
+_trial_temp
