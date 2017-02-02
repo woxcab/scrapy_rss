@@ -6,7 +6,7 @@ scrapy_rss
    :target: https://pypi.python.org/pypi/scrapy_rss
    :alt: PyPI Version
 
-.. image:: https://img.shields.io/travis/scrapy/scrapy/master.svg
+.. image:: https://img.shields.io/travis/woxcab/scrapy_rss/master.svg
    :target: http://travis-ci.org/woxcab/scrapy_rss
    :alt: Build Status
 
