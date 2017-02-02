@@ -121,6 +121,8 @@ It's allowed to set **any** subset of RSS elements (e.g. only title). For exampl
 
 .. code:: python
 
+  from datetime import datetime
+
   item1.title = 'RSS item title'  # set value of <title> element
   title = item1.title.title  # get value of <title> element
   item1.description = 'description'
@@ -145,6 +147,8 @@ It's allowed to set **any** subset of RSS elements (e.g. only title). For exampl
   # or dict based attributes setting
   item1.enclosure = {'url': 'http://example.com/file', 'length': 0, 'type': 'text/plain'}
   item1.guid = {'guid': 'item identifier', 'isPermaLink': True}
+
+  item1.pubDate = datetime.now()  # correctly works with Python' datetimes
 
 
   item2.rss.title = 'Item title'
