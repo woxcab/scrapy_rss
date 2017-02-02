@@ -6,6 +6,17 @@ scrapy_rss
    :target: https://pypi.python.org/pypi/scrapy_rss
    :alt: PyPI Version
 
+.. image:: https://img.shields.io/travis/scrapy/scrapy/master.svg
+   :target: http://travis-ci.org/woxcab/scrapy_rss
+   :alt: Build Status
+
+.. image:: https://img.shields.io/badge/wheel-yes-brightgreen.svg
+   :target: https://pypi.python.org/pypi/scrapy_rss
+   :alt: Wheel Status
+
+.. image:: https://img.shields.io/codecov/c/github/woxcab/scrapy_rss/master.svg
+   :target: http://codecov.io/github/woxcab/scrapy_rss?branch=master
+   :alt: Coverage report
 
 Tools for easy generating of RSS feed with each scraped item using `Scrapy framework <https://github.com/scrapy/scrapy>`_.
 
