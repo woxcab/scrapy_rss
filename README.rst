@@ -18,7 +18,7 @@ scrapy_rss
    :target: http://codecov.io/github/woxcab/scrapy_rss?branch=master
    :alt: Coverage report
 
-Tools for easy generating of RSS feed with each scraped item using `Scrapy framework <https://github.com/scrapy/scrapy>`_.
+Tools for easy RSS feed generating that contains each scraped item using `Scrapy framework <https://github.com/scrapy/scrapy>`_.
 
 Package works with Python 2.7, 3.3, 3.4 and 3.5.
 
@@ -131,7 +131,7 @@ It's allowed to set **any** subset of RSS elements (e.g. only title). For exampl
   item1.guid.isPermaLink = True  # set value of attribute isPermalink of <guid> element,
                                  # isPermaLink is False by default
   is_permalink = item1.guid.isPermaLink  # get value of attribute isPermalink of <guid> element
-  guid = item1.guid.guid  # set guid to 'item identifier'
+  guid = item1.guid.guid  # get value of element <guid>
 
   item1.category = 'single category'
   category = item1.category
