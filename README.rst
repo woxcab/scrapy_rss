@@ -20,7 +20,7 @@ scrapy_rss
 
 Tools for easy RSS feed generating that contains each scraped item using `Scrapy framework <https://github.com/scrapy/scrapy>`_.
 
-Package works with Python 2.7, 3.3, 3.4 and 3.5.
+Package works with Python 2.7, 3.3, 3.4, 3.5 and 3.6.
 
 
 `Installation <https://packaging.python.org/installing/>`_
@@ -156,6 +156,6 @@ It's allowed to set **any** subset of RSS elements (e.g. only title). For exampl
   item2.rss.enclosure = {'url': 'http://example.com/file', 'length': 0, 'type': 'text/plain'}
 
 
-All allowed elements are listed in the `scrapy_rss/items.py <scrapy_rss/items.py>`_.
+All allowed elements are listed in the `scrapy_rss/items.py <https://github.com/woxcab/scrapy_rss/blob/master/scrapy_rss/items.py>`_.
 All allowed attributes of each element with constraints and default values
-are listed in the `scrapy_rss/elements.py <scrapy_rss/elements.py>`_.
+are listed in the `scrapy_rss/elements.py <https://github.com/woxcab/scrapy_rss/blob/master/scrapy_rss/elements.py>`_.

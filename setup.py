@@ -1,12 +1,10 @@
 from os.path import dirname, join
+import sys
 from setuptools import setup, find_packages
 
 
 with open(join(dirname(__file__), 'scrapy_rss/VERSION'), 'rt') as f:
     version = f.read().strip()
-
-with open(join(dirname(__file__), 'tests/requirements.txt'), 'rt') as f:
-    tests_requires = [line.strip() for line in f]
 
 with open('README.rst') as readme:
     setup(
@@ -32,10 +30,11 @@ with open('README.rst') as readme:
             'Programming Language :: Python :: 3.3',
             'Programming Language :: Python :: 3.4',
             'Programming Language :: Python :: 3.5',
+            'Programming Language :: Python :: 3.6',
             'Topic :: Internet :: WWW/HTTP',
             'Topic :: Software Development :: Libraries :: Python Modules',
         ],
         install_requires=['python-dateutil',
-                          'scrapy>=1.1',
+                          'scrapy>=1.1' if sys.version_info < (3, 6) else 'scrapy>=1.3.1',
                           'six'],
     )

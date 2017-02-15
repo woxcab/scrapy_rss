@@ -11,3 +11,4 @@ coverage.xml
 *.egg-info
 .python-version
 _trial_temp
+.cache
