@@ -45,6 +45,18 @@ class TestExtendableItem(RssTestCase):
         item22 = self.MyItem2()
         self.assertNotEqual(id(item21.rss), id(item22.rss))
 
+    def test_inheritance(self):
+        class Derived1(ExtendableItem):
+            pass
+
+        Derived1()
+
+        class Derived2(ExtendableItem):
+            def __init__(self, *args, **kwargs):
+                super(Derived2, self).__init__(*args, **kwargs)
+
+        Derived2()
+
 
 if __name__ == '__main__':
     unittest.main()
