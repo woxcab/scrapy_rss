@@ -76,35 +76,35 @@ class RssItemExporter(XmlItemExporter):
         self.xg.startElement(self.root_element, {'version': '2.0'})
         self.xg.startElement(self.channel_element, {})
 
-        self._export_xml_field('title', self.channel_title)
-        self._export_xml_field('link', self.channel_link)
-        self._export_xml_field('description', self.channel_description)
+        self._export_xml_field('title', self.channel_title, 1)
+        self._export_xml_field('link', self.channel_link, 1)
+        self._export_xml_field('description', self.channel_description, 1)
         if self.channel_language:
-            self._export_xml_field('language', self.channel_language)
+            self._export_xml_field('language', self.channel_language, 1)
         if self.channel_copyright:
-            self._export_xml_field('copyright', self.channel_copyright)
+            self._export_xml_field('copyright', self.channel_copyright, 1)
         if self.channel_managing_editor:
-            self._export_xml_field('managingEditor', self.channel_managing_editor)
+            self._export_xml_field('managingEditor', self.channel_managing_editor, 1)
         if self.channel_webmaster:
-            self._export_xml_field('webMaster', self.channel_webmaster)
+            self._export_xml_field('webMaster', self.channel_webmaster, 1)
         if self.channel_pubdate:
             self._export_xml_field('pubdate',
                                    format_rfc822(self.channel_pubdate)
                                    if isinstance(self.channel_pubdate, datetime)
-                                   else self.channel_pubdate)
+                                   else self.channel_pubdate, 1)
         self._export_xml_field('lastBuildDate',
                                format_rfc822(self.channel_last_build_date)
                                if isinstance(self.channel_last_build_date, datetime)
-                               else self.channel_last_build_date)
+                               else self.channel_last_build_date, 1)
         if self.channel_category:
             for category in self.channel_category:
-                self._export_xml_field('category', category)
+                self._export_xml_field('category', category, 1)
         if self.channel_generator:
-            self._export_xml_field('generator', self.channel_generator)
+            self._export_xml_field('generator', self.channel_generator, 1)
         if self.channel_docs:
-            self._export_xml_field('docs', self.channel_docs)
+            self._export_xml_field('docs', self.channel_docs, 1)
         if self.channel_ttl:
-            self._export_xml_field('ttl', self.channel_ttl)
+            self._export_xml_field('ttl', self.channel_ttl, 1)
 
     def export_item(self, item):
         if not isinstance(item, RssItem) and not isinstance(getattr(item, 'rss', None), RssItem):
