@@ -97,19 +97,18 @@ Declare your item directly as RssItem():
 
   item1 = scrapy_rss.RssItem()
 
-Or define new item class with RSS field named as :code:`rss`:
+Or use predefined item class :code:`RssedItem` with RSS field named as :code:`rss`
+that's instance of :code:`RssItem`:
 
 .. code:: python
 
   import scrapy_rss
 
-  class MyItem(scrapy_rss.ExtendableItem):
+  class MyItem(scrapy_rss.RssedItem):
       # scrapy.Field() and/or another fields definitions
       # ...
-
-      def __init__(self):
-          super(MyItem, self).__init__()
-          self.rss = scrapy_rss.RssItem()
+      field1 = scrapy.Field()
+      field2 = scrapy.Field()
 
   item2 = MyItem()
 

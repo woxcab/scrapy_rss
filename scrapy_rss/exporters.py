@@ -73,7 +73,7 @@ class RssItemExporter(XmlItemExporter):
         self.channel_docs = docs
         self.channel_ttl = ttl
 
-    if LooseVersion(scrapy.__version__) < LooseVersion('1.4.0'):
+    if LooseVersion(scrapy.__version__) < LooseVersion('1.4.0'):  # pragma: no cover
         def _export_xml_field(self, name, serialized_value, depth):
             return super(RssItemExporter, self)._export_xml_field(name, serialized_value)
 

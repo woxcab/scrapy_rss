@@ -26,3 +26,10 @@ class ExtendableItem(scrapy.Item):
         if name in self.fields:
             raise AttributeError("Use item[{!r}] = {!r} to set field value".format(name, value))
         super(BaseItem, self).__setattr__(name, value)
+
+
+class RssedItem(ExtendableItem):
+    def __init__(self, **kwargs):
+        super(RssedItem, self).__init__(**kwargs)
+        self.rss = RssItem()
+
