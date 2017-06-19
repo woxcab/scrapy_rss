@@ -4,6 +4,3 @@ source = scrapy_rss
 
 [html]
 directory = coverage_report 
-
-[report]
-fail_under = 98
