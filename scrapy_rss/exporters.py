@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+from distutils.version import LooseVersion
+
 from datetime import datetime
 from dateutil.tz import tzlocal
 import six
@@ -70,6 +72,10 @@ class RssItemExporter(XmlItemExporter):
         self.channel_generator = generator if generator is not None else 'Scrapy {}'.format(scrapy.__version__)
         self.channel_docs = docs
         self.channel_ttl = ttl
+
+    if LooseVersion(scrapy.__version__) < LooseVersion('1.4.0'):
+        def _export_xml_field(self, name, serialized_value, depth):
+            return super(RssItemExporter, self)._export_xml_field(name, serialized_value)
 
     def start_exporting(self):
         self.xg.startDocument()
