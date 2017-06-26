@@ -12,11 +12,15 @@ from scrapy import signals
 from tests.utils import RaisedItemPipelineManager
 from scrapy.exceptions import NotConfigured, CloseSpider
 from scrapy.utils.misc import load_object
-from scrapy_rss.items import RssItem, ExtendableItem
+from scrapy.utils.test import get_crawler
+from scrapy.core.scraper import Scraper
+from scrapy.crawler import Crawler
+
+from scrapy_rss.items import RssItem, ExtendableItem, RssedItem
 from scrapy_rss.meta import ItemElement, ItemElementAttribute
 from scrapy_rss.exceptions import *
 from scrapy_rss.exporters import RssItemExporter
-from scrapy.utils.test import get_crawler
+
 import nose
 from tests.utils import RssTestCase
 
@@ -326,6 +330,20 @@ class TestExporting(RssTestCase):
                         feed_channel.extend(item_tree.xpath('//item'))
             with open(self.feed_settings['feed_file']) as data:
                 self.assertUnorderedXmlEquivalentOutputs(data.read(), feed_tree)
+
+
+class TestScraper:
+    class MySpider(scrapy.Spider):
+        name = 'spider'
+
+    def test_spider_output_handling(self):
+        spider = self.MySpider()
+        scraper = Scraper(Crawler(spider))
+        scraper.open_spider(spider)
+        scraper._process_spidermw_output(RssItem(), None, None, None)
+        scraper._process_spidermw_output(ExtendableItem(), None, None, None)
+        scraper._process_spidermw_output(RssedItem(), None, None, None)
+        scraper.close_spider(spider)
 
 
 if __name__ == '__main__':
