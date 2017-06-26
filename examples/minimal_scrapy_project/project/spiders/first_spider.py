@@ -5,7 +5,7 @@ from scrapy_rss import RssItem
 
 
 class SomeSpider(scrapy.Spider):
-    name = 'spider_name'
+    name = 'first_spider'
     start_urls = ['https://woxcab.github.io/scrapy_rss/']
 
     def parse(self, response):
