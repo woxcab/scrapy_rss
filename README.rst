@@ -18,9 +18,21 @@ scrapy_rss
    :target: http://codecov.io/github/woxcab/scrapy_rss?branch=master
    :alt: Coverage report
 
-Tools for easy RSS feed generating that contains each scraped item using `Scrapy framework <https://github.com/scrapy/scrapy>`_.
+Tools for easy `RSS feed <http://www.rssboard.org/rss-specification>`_ generating that contains each scraped item using `Scrapy framework <https://github.com/scrapy/scrapy>`_.
 
 Package works with Python 2.7, 3.3, 3.4, 3.5 and 3.6.
+
+
+Table of Contents
+=================
+* `Installation <#installation>`__
+* `How To Use <#how-to-use>`__
+
+  * `Configuration <#configuration>`__
+  * `Additional Customization [optionally] <#feed-channel-elements-customization-optionally>`__
+  * `Usage <#usage>`__
+
+* `Scrapy Project Examples <#scrapy-project-examples>`__
 
 
 `Installation <https://packaging.python.org/installing/>`_
@@ -31,13 +43,13 @@ Package works with Python 2.7, 3.3, 3.4, 3.5 and 3.6.
 
        pip install scrapy_rss
 
-  or using pip for specific interpreter, e.g.:
+  or using pip for the specific interpreter, e.g.:
 
   .. code:: bash
 
       pip3 install scrapy_rss
 
-* or using directly setuptools:
+* or using setuptools directly:
 
   .. code:: bash
 
@@ -54,6 +66,9 @@ Package works with Python 2.7, 3.3, 3.4, 3.5 and 3.6.
 
 How To Use
 ==========
+
+Configuration
+-------------
 
 Add parameters to the Scrapy project settings (settings.py file)
 or to the :code:`custom_settings` attribute of the spider:
@@ -89,6 +104,34 @@ or to the :code:`custom_settings` attribute of the spider:
      FEED_DESCRIPTION = 'About channel'
 
 
+Feed (Channel) Elements Customization [optionally]
+--------------------------------------------------
+
+If you want to change another channel parameters (such as language, copyright, managing_editor,
+webmaster, pubdate, last_build_date, category, generator, docs, ttl)
+then declare your own exporter that's inherited from :code:`RssItemExporter` class, for example:
+
+.. code:: python
+
+   from scrapy_rss.exporters import RssItemExporter
+
+   MyRssItemExporter(RssItemExporter):
+      def __init__(self, *args, **kwargs):
+         kwargs['generator'] = kwargs.get('generator', 'Special generator')
+         kwargs['language'] = kwargs.get('language', 'en-us')
+         super(CustomRssItemExporter, self).__init__(*args, **kwargs)
+
+And add :code:`FEED_EXPORTER` parameter to the Scrapy project settings
+or to the :code:`custom_settings` attribute of the spider:
+
+.. code:: python
+
+   FEED_EXPORTER = 'myproject.exporters.MyRssItemExporter'
+
+
+Usage
+-----
+
 Declare your item directly as RssItem():
 
 .. code:: python
@@ -105,17 +148,16 @@ that's instance of :code:`RssItem`:
   import scrapy_rss
 
   class MyItem(scrapy_rss.RssedItem):
-      # scrapy.Field() and/or another fields definitions
-      # ...
       field1 = scrapy.Field()
       field2 = scrapy.Field()
+      # ...
 
   item2 = MyItem()
 
 
 Set/get item fields. Case sensitive attributes of :code:`RssItem()` are appropriate to RSS elements,
 Attributes of RSS elements are case sensitive too.
-If editor is allowed autocompletion then it suggests attributes for instances of :code:`RssItem`.
+If editor allows autocomplete then it suggests attributes for instances of :code:`RssedItem` and :code:`RssItem`.
 It's allowed to set **any** subset of RSS elements (e.g. only title). For example:
 
 .. code:: python
@@ -158,3 +200,21 @@ It's allowed to set **any** subset of RSS elements (e.g. only title). For exampl
 All allowed elements are listed in the `scrapy_rss/items.py <https://github.com/woxcab/scrapy_rss/blob/master/scrapy_rss/items.py>`_.
 All allowed attributes of each element with constraints and default values
 are listed in the `scrapy_rss/elements.py <https://github.com/woxcab/scrapy_rss/blob/master/scrapy_rss/elements.py>`_.
+You also can read `RSS specification <http://www.rssboard.org/rss-specification>`_ for more details.
+
+Scrapy Project Examples
+=======================
+
+`Examples directory <https://github.com/woxcab/scrapy_rss/blob/master/examples>`_ contains
+several Scrapy projects with the scrapy_rss usage demonstration. It crawls
+`this website <https://woxcab.github.io/scrapy_rss/>`_ whose source code is
+`here <https://github.com/woxcab/scrapy_rss/blob/master/examples/website>`_.
+
+Just go to the Scrapy project directory and run commands
+
+.. code:: bash
+
+   scrapy crawl first_spider
+   scrapy crawl second_spider
+
+After this feed.rss and feed2.rss files will be created in the same directory.
