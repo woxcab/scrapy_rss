@@ -8,7 +8,7 @@ import six
 
 
 @six.add_metaclass(meta.ItemMeta)
-class RssItem:
+class RssItem(BaseItem):
     title = TitleElement()
     link = LinkElement()
     description = DescriptionElement()
