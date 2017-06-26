@@ -45,10 +45,10 @@ class RssItemExporter(XmlItemExporter):
                  language=None, copyright=None, managing_editor=None, webmaster=None,
                  pubdate=None, last_build_date=None, category=None, generator=None,
                  docs=None, ttl=None,
-                 *args, **kwargs):
+                 **kwargs):
         kwargs['root_element'] = 'rss'
         kwargs['item_element'] = 'item'
-        super(RssItemExporter, self).__init__(file, *args, **kwargs)
+        super(RssItemExporter, self).__init__(file, **kwargs)
 
         self.channel_element = 'channel'
 
