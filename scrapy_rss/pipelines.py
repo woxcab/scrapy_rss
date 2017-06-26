@@ -41,10 +41,7 @@ class RssExportPipeline(object):
             feed_exporter = load_object(feed_exporter)
         if not issubclass(feed_exporter, RssItemExporter):
             raise TypeError("FEED_EXPORTER must be RssItemExporter or its subclass, not '{}'".format(feed_exporter))
-        self.exporters[spider] = feed_exporter(file,
-                                               channel_title=feed_title,
-                                               channel_link=feed_link,
-                                               channel_description=feed_description)
+        self.exporters[spider] = feed_exporter(file, feed_title, feed_link, feed_description)
         self.exporters[spider].start_exporting()
 
     def spider_closed(self, spider):
