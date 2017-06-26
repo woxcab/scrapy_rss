@@ -12,3 +12,4 @@ coverage.xml
 .python-version
 _trial_temp
 .cache
+update*.sh
