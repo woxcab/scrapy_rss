@@ -115,7 +115,7 @@ then declare your own exporter that's inherited from :code:`RssItemExporter` cla
 
    from scrapy_rss.exporters import RssItemExporter
 
-   MyRssItemExporter(RssItemExporter):
+   class MyRssItemExporter(RssItemExporter):
       def __init__(self, *args, **kwargs):
          kwargs['generator'] = kwargs.get('generator', 'Special generator')
          kwargs['language'] = kwargs.get('language', 'en-us')
