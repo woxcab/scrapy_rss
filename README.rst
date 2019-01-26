@@ -20,7 +20,7 @@ scrapy_rss
 
 Tools for easy `RSS feed <http://www.rssboard.org/rss-specification>`_ generating that contains each scraped item using `Scrapy framework <https://github.com/scrapy/scrapy>`_.
 
-Package works with Python 2.7, 3.3, 3.4, 3.5 and 3.6.
+Package works with Python 2.7, 3.3, 3.4, 3.5, 3.6 and 3.7.
 
 If you use Python 3.3 then you have to use Scrapy<1.5.0.
 
