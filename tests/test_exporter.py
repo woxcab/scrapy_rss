@@ -338,7 +338,7 @@ class TestScraper:
 
     def test_spider_output_handling(self):
         spider = self.MySpider()
-        scraper = Scraper(Crawler(spider))
+        scraper = Scraper(Crawler(self.MySpider))
         scraper.open_spider(spider)
         scraper._process_spidermw_output(RssItem(), None, None, None)
         scraper._process_spidermw_output(ExtendableItem(), None, None, None)
