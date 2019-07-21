@@ -31,7 +31,7 @@ Table of Contents
 * `How To Use <#how-to-use>`__
 
   * `Configuration <#configuration>`__
-  * `Additional Customization [optionally] <#feed-channel-elements-customization-optionally>`__
+  * `Optional Additional Customization <#feed-channel-elements-customization-optionally>`__
   * `Usage <#usage>`__
 
 * `Scrapy Project Examples <#scrapy-project-examples>`__
@@ -72,7 +72,7 @@ How To Use
 Configuration
 -------------
 
-Add parameters to the Scrapy project settings (settings.py file)
+Add parameters to the Scrapy project settings (`settings.py` file)
 or to the :code:`custom_settings` attribute of the spider:
 
 1. Add item pipeline that export items to rss feed:
@@ -89,12 +89,12 @@ or to the :code:`custom_settings` attribute of the spider:
 2. Add required feed parameters:
 
    FEED_FILE
-       absolute or relative file path where the result RSS feed will be saved.
+       the absolute or relative file path where the result RSS feed will be saved.
        For example, :code:`feed.rss` or :code:`output/feed.rss`.
    FEED_TITLE
        the name of the channel (feed),
    FEED_DESCRIPTION
-       phrase or sentence describing the channel (feed),
+       the phrase or sentence that describes the channel (feed),
    FEED_LINK
        the URL to the HTML website corresponding to the channel (feed)
 
@@ -219,4 +219,4 @@ Just go to the Scrapy project directory and run commands
    scrapy crawl first_spider
    scrapy crawl second_spider
 
-After this feed.rss and feed2.rss files will be created in the same directory.
+Thereafter `feed.rss` and `feed2.rss` files will be created in the same directory.
