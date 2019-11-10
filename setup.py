@@ -8,7 +8,10 @@ with open(join(dirname(__file__), 'scrapy_rss/VERSION'), 'rt') as f:
 
 
 install_requires=['python-dateutil',
-                  'scrapy<1.5.0' if sys.version_info[:2] == (3, 3) else 'scrapy>=1.1' if sys.version_info < (3, 6) else 'scrapy>=1.3.1',
+                  'scrapy<1.5.0' if sys.version_info[:2] == (3, 3)
+                  else 'scrapy>=1.1,<1.8.0' if sys.version_info[:2] == (3, 4)
+                  else 'scrapy>=1.1' if sys.version_info[:2] == (3, 5)
+                  else 'scrapy>=1.3.1',
                   'six']
 if sys.version_info[:2] == (3, 3):
     install_requires.extend(['cryptography<2.0', 'pyOpenSSL<17.3.0'])
@@ -40,6 +43,7 @@ with open('README.rst') as readme:
             'Programming Language :: Python :: 3.5',
             'Programming Language :: Python :: 3.6',
             'Programming Language :: Python :: 3.7',
+            'Programming Language :: Python :: 3.8',
             'Topic :: Internet :: WWW/HTTP',
             'Topic :: Software Development :: Libraries :: Python Modules',
         ],
