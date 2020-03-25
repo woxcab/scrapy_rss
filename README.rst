@@ -24,6 +24,9 @@ Package works with Python 2.7, 3.3, 3.4, 3.5, 3.6, 3.7 and 3.8.
 
 If you use Python 3.3 then you have to use Scrapy<1.5.0.
 
+If you use Python 2.7 then you have to use Scrapy<2.0.
+
+
 
 Table of Contents
 =================
