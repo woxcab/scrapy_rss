@@ -131,7 +131,7 @@ class RssItemExporter(XmlItemExporter):
                     content = attrs.pop(elem_descr.content_arg, None)
                     self.xg.startElement(elem_name, attrs)
                     if content:
-                        self._xg_characters(content)
+                        self.xg.characters(content)
                     self.xg.endElement(elem_name)
         self.xg.endElement(self.item_element)
 
