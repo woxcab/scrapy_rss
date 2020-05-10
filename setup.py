@@ -20,7 +20,8 @@ with open(join(dirname(__file__), 'scrapy_rss/VERSION'), 'rt') as f:
 
 
 install_requires=['python-dateutil',
-                  'scrapy<1.5.0' if sys.version_info[:2] == (3, 3)
+                  'scrapy>=1.3.1,<2.0' if  sys.version_info[0] < 3
+                  else 'scrapy<1.5.0' if sys.version_info[:2] == (3, 3)
                   else 'scrapy>=1.1,<1.8.0' if sys.version_info[:2] == (3, 4)
                   else 'scrapy>=1.1' if sys.version_info[:2] == (3, 5)
                   else 'scrapy>=1.3.1',
