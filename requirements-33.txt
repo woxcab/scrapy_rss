@@ -1,0 +1,5 @@
+python-dateutil
+scrapy<1.5.0
+six
+pyOpenSSL<17.3.0
+cryptography<2.0

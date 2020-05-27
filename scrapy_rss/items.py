@@ -29,7 +29,7 @@ class ExtendableItem(scrapy.Item):
 
 
 class RssedItem(ExtendableItem):
-    def __init__(self, **kwargs):
-        super(RssedItem, self).__init__(**kwargs)
+    def __init__(self, *args, **kwargs):
+        super(RssedItem, self).__init__(*args, **kwargs)
         self.rss = RssItem()
 

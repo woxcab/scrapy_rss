@@ -14,6 +14,7 @@ class TestExtendableItem(RssTestCase):
 
     class MyItem2(ExtendableItem):
         field = scrapy.Field()
+        field2 = scrapy.Field()
 
         def __init__(self, **kwargs):
             super(self.__class__, self).__init__(**kwargs)
@@ -24,12 +25,20 @@ class TestExtendableItem(RssTestCase):
 
     class MyItem4(RssedItem):
         field = scrapy.Field()
+        field2 = scrapy.Field()
 
     def test_field_init(self):
-        value = 'value'
+        data = {'field': 'value1', 'field2': 2}
         for item_cls in (self.MyItem2, self.MyItem4):
-            item = item_cls(field=value)
-            self.assertEqual(item['field'], value)
+            item = item_cls(**data)
+            for key, value in data.items():
+                self.assertEqual(item[key], value)
+
+    def test_dict_init(self):
+        d = {'field': 'value1', 'field2': 2}
+        item = self.MyItem4(d)
+        for key, value in d.items():
+            self.assertEqual(item[key], value)
 
     def test_field_setter(self):
         for item in (self.MyItem2(), self.MyItem4()):
