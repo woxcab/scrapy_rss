@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import scrapy_rss.meta as meta
-from scrapy_rss.utlis import format_rfc822
+from scrapy_rss.utils import format_rfc822
 
 
 class TitleElement(meta.ItemElement):
