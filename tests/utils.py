@@ -113,6 +113,7 @@ class RaisedItemPipelineManager(ItemPipelineManager):
         if isinstance(d.result, Failure):
             failure = d.result
             d.addErrback(lambda failure: None)  # workaround for Python 2.*
+            print(failure.getTraceback())
             failure.raiseException()
         return d
 
