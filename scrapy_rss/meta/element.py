@@ -163,8 +163,8 @@ class MultipleElements(ItemElement):
     def __setattr__(self, name, value):
         if name != 'base_element_cls' and name in self.base_element_cls._attrs:
             if len(self.elements) != 1:
-                raise AttributeError("Cannot set attribute: zero or more than one elements have been assigned. "
-                                     "Choose element and set its' attribute.")
+                raise AttributeError("Cannot set attribute: {} elements have been assigned. "
+                                     "Choose element and set its' attribute.".format(len(self.elements)))
             setattr(self.elements[0], name, value)
         else:
             return super(MultipleElements, self).__setattr__(name, value)

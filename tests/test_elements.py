@@ -368,9 +368,9 @@ class TestMultipleElements(RssTestCase):
         with self.assertRaisesRegexp(AttributeError, 'have not been assigned'):
             me.category
         me.add(['first', 'second'])
-        with self.assertRaisesRegexp(AttributeError, 'more than one elements'):
+        with self.assertRaisesRegexp(AttributeError, 'Cannot get attribute: more than one elements'):
             me.category
-        with self.assertRaisesRegexp(AttributeError, 'zero or more than one elements'):
+        with self.assertRaisesRegexp(AttributeError, 'Cannot get attribute: 2 elements have been assigned'):
             me.category = 'another'
 
         me.clear()
@@ -382,9 +382,9 @@ class TestMultipleElements(RssTestCase):
         with self.assertRaisesRegexp(AttributeError, 'have not been assigned'):
             item.category.category
         item.category = ['first', 'second']
-        with self.assertRaisesRegexp(AttributeError, 'more than one elements'):
+        with self.assertRaisesRegexp(AttributeError, 'Cannot get attribute: more than one elements'):
             item.category.category
-        with self.assertRaisesRegexp(AttributeError, 'zero or more than one elements'):
+        with self.assertRaisesRegexp(AttributeError, 'Cannot get attribute: 2 elements have been assigned'):
             item.category.category = 'other'
 
         item.category.clear()
