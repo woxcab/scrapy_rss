@@ -29,6 +29,11 @@ install_requires=['python-dateutil',
 if sys.version_info[:2] == (3, 3):
     install_requires.extend(['cryptography<2.0', 'pyOpenSSL<17.3.0'])
 
+
+with open(join(dirname(__file__), 'tests/requirements.txt'), 'rt') as f:
+    dev_requires = [l.strip() for l in f]
+dev_requires.extend(['tox', 'pytest', 'pytest-cov'])
+
 with open('README.rst') as readme:
     setup(
         name='scrapy-rss',
@@ -61,5 +66,8 @@ with open('README.rst') as readme:
             'Topic :: Software Development :: Libraries :: Python Modules',
         ],
         install_requires=install_requires,
+        extras_require={
+            'dev': dev_requires
+        },
         cmdclass={'bdist_wheel': bdist_wheel},
     )
