@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 import unittest
-import nose
 from tests.utils import RssTestCase, get_dict_attr
 from scrapy_rss.items import RssItem
 from scrapy_rss.elements import *
@@ -394,4 +393,4 @@ class TestMultipleElements(RssTestCase):
 
 
 if __name__ == '__main__':
-    nose.main()
+    unittest.main()

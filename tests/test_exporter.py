@@ -21,7 +21,7 @@ from scrapy_rss.meta import ItemElement, ItemElementAttribute
 from scrapy_rss.exceptions import *
 from scrapy_rss.exporters import RssItemExporter
 
-import nose
+import unittest
 from tests.utils import RssTestCase
 
 
@@ -347,5 +347,5 @@ class TestScraper:
 
 
 if __name__ == '__main__':
-    nose.main()
+    unittest.main()
 
