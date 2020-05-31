@@ -1,7 +1,11 @@
 # -*- coding: utf-8 -*-
 
 import unittest
+from parameterized import parameterized
+from itertools import chain
+
 from tests.utils import RssTestCase, get_dict_attr
+
 from scrapy_rss.items import RssItem
 from scrapy_rss.elements import *
 from scrapy_rss.meta import ItemElementAttribute, ItemElement, MultipleElements
@@ -88,43 +92,51 @@ class TestSimpleElements(RssTestCase):
         item_with_guid.guid = GuidElement(**self.guids[1])
         self.items_with_guid[1].append(item_with_guid)
 
-    def test_uniqueness(self):
-        for elem_name, elem in RssItem().elements.items():
-            elem1 = elem.__class__() if not isinstance(elem, MultipleElements) else elem.__class__(ItemElement)
-            elem2 = elem.__class__() if not isinstance(elem, MultipleElements) else elem.__class__(ItemElement)
-            self.assertIsNot(elem1, elem2,
-                             msg="Instances of element class '{}' are identical".format(elem.__class__.__name__))
+    @parameterized.expand((elem, str(elem_name))
+                          for elem_name, elem in RssItem().elements.items())
+    def test_elements_uniqueness(self, elem, elem_name):
+        elem1 = elem.__class__() if not isinstance(elem, MultipleElements) else elem.__class__(ItemElement)
+        elem2 = elem.__class__() if not isinstance(elem, MultipleElements) else elem.__class__(ItemElement)
+        self.assertIsNot(elem1, elem2,
+                         msg="Instances of element class '{}' are identical".format(elem.__class__.__name__))
 
-            item1 = RssItem()
-            item2 = RssItem()
-            self.assertIsNot(getattr(item1, elem_name), getattr(item2, elem_name),
-                             msg="Appropriate elements [class '{}'] of RSS item instances are identical"
-                                 .format(elem.__class__.__name__))
+        item1 = RssItem()
+        item2 = RssItem()
+        self.assertIsNot(getattr(item1, elem_name), getattr(item2, elem_name),
+                         msg="Appropriate elements [class '{}'] of RSS item instances are identical"
+                             .format(elem.__class__.__name__))
 
-            for attr_name, attr in elem.attrs.items():
-                attr1 = attr.__class__()
-                attr2 = attr.__class__()
-                self.assertIsNot(attr1, attr2,
-                                 msg="Instances of attribute [class '{}'] are identical"
-                                     .format(attr.__class__.__name__))
+    @parameterized.expand((elem, str(elem_name), attr, attr_name)
+                          for elem_name, elem in RssItem().elements.items()
+                          for attr_name, attr in elem.attrs.items())
+    def test_attributes_uniqueness(self, elem, elem_name, attr, attr_name):
+        item1 = RssItem()
+        item2 = RssItem()
+        attr1 = attr.__class__()
+        attr2 = attr.__class__()
+        self.assertIsNot(attr1, attr2,
+                         msg="Instances of attribute [class '{}'] are identical"
+                             .format(attr.__class__.__name__))
 
-                self.assertIsNot(getattr(getattr(item1, elem_name), '__{}'.format(attr_name)),
-                                 getattr(getattr(item2, elem_name), '__{}'.format(attr_name)),
-                                 msg="Appropriate attributes [class '{}'] of appropriate elements [class '{}'] "
-                                     "of RSS item instances are identical"
-                                     .format(attr.__class__.__name__, elem.__class__.__name__))
+        self.assertIsNot(getattr(getattr(item1, elem_name), attr_name.priv_name),
+                         getattr(getattr(item2, elem_name), attr_name.priv_name),
+                         msg="Appropriate attributes [class '{}'] of appropriate elements [class '{}'] "
+                             "of RSS item instances are identical"
+                             .format(attr.__class__.__name__, elem.__class__.__name__))
 
-    def test_item_properties(self):
+    @parameterized.expand((elem, str(elem_name), value)
+                          for elem_name, elem in RssItem().elements.items()
+                          for value in (None, 0, '', 1, '1'))
+    def test_item_properties_v1(self, elem, elem_name, value):
         item = RssItem()
-        for elem_name, elem in item.elements.items():
-            for val in (None, 0, '', 1, '1'):
-                if elem.required_attrs:
-                    with self.assertRaisesRegexp(ValueError, 'Could not assign value'):
-                        setattr(item, elem_name, val)
-                else:
-                    setattr(item, elem_name, val)
-                    self.assertEqual(getattr(item, elem_name), val)
+        if elem.required_attrs:
+            with self.assertRaisesRegexp(ValueError, 'Could not assign value'):
+                setattr(item, elem_name, value)
+        else:
+            setattr(item, elem_name, value)
+            self.assertEqual(getattr(item, elem_name), value)
 
+    def test_item_properties_v2(self):
         self.assertEqual(self.item_with_empty_title_only.title, self.empty_text)
 
         self.assertEqual(self.item_with_empty_description_only.description, self.empty_text)
@@ -155,60 +167,80 @@ class TestSimpleElements(RssTestCase):
                 self.assertEqual(item.guid.guid, self.guids[idx]['guid'])
                 self.assertEqual(item.guid.isPermaLink, self.guids[idx]['isPermaLink'])
 
-    def test_element_initializer(self):
-        all_attrs = set(attr for elem in RssItem().elements.values() for attr in elem.attrs)
-        all_attrs.add('impossible_attr')
-        for elem in RssItem().elements.values():
-            elem_cls = elem.__class__
-            if elem_cls == MultipleElements:
-                elem_cls(ItemElement)
-                continue
-            else:
-                elem_cls()
-            for attr in elem.attrs:
-                elem_cls(**{attr: None})
-                elem_cls(**{attr: 0})
-                elem_cls(**{attr: ''})
-                elem_cls(**{attr: 1})
-                elem_cls(**{attr: '1'})
-            for bad_attr in all_attrs - set(elem.attrs):
-                for val in (None, 0, '', 1, '1'):
-                    with self.assertRaisesRegexp(ValueError, 'supports only the next named arguments',
-                                                 msg="Invalid attribute '{}' was passed to '{}' initializer"
-                                                     .format(bad_attr, elem_cls.__name__)):
-                        elem_cls(**{bad_attr: val})
-            for val in (None, 0, '', 1, '1'):
-                if elem.content_arg:
-                    el = elem_cls(val)
-                    self.assertEqual(el, getattr(el, el.content_arg))
-                    self.assertEqual(el, val)
-                else:
-                    with self.assertRaisesRegexp(ValueError, 'does not support unnamed arguments',
-                                                 msg="Invalid attribute was passed to '{}' initializer "
-                                                     "(element must not have content)".format(elem_cls.__name__)):
-                        elem_cls(val)
+    @parameterized.expand((elem,) for elem in RssItem().elements.values())
+    def test_element_init_without_args(self, elem):
+        elem_cls = elem.__class__
+        if elem_cls is MultipleElements:
+            elem_cls(ItemElement)
+        else:
+            elem_cls()
 
-            for val1, val2 in zip((None, 0, '', 1, '1'), (None, 0, '', 1, '1')):
-                if elem.content_arg:
-                    with self.assertRaisesRegexp(ValueError, 'supports only single unnamed argument',
-                                                 msg="Invalid attribute was passed to '{}' initializer "
-                                                     "(element must not have content)".format(elem_cls.__name__)):
-                        elem_cls(val1, val2)
-                else:
-                    with self.assertRaisesRegexp(ValueError, 'does not support unnamed arguments',
-                                                 msg="Invalid attribute was passed to '{}' initializer "
-                                                     "(element must not have content)".format(elem_cls.__name__)):
-                        elem_cls(val1, val2)
+    @parameterized.expand((elem, str(attr), value)
+                          for elem in RssItem().elements.values()
+                          for attr in elem.attrs
+                          for value in (None, 0, '', 1, '1')
+                          if not isinstance(elem, MultipleElements))
+    def test_element_init_with_single_kwarg(self, elem, attr_name, value):
+        elem_cls = elem.__class__
+        elem_cls(**{attr_name: value})
 
-    def test_element_setattr(self):
-        values = [None, 0, 1, '1', 'long string']
+    @parameterized.expand((elem, str(bad_attr), value)
+                          for elem in RssItem().elements.values()
+                          for bad_attr in chain(('impossible_attr',),
+                                                set(attr for elem in RssItem().elements.values() for attr in elem.attrs)
+                                                - set(elem.attrs))
+                          for value in (None, 0, '', 1, '1')
+                          if not isinstance(elem, MultipleElements))
+    def test_element_init_with_bad_kwarg(self, elem, bad_attr_name, value):
+        elem_cls = elem.__class__
+        with self.assertRaisesRegexp(ValueError, 'supports only the next named arguments',
+                                     msg="Invalid attribute '{}' was passed to '{}' initializer"
+                                         .format(bad_attr_name, elem_cls.__name__)):
+            elem_cls(**{bad_attr_name: value})
+
+    @parameterized.expand((elem, value)
+                          for elem in RssItem().elements.values()
+                          for value in (None, 0, '', 1, '1')
+                          if not isinstance(elem, MultipleElements))
+    def test_element_init_content_arg(self, elem, value):
+        elem_cls = elem.__class__
+        if elem.content_arg:
+            el = elem_cls(value)
+            self.assertEqual(el, getattr(el, str(el.content_arg)))
+            self.assertEqual(el, value)
+        else:
+            with self.assertRaisesRegexp(ValueError, 'does not support unnamed arguments',
+                                         msg="Invalid attribute was passed to '{}' initializer "
+                                             "(element must not have content)".format(elem_cls.__name__)):
+                elem_cls(value)
+
+    @parameterized.expand((elem, value1, value2)
+                          for elem in RssItem().elements.values()
+                          for value1, value2 in zip((None, 0, '', 1, '1'), (None, 0, '', 1, '1'))
+                          if not isinstance(elem, MultipleElements))
+    def test_element_init_with_multiple_args(self, elem, value1, value2):
+        elem_cls = elem.__class__
+        if elem.content_arg:
+            with self.assertRaisesRegexp(ValueError, 'supports only single unnamed argument',
+                                         msg="Invalid attribute was passed to '{}' initializer "
+                                             "(element must not have content)".format(elem_cls.__name__)):
+                elem_cls(value1, value2)
+        else:
+            with self.assertRaisesRegexp(ValueError, 'does not support unnamed arguments',
+                                         msg="Invalid attribute was passed to '{}' initializer "
+                                             "(element must not have content)".format(elem_cls.__name__)):
+                elem_cls(value1, value2)
+
+
+    @parameterized.expand((str(elem_name), str(attr_name), value)
+                          for elem_name, elem_descr in RssItem().elements.items()
+                          for attr_name in elem_descr.attrs
+                          for value in [None, 0, 1, '1', 'long string'])
+    def test_element_setattr(self, elem_name, attr_name, value):
         item = RssItem()
-        for elem_name in RssItem().elements:
-            elem = getattr(item, elem_name)
-            for attr in elem.attrs:
-                for val in values:
-                    setattr(elem, attr, val)
-                    self.assertEqual(getattr(elem, attr), val)
+        elem = getattr(item, elem_name)
+        setattr(elem, attr_name, value)
+        self.assertEqual(getattr(elem, attr_name), value)
 
 
 class TestMultipleElements(RssTestCase):
