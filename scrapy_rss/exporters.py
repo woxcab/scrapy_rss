@@ -65,7 +65,8 @@ class RssItemExporter(XmlItemExporter):
             raise ValueError('webmaster field must contain at least e-mail. Passed: {}'.format(webmaster))
         self.channel_webmaster = webmaster
         self.channel_pubdate = pubdate
-        self.channel_last_build_date = last_build_date if last_build_date else datetime.today().replace(tzinfo=tzlocal())
+        self.channel_last_build_date = last_build_date if last_build_date \
+            else datetime.today().replace(tzinfo=tzlocal())
         self.channel_category = ([category] if category and isinstance(category, six.string_types)
                                  and not isinstance(category, (list, set, tuple))
                                  else category)
