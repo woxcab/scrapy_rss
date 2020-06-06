@@ -94,7 +94,7 @@ class RssItemExporter(XmlItemExporter):
             else:
                 self._namespaces[ns_prefix] = ns_uri
 
-    if LooseVersion(scrapy.__version__) < LooseVersion('1.4.0'):
+    if LooseVersion(scrapy.__version__) < LooseVersion('1.4.0'): # pragma: no cover
         def _export_xml_field(self, name, serialized_value, depth):
             return super(RssItemExporter, self)._export_xml_field(name, serialized_value)
 

@@ -7,7 +7,7 @@ dist
 *.cover
 coverage_report/*
 .coverage
-coverage.xml
+*coverage.xml
 *.egg-info
 .python-version
 _trial_temp

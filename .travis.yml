@@ -9,5 +9,5 @@ python:
     - "3.9-dev"
 install:
     - pip install -U tox-travis codecov
-script: tox
+script: COVERAGE_FILE=.coverage tox
 after_success: codecov

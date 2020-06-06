@@ -1,8 +1,9 @@
 [run]
 branch = True
-source =
-    scrapy_rss
-    .tox/py*/lib/python*/site-packages/
+include = scrapy_rss/*
+omit =
+    setup.py
+    tests/*
 
 [html]
 directory = coverage_report 
