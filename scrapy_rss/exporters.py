@@ -7,11 +7,11 @@ from dateutil.tz import tzlocal
 import six
 import scrapy
 from scrapy.exporters import XmlItemExporter
-from scrapy_rss.items import RssItem
-from scrapy_rss.utils import format_rfc822
-from scrapy_rss.exceptions import *
-from scrapy_rss import meta
 
+from .items import RssItem
+from .utils import format_rfc822
+from .exceptions import *
+from . import meta
 
 class RssItemExporter(XmlItemExporter):
     """

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
-import scrapy_rss.meta as meta
-from scrapy_rss.utils import format_rfc822
+from . import meta
+from .utils import format_rfc822
 
 
 class TitleElement(meta.ItemElement):
@@ -45,4 +45,3 @@ class PubDateElement(meta.ItemElement):
 
 class SourceElement(meta.ItemElement):
     url = meta.ItemElementAttribute(required=True)
-

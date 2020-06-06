@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
 from copy import deepcopy
-from scrapy_rss.exceptions import *
 
+from ..exceptions import *
 from .element import ItemElement, MultipleElements
 
 

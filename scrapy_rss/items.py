@@ -2,9 +2,9 @@
 
 import scrapy
 from scrapy.item import BaseItem
-from scrapy_rss.elements import *
-from scrapy_rss import meta
 import six
+from .elements import *
+from . import meta
 
 
 @six.add_metaclass(meta.ItemMeta)

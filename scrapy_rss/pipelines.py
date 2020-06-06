@@ -4,7 +4,8 @@ import six
 from scrapy import signals
 from scrapy.exceptions import NotConfigured, CloseSpider
 from scrapy.utils.misc import load_object
-from scrapy_rss.exporters import RssItemExporter
+
+from .exporters import RssItemExporter
 
 
 class RssExportPipeline(object):
