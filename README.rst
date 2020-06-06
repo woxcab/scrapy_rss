@@ -18,7 +18,7 @@ scrapy_rss
    :target: http://codecov.io/github/woxcab/scrapy_rss?branch=master
    :alt: Coverage report
 
-Tools for easy `RSS feed <http://www.rssboard.org/rss-specification>`_ generating that contains each scraped item using `Scrapy framework <https://github.com/scrapy/scrapy>`_.
+Tools to easy generate `RSS feed <http://www.rssboard.org/rss-specification>`_ that contains each scraped item using `Scrapy framework <https://github.com/scrapy/scrapy>`_.
 
 Package works with Python 2.7, 3.3, 3.4, 3.5, 3.6, 3.7 and 3.8.
 
@@ -112,9 +112,9 @@ or to the :code:`custom_settings` attribute of the spider:
 Feed (Channel) Elements Customization [optionally]
 --------------------------------------------------
 
-If you want to change another channel parameters (such as language, copyright, managing_editor,
+If you want to change other channel parameters (such as language, copyright, managing_editor,
 webmaster, pubdate, last_build_date, category, generator, docs, ttl)
-then declare your own exporter that's inherited from :code:`RssItemExporter` class, for example:
+then define your own exporter that's inherited from :code:`RssItemExporter` class, for example:
 
 .. code:: python
 
@@ -150,6 +150,7 @@ that's instance of :code:`RssItem`:
 
 .. code:: python
 
+  import scrapy
   import scrapy_rss
 
   class MyItem(scrapy_rss.RssedItem):
@@ -160,10 +161,10 @@ that's instance of :code:`RssItem`:
   item2 = MyItem()
 
 
-Set/get item fields. Case sensitive attributes of :code:`RssItem()` are appropriate to RSS elements,
+Set/get item fields. Case sensitive attributes of :code:`RssItem()` are appropriate to RSS elements.
 Attributes of RSS elements are case sensitive too.
-If editor allows autocomplete then it suggests attributes for instances of :code:`RssedItem` and :code:`RssItem`.
-It's allowed to set **any** subset of RSS elements (e.g. only title). For example:
+If the editor allows autocompletion then it suggests attributes for instances of :code:`RssedItem` and :code:`RssItem`.
+It's allowed to set **any** subset of RSS elements (e.g. title only). For example:
 
 .. code:: python
 
@@ -205,7 +206,7 @@ It's allowed to set **any** subset of RSS elements (e.g. only title). For exampl
 All allowed elements are listed in the `scrapy_rss/items.py <https://github.com/woxcab/scrapy_rss/blob/master/scrapy_rss/items.py>`_.
 All allowed attributes of each element with constraints and default values
 are listed in the `scrapy_rss/elements.py <https://github.com/woxcab/scrapy_rss/blob/master/scrapy_rss/elements.py>`_.
-You also can read `RSS specification <http://www.rssboard.org/rss-specification>`_ for more details.
+Also you can read `RSS specification <http://www.rssboard.org/rss-specification>`_ for more details.
 
 Scrapy Project Examples
 =======================
