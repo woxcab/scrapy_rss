@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 
 from distutils.version import LooseVersion
+from itertools import chain
+from collections import Counter
 
 from datetime import datetime
 from dateutil.tz import tzlocal
@@ -13,39 +15,34 @@ from .utils import format_rfc822
 from .exceptions import *
 from . import meta
 
+
 class RssItemExporter(XmlItemExporter):
-    """
-    Parameters semantics: https://validator.w3.org/feed/docs/rss2.html
-
-    Item fields that corresponds to RSS element with attributes or sub-elements,
-    must be a dictionary-like such as
-    {"attribute-name": "attribute-value"} (with special key "content" if RSS element must have content)
-    or {"sub-element-name": "sub-element-content"}
-
-    Examples:
-        * The dictionary for the ``<image>`` element:
-            >>> {'url': 'http://example.com/image.png', 'title': 'Some title', 'link': 'http://example.com/'}
-
-            that converts into
-
-            <image>
-                 <url>http://example.com/image.png</url>
-                 <title>Some title</title>
-                 <link>http://example.com/</link>
-            </image>
-
-        * The dictionary for <guid> element:
-            >>> {'isPermalink': 'False', 'content': '0123456789abcdef'}
-            that converts into
-            <guid isPermalink="False">0123456789abcdef</guid>
-
-    """
-
     def __init__(self, file, channel_title, channel_link, channel_description,
+                 namespaces=None, item_cls=None,
                  language=None, copyright=None, managing_editor=None, webmaster=None,
                  pubdate=None, last_build_date=None, category=None, generator=None,
                  docs=None, ttl=None,
                  **kwargs):
+        """
+        RSS parameters semantics: https://validator.w3.org/feed/docs/rss2.html
+
+        Parameters
+        ----------
+        namespaces : {str or None : str} or tuple of (str or None, str) or list of (str or None, str) or None
+            predefined XML namespaces {prefix: URI, ...} or [(prefix, URI), ...]
+        item_cls : type
+            main class of RSS items (default: RssItem)
+
+        Item fields that corresponds to RSS element with attributes or sub-elements,
+        must be a dictionary-like such as
+        {"attribute-name": "attribute-value"} (with special key "content" if RSS element must have content)
+        or {"sub-element-name": "sub-element-content"}
+
+        For example, the dictionary for <guid> element:
+            >>> {'isPermalink': 'False', 'content': '0123456789abcdef'}
+            that converts into
+            <guid isPermalink="False">0123456789abcdef</guid>
+        """
         kwargs['root_element'] = 'rss'
         kwargs['item_element'] = 'item'
         super(RssItemExporter, self).__init__(file, **kwargs)
@@ -74,13 +71,39 @@ class RssItemExporter(XmlItemExporter):
         self.channel_docs = docs
         self.channel_ttl = ttl
 
+        if not item_cls:
+            item_cls = RssItem
+        elif not issubclass(item_cls, RssItem):
+            raise ValueError('Item class must be RssItem class or its subclass')
+        self._item_cls = item_cls
+
+        if not namespaces:
+            namespaces = {}
+        elif isinstance(namespaces, (list, tuple)):
+            namespaces = dict(namespaces)
+        namespaces_iter = namespaces.items() if isinstance(namespaces, dict) else namespaces
+        item_cls_namespaces = item_cls().get_namespaces(False)
+        self._namespaces = {}
+        skipped_ns_prefixes = set()
+        for ns_prefix, ns_uri in chain(namespaces_iter, item_cls_namespaces):
+            if ns_prefix in skipped_ns_prefixes:
+                continue
+            if ns_prefix in self._namespaces and ns_uri != self._namespaces[ns_prefix]:
+                self._namespaces.pop(ns_prefix)
+                skipped_ns_prefixes.add(ns_prefix)
+            else:
+                self._namespaces[ns_prefix] = ns_uri
+
     if LooseVersion(scrapy.__version__) < LooseVersion('1.4.0'):
         def _export_xml_field(self, name, serialized_value, depth):
             return super(RssItemExporter, self)._export_xml_field(name, serialized_value)
 
     def start_exporting(self):
         self.xg.startDocument()
-        self.xg.startElement(self.root_element, {'version': '2.0'})
+        for ns_prefix, ns_uri in self._namespaces.items():
+            self.xg.startPrefixMapping(ns_prefix, ns_uri)
+        root_attrs = {(None, 'version'): '2.0'}
+        self.xg.startElementNS((None, self.root_element), self.root_element, root_attrs)
         self.xg.startElement(self.channel_element, {})
 
         self._export_xml_field('title', self.channel_title, 1)
@@ -118,9 +141,21 @@ class RssItemExporter(XmlItemExporter):
             raise InvalidRssItemError("Item must have 'rss' field of type 'RssItem'")
         if not isinstance(item, RssItem):
             item = item.rss
-        self.xg.startElement(self.item_element, {})
+
+        item_namespaces = set()
+        if item.__class__ is not self._item_cls:
+            item_namespaces = item.get_namespaces()
+            item_namespaces -= set(self._namespaces.items())
+            ns_prefix_count = Counter(ns_prefix for ns_prefix, _ in item_namespaces)
+            item_namespaces = {ns for ns in item_namespaces if ns_prefix_count[ns[0]] == 1}
+        item_namespaces = dict(item_namespaces)
+
+        for elem_ns_prefix, elem_ns_uri in item_namespaces.items():
+            self.xg.startPrefixMapping(elem_ns_prefix, elem_ns_uri)
+        self.xg.startElementNS((None, self.item_element), self.item_element, {})
+
         for elem_name, elem_descr in item.elements.items():
-            elem_value = getattr(item, elem_name)
+            elem_value = getattr(item, str(elem_name))
             if elem_value.assigned:
                 elem_values = elem_value if isinstance(elem_value, meta.MultipleElements) else (elem_value,)
                 for elem_value in elem_values:
@@ -128,15 +163,35 @@ class RssItemExporter(XmlItemExporter):
                         raise InvalidRssItemAttributesError(elem_name,
                                                             list(elem_value.required_attrs),
                                                             elem_value.content_arg)
+
                     attrs = elem_value.serialize()
-                    content = attrs.pop(elem_descr.content_arg, None)
-                    self.xg.startElement(elem_name, attrs)
+                    content = attrs.pop(elem_descr.content_arg.xml_name, None) if elem_descr.content_arg else None
+                    undeclared_elem_namespaces = {ns_prefix: ns_uri
+                                                  for ns_prefix, ns_uri in elem_descr.get_namespaces()
+                                                  if (ns_prefix not in self._namespaces 
+                                                      or self._namespaces[ns_prefix] != ns_uri)
+                                                  and (ns_prefix not in item_namespaces 
+                                                       or item_namespaces[ns_prefix] != ns_uri)}
+                    if elem_name.ns_prefix:
+                        elem_qname = '{}:{}'.format(elem_name.ns_prefix, elem_name.name)
+                    else:
+                        elem_qname = elem_name.name
+                    for ns_prefix, ns_uri in undeclared_elem_namespaces.items():
+                        self.xg.startPrefixMapping(ns_prefix, ns_uri)
+                    self.xg.startElementNS(elem_name.xml_name, elem_qname, attrs)
                     if content:
                         self.xg.characters(content)
-                    self.xg.endElement(elem_name)
-        self.xg.endElement(self.item_element)
+                    self.xg.endElementNS(elem_name.xml_name, elem_qname)
+                    for ns_prefix, ns_uri in undeclared_elem_namespaces.items():
+                        self.xg.endPrefixMapping(ns_prefix)
+
+        self.xg.endElementNS((None, self.item_element), self.item_element)
+        for elem_ns_prefix in item_namespaces:
+            self.xg.endPrefixMapping(elem_ns_prefix)
 
     def finish_exporting(self):
         self.xg.endElement(self.channel_element)
-        self.xg.endElement(self.root_element)
+        self.xg.endElementNS((None, self.root_element), self.root_element)
+        for ns_prefix, ns_uri in self._namespaces.items():
+            self.xg.startPrefixMapping(ns_prefix, ns_uri)
         self.xg.endDocument()

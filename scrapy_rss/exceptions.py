@@ -27,7 +27,12 @@ class InvalidRssItemAttributesError(ValueError):
 
     def __str__(self):
         if self.content_arg:
-            return "The next required attributes of RSS element '{}'  ({}) or required content ('{}' argument) are not set" \
-                .format(self.rss_element, ', '.join(self.required_attrs), self.content_arg)
+            return "The next required attributes of RSS element '{}' ({}) "\
+                   "or required content ('{}' argument) are not set" \
+                   .format(self.rss_element, ", ".join(str(a) for a in self.required_attrs), self.content_arg)
         return "The next required attributes of RSS element '{}' are not set: {}" \
-            .format(self.rss_element, ', '.join(self.required_attrs))
+            .format(self.rss_element, ", ".join(str(a) for a in self.required_attrs))
+
+
+class NoNamespaceURIError(ValueError):
+    pass

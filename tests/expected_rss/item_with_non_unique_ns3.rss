@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0"
+     xmlns:el_prefix1="el_id1"
+     xmlns:prefix01="id01"
+     xmlns:prefix11="id11"
+     xmlns:prefix12="id12"
+     xmlns:prefix22="id22">
+    <channel>
+        <title>Title</title>
+        <link>http://example.com/feed</link>
+        <description>Description</description>
+        <item xmlns:el_prefix4="el_id4">
+               <title>Title of item with unique namespaces</title>
+               <el_prefix1:elem1 prefix01:attr01="-"></el_prefix1:elem1>
+               <el_prefix:elem2
+                xmlns:el_prefix="el_id2" 
+                prefix11:attr11="-1"
+                prefix12:attr12="-">
+               </el_prefix:elem2>
+               <el_prefix:elem3
+                xmlns:el_prefix="el_id3"
+                prefix22:attr22="4224">yet another value3_21</el_prefix:elem3>
+               <el_prefix4:elem4 prefix01:attr01="-"></el_prefix4:elem4>
+
+        </item>
+    </channel>
+</rss>

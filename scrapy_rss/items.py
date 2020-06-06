@@ -2,13 +2,11 @@
 
 import scrapy
 from scrapy.item import BaseItem
-import six
 from .elements import *
 from . import meta
 
 
-@six.add_metaclass(meta.ItemMeta)
-class RssItem(BaseItem):
+class RssItem(meta.item.BaseFeedItem):
     title = TitleElement()
     link = LinkElement()
     description = DescriptionElement()

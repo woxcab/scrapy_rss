@@ -63,43 +63,6 @@ except ImportError:
                      for s in args)
 
 
-    class _AssertRaisesContext(object):
-        """A context manager used to implement TestCase.assertRaises* methods."""
-
-        def __init__(self, expected, test_case, expected_regexp=None, msg=None):
-            self.expected = expected
-            self.failureException = test_case.failureException
-            self.expected_regexp = expected_regexp
-            self.msg = msg
-
-        def __enter__(self):
-            return self
-
-        def __exit__(self, exc_type, exc_value, tb):
-            if exc_type is None:
-                try:
-                    exc_name = self.expected.__name__
-                except AttributeError:
-                    exc_name = str(self.expected)
-                failure_msg = "{0} not raised".format(exc_name)
-                if self.msg:
-                    failure_msg += " : {0}".format(self.msg)
-                raise self.failureException(failure_msg)
-            if not issubclass(exc_type, self.expected):
-                # let unexpected exceptions pass through
-                return False
-            self.exception = exc_value  # store for later retrieval
-            if self.expected_regexp is None:
-                return True
-
-            expected_regexp = self.expected_regexp
-            if not expected_regexp.search(str(exc_value)):
-                raise self.failureException('"%s" does not match "%s"' %
-                                            (expected_regexp.pattern, str(exc_value)))
-
-            return True
-
-
 def get_dict_attr(obj,attr):
     for obj in [obj]+obj.__class__.mro():
         if attr in obj.__dict__:
@@ -126,6 +89,7 @@ class UnorderedXmlTestCase(XmlTestCase):
     @classmethod
     def _xml_to_tuple(cls, element):
         return (element.tag,
+                frozendict(element.nsmap),
                 frozendict(element.attrib),
                 frozendict(Counter(t for t in element.itertext() if t.strip())),
                 frozenset(cls._xml_to_tuple(child) for child in element.getchildren()))
@@ -149,21 +113,6 @@ class UnorderedXmlTestCase(XmlTestCase):
                         asserter = getattr(self, asserter)
                     return asserter
         return super(UnorderedXmlTestCase, self)._getAssertEqualityFunc(first, second)
-
-    def assertRaisesRegexp(self, expected_exception, expected_regex, callable_obj=None, msg=None,
-                           *args, **kwargs):
-        if six.PY3:
-            if callable_obj:
-                return self.assertRaisesRegex(expected_exception, expected_regex, callable_obj,
-                                              msg=msg, *args, **kwargs)
-            return self.assertRaisesRegex(expected_exception, expected_regex, msg=msg, *args, **kwargs)
-        if expected_regex is not None:
-            expected_regex = re.compile(expected_regex)
-        context = _AssertRaisesContext(expected_exception, self, expected_regex, msg=msg)
-        if callable_obj is None:
-            return context
-        with context:
-            callable_obj(*args, **kwargs)
 
     def assertUnorderedXmlEquivalentOutputs(self, data, expected, excepted_elements = ('lastBuildDate', 'generator')):
         """
@@ -303,7 +252,7 @@ class RssTestCase(UnorderedXmlTestCase):
     def assertRssElementEqualsToValue(self, element, value, msg=None):
         if isinstance(value, ItemElement):
             raise NotImplemented
-        self.assertEqual(getattr(element, element.content_arg), value, msg)
+        self.assertEqual(getattr(element, str(element.content_arg)), value, msg)
 
     def assertMultipleRssElementsEqualsToValues(self, multiple_element, values, msg=None):
         if isinstance(values, ItemElement):
@@ -311,6 +260,6 @@ class RssTestCase(UnorderedXmlTestCase):
         if len(multiple_element) == 1:
             self.assertRssElementEqualsToValue(multiple_element, values, msg)
         else:
-            self.assertSequenceEqual([getattr(elem, elem.content_arg) for elem in multiple_element], values, msg)
+            self.assertSequenceEqual([getattr(elem, str(elem.content_arg)) for elem in multiple_element], values, msg)
 
 

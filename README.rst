@@ -36,6 +36,9 @@ Table of Contents
   * `Configuration <#configuration>`__
   * `Optional Additional Customization <#feed-channel-elements-customization-optionally>`__
   * `Usage <#usage>`__
+  
+    * `Basic usage <#basic-usage>`__
+    * `RssItem derivation and namespaces <#rssitem-derivation-and-namespaces>`__
 
 * `Scrapy Project Examples <#scrapy-project-examples>`__
 
@@ -136,6 +139,8 @@ or to the :code:`custom_settings` attribute of the spider:
 
 Usage
 -----
+Basic usage
+^^^^^^^^^^^
 
 Declare your item directly as RssItem():
 
@@ -207,6 +212,91 @@ All allowed elements are listed in the `scrapy_rss/items.py <https://github.com/
 All allowed attributes of each element with constraints and default values
 are listed in the `scrapy_rss/elements.py <https://github.com/woxcab/scrapy_rss/blob/master/scrapy_rss/elements.py>`_.
 Also you can read `RSS specification <http://www.rssboard.org/rss-specification>`_ for more details.
+
+:code:`RssItem` derivation and namespaces
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+You can extend RssItem to add new XML fields that can be namespaced or not.
+You can specify namespaces in an attribute and/or an element constructors.
+Namespace prefix can be specified in the attribute/element name
+using double underscores as delimiter (:code:`prefix__name`)
+or in the attribute/element constructor using :code:`ns_prefix` argument. 
+Namespace URI can be specified using :code:`ns_uri` argument of the constructor.
+
+.. code:: python
+
+    from scrapy_rss.meta import ItemElementAttribute, ItemElement
+    from scrapy_rss.items import RssItem
+
+    class Element0(ItemElement):
+        # attributes without special namespace
+        attr0 = ItemElementAttribute(is_content=True, required=True)
+        attr1 = ItemElementAttribute()
+
+    class Element1(ItemElement):
+        # attribute "prefix2:attr2" with namespace xmlns:prefix2="id2"
+        attr2 = ItemElementAttribute(ns_prefix="prefix2", ns_uri="id2")
+
+        # attribute "prefix3:attr3" with namespace xmlns:prefix3="id3"
+        prefix3__attr3 = ItemElementAttribute(ns_uri="id3")
+
+        # attribute "prefix4:attr4" with namespace xmlns:prefix4="id4"
+        fake_prefix__attr4 = ItemElementAttribute(ns_prefix="prefix4", ns_uri="id4")
+
+        # attribute "attr5" with default namespace xmlns="id5"
+        attr5 = ItemElementAttribute(ns_uri="id5")
+
+    class MyXMLItem(RssItem):
+        # element <elem1> without namespace
+        elem1 = Element0()
+
+        # element <elem_prefix2:elem2> with namespace xmlns:elem_prefix2="id2e"
+        elem2 = Element0(ns_prefix="elem_prefix2", ns_uri="id2e")
+
+        # element <elem_prefix3:elem3> with namespace xmlns:elem_prefix3="id3e"
+        elem_prefix3__elem3 = Element1(ns_uri="id3e")
+
+        # yet another element <elem_prefix4:elem3> with namespace xmlns:elem_prefix4="id4e"
+        # (does not conflict with previous one)
+        fake_prefix__elem3 = Element0(ns_prefix="elem_prefix4", ns_uri="id4e")
+
+        # element <elem5> with default namespace xmlns="id5e"
+        elem5 = Element0(ns_uri="id5e")
+
+Access to elements and its attributes is the same as with simple items:
+
+.. code:: python
+
+    item = MyXMLItem()
+    item.title = 'Some title'
+    item.elem1.attr0 = 'Required content value'
+    item.elem1 = 'Another way to set content value'
+    item.elem1.attr1 = 'Some attribute value'
+    item.elem_prefix3__elem3.prefix3__attr3 = 'Yet another attribute value'
+    item.elem_prefix3__elem3.fake_prefix__attr4 = '' # non-None value is interpreted as assigned
+    item.fake_prefix__elem3.attr1 = 42
+
+
+Several optional settings are allowed for namespaced items:
+
+FEED_NAMESPACES
+  list of tuples :code:`[(prefix, URI), ...]` or dictionary :code:`{prefix: URI, ...}` of namespaces
+  that must be defined in the root XML element
+
+FEED_ITEM_CLASS or FEED_ITEM_CLS
+  main class of feed items (class object :code:`MyXMLItem` or path to class :code:`"path.to.MyXMLItem"`).
+  **Default value**: :code:`RssItem`.
+  It's used in order to extract all possible namespaces
+  that will be declared in the root XML element.
+
+  Feed items do **NOT** have to be instances of this class or its subclass.
+
+If these settings are not defined or only part of namespaces are defined
+then other used namespaces will be declared either in the :code:`<item>` element
+or in its subelements when these namespaces are not unique.
+Each :code:`<item>` element and its sublements always contains
+only namespace declarations of non-:code:`None` attributes (including ones that are interpreted as element content).
+
 
 Scrapy Project Examples
 =======================

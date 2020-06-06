@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0"
+     xmlns:unused_prefix="id000"
+     xmlns:prefix="el_id1"
+     xmlns:prefixa="id32">
+    <channel>
+        <title>Title</title>
+        <link>http://example.com/feed</link>
+        <description>Description</description>
+        <item>
+               <title>Title of item with same namespace prefixes</title>
+               <prefix:elem1 xmlns:prefix="el_id1">Content value 11ё</prefix:elem1>
+               <prefix:elem2 xmlns:prefix="el_id2" prefixa:attr32="Attribute value 22"></prefix:elem2>
+               <prefix:elem3 xmlns:prefix="el_id3" prefixa:attr32="Attribute value 32">Content value 11</prefix:elem3>
+               <prefix:elem4 xmlns:prefix="el_id4" prefixa:attr32=""></prefix:elem4>
+        </item>
+    </channel>
+</rss>

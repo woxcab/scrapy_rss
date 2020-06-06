@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0" xmlns:prefix="el_id3" xmlns:prefix2="el_id4" xmlns:prefix42="id42" xmlns:prefixa="id32">
+    <channel>
+        <title>Title</title>
+        <link>http://example.com/feed</link>
+        <description>Description</description>
+        <item>
+               <title>Title of item with default namespaces</title>
+               <elem1 xmlns="el_id1">Content value 11ё</elem1>
+               <elem2 xmlns="el_id2" prefixa:attr32="Attribute value 22"></elem2>
+               <prefix:elem3 prefixa:attr32="Attribute value 32">Content value 11</prefix:elem3>
+               <prefix2:elem3 prefixa:attr32=""></prefix2:elem3>
+               <elem4 attr41="A41 b" prefix42:attr41="0"></elem4>
+        </item>
+    </channel>
+</rss>

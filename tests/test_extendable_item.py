@@ -2,6 +2,7 @@
 
 import unittest
 import scrapy
+import six
 from scrapy_rss import ExtendableItem, RssItem, RssedItem
 from tests.utils import RssTestCase
 
@@ -42,16 +43,16 @@ class TestExtendableItem(RssTestCase):
 
     def test_field_setter(self):
         for item in (self.MyItem2(), self.MyItem4()):
-            with self.assertRaisesRegexp(AttributeError,  r'Use item\[[^\]]+\] = .*? to set field value',
-                                         msg="Allowed assignment to Scrapy fields [{} class]"
-                                             .format(item.__class__.__name__)):
+            with six.assertRaisesRegex(self, AttributeError,  r'Use item\[[^\]]+\] = .*? to set field value',
+                                       msg="Allowed assignment to Scrapy fields [{} class]"
+                                           .format(item.__class__.__name__)):
                 item.field = None
             item.rss = None
             item.new_attr = None
 
     def test_field_getter(self):
         for item in (self.MyItem2(), self.MyItem4()):
-            with self.assertRaisesRegexp(AttributeError, r'Use item\[[^\]]+\] to get field value'):
+            with six.assertRaisesRegex(self, AttributeError, r'Use item\[[^\]]+\] to get field value'):
                 _ = item.field
             _ = item.rss
 

@@ -5,6 +5,7 @@ from scrapy import signals
 from scrapy.exceptions import NotConfigured, CloseSpider
 from scrapy.utils.misc import load_object
 
+from .items import RssItem
 from .exporters import RssItemExporter
 
 
@@ -37,12 +38,20 @@ class RssExportPipeline(object):
         feed_description = spider.settings.get('FEED_DESCRIPTION')
         if feed_description is None:
             raise NotConfigured('FEED_DESCRIPTION parameter does not exist')
+
+        item_cls = spider.settings.get('FEED_ITEM_CLASS', spider.settings.get('FEED_ITEM_CLS', RssItem))
+        if isinstance(item_cls, six.string_types):
+            item_cls = load_object(item_cls)
+
+        namespaces = spider.settings.get('FEED_NAMESPACES', {})
+
         feed_exporter = spider.settings.get('FEED_EXPORTER', RssItemExporter)
         if isinstance(feed_exporter, six.string_types):
             feed_exporter = load_object(feed_exporter)
         if not issubclass(feed_exporter, RssItemExporter):
             raise TypeError("FEED_EXPORTER must be RssItemExporter or its subclass, not '{}'".format(feed_exporter))
-        self.exporters[spider] = feed_exporter(file, feed_title, feed_link, feed_description)
+        self.exporters[spider] = feed_exporter(file, feed_title, feed_link, feed_description,
+                                               namespaces=namespaces, item_cls=item_cls)
         self.exporters[spider].start_exporting()
 
     def spider_closed(self, spider):

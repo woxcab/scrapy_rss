@@ -31,11 +31,14 @@ class TestImport(unittest.TestCase):
         from scrapy_rss.items import RssedItem
 
     def test_meta(self):
+        from scrapy_rss.meta import BaseNSComponent
+        from scrapy_rss.meta import NSComponentName
         from scrapy_rss.meta import ItemElementAttribute
         from scrapy_rss.meta import ItemElementMeta
         from scrapy_rss.meta import ItemElement
         from scrapy_rss.meta import MultipleElements
         from scrapy_rss.meta import ItemMeta
+        from scrapy_rss.meta import BaseFeedItem
 
     def test_pipelines(self):
         from scrapy_rss.pipelines import RssExportPipeline
@@ -44,8 +47,5 @@ class TestImport(unittest.TestCase):
         from scrapy_rss.utils import format_rfc822
 
 
-
 if __name__ == '__main__':
     unittest.main()
-
-
