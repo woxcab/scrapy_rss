@@ -1,15 +1,20 @@
 # -*- coding: utf-8 -*-
 
-from scrapy.item import BaseItem
 from copy import deepcopy
 import six
+from scrapy.item import BaseItem
+
+try:
+    from scrapy.item import _BaseItemMeta
+except ImportError:  # pragma: no cover
+    _BaseItemMeta = type
 
 from ..exceptions import *
 from .nscomponent import NSComponentName
 from .element import ItemElement, MultipleElements
 
 
-class ItemMeta(type):
+class ItemMeta(_BaseItemMeta):
     def __new__(mcs, cls_name, cls_bases, cls_attrs):
         cls_attrs['_elements'] = {}
         for cls_base in reversed(cls_bases):
@@ -64,6 +69,9 @@ class BaseFeedItem(BaseItem):
     elements : { NSComponentName : ItemElement }
         All elements of the item
     """
+
+    def __new__(cls, *args, **kwargs):
+        return super(BaseItem, cls).__new__(cls, *args, **kwargs)
 
     def __init__(self):
         new_elements = {}
