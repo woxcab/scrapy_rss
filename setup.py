@@ -2,14 +2,15 @@ from os.path import dirname, join
 import sys
 from setuptools import setup, find_packages
 
+
 try:
     from wheel.bdist_wheel import bdist_wheel as _bdist_wheel
-    from wheel.pep425tags import get_impl_ver
+    import sys
 
     class bdist_wheel(_bdist_wheel):
         def finalize_options(self):
             _bdist_wheel.finalize_options(self)
-            self.python_tag = 'py' + get_impl_ver()[:2]
+            self.python_tag = 'py%i%i' % (sys.version_info.major, sys.version_info.minor)
 
 except ImportError:
     bdist_wheel = None
