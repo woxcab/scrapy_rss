@@ -7,7 +7,7 @@ scrapy_rss
    :alt: PyPI Version
 
 .. image:: https://img.shields.io/travis/woxcab/scrapy_rss/master.svg
-   :target: http://travis-ci.org/woxcab/scrapy_rss
+   :target: http://travis-ci.com/woxcab/scrapy_rss
    :alt: Build Status
 
 .. image:: https://img.shields.io/badge/wheel-yes-brightgreen.svg
