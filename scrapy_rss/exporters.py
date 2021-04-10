@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 
-from distutils.version import LooseVersion
 from itertools import chain
 from collections import Counter
 
+from packaging import version
 from datetime import datetime
 from dateutil.tz import tzlocal
 import six
@@ -94,7 +94,7 @@ class RssItemExporter(XmlItemExporter):
             else:
                 self._namespaces[ns_prefix] = ns_uri
 
-    if LooseVersion(scrapy.__version__) < LooseVersion('1.4.0'): # pragma: no cover
+    if version.parse(scrapy.__version__) < version.parse('1.4.0'):  # pragma: no cover
         def _export_xml_field(self, name, serialized_value, depth):
             return super(RssItemExporter, self)._export_xml_field(name, serialized_value)
 

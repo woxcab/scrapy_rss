@@ -1,3 +1,4 @@
-python-dateutil
 scrapy<2.0
+packaging
+python-dateutil
 six

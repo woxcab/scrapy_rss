@@ -13,12 +13,16 @@ import six
 
 from twisted.python.failure import Failure
 from scrapy.pipelines import ItemPipelineManager
-from frozendict import frozendict
 from lxml import etree
 from xmlunittest import XmlTestCase
 
 from scrapy_rss.meta import ItemElement, MultipleElements
 from scrapy_rss.items import RssItem
+
+try:
+    from collections.abc import Mapping
+except ImportError:
+    from collections import Mapping
 
 try:
     from unittest.util import _common_shorten_repr, _shorten
@@ -70,6 +74,48 @@ def get_dict_attr(obj,attr):
     raise AttributeError
 
 
+iteritems = getattr(dict, 'iteritems', dict.items) # py2-3 compatibility
+
+
+class FrozenDict(Mapping):
+    """
+    A simple immutable wrapper around dictionaries.
+    It can be used as a drop-in replacement for dictionaries where immutability is desired.
+    """
+
+    dict_cls = dict
+
+    def __init__(self, *args, **kwargs):
+        self._dict = self.dict_cls(*args, **kwargs)
+        self._hash = None
+
+    def __getitem__(self, key):
+        return self._dict[key]
+
+    def __contains__(self, key):
+        return key in self._dict
+
+    def copy(self, **add_or_replace):
+        return self.__class__(self, **add_or_replace)
+
+    def __iter__(self):
+        return iter(self._dict)
+
+    def __len__(self):
+        return len(self._dict)
+
+    def __repr__(self):
+        return '<%s %r>' % (self.__class__.__name__, self._dict)
+
+    def __hash__(self):
+        if self._hash is None:
+            h = 0
+            for key, value in iteritems(self._dict):
+                h ^= hash((key, value))
+            self._hash = h
+        return self._hash
+
+
 class RaisedItemPipelineManager(ItemPipelineManager):
     def process_item(self, item, spider):
         d = super(RaisedItemPipelineManager, self).process_item(item, spider)
@@ -89,9 +135,9 @@ class UnorderedXmlTestCase(XmlTestCase):
     @classmethod
     def _xml_to_tuple(cls, element):
         return (element.tag,
-                frozendict(element.nsmap),
-                frozendict(element.attrib),
-                frozendict(Counter(t for t in element.itertext() if t.strip())),
+                FrozenDict(element.nsmap),
+                FrozenDict(element.attrib),
+                FrozenDict(Counter(t for t in element.itertext() if t.strip())),
                 frozenset(cls._xml_to_tuple(child) for child in element.getchildren()))
 
     @staticmethod

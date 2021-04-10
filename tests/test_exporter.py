@@ -6,7 +6,6 @@ from  itertools import chain, combinations
 from parameterized import parameterized
 
 import six
-from frozendict import frozendict
 from lxml import etree
 import scrapy
 from scrapy import signals
@@ -24,7 +23,7 @@ from scrapy_rss.exceptions import *
 from scrapy_rss.exporters import RssItemExporter
 
 import unittest
-from tests.utils import RssTestCase
+from tests.utils import RssTestCase, FrozenDict
 
 
 if six.PY2:
@@ -34,7 +33,7 @@ if six.PY2:
 
 
 class CrawlerContext(object):
-    default_settings = frozendict({'ITEM_PIPELINES':
+    default_settings = FrozenDict({'ITEM_PIPELINES':
                                        {'scrapy_rss.pipelines.RssExportPipeline': 900,},
                                    'LOG_LEVEL': 'WARNING',
                                    'EXTENSIONS': {
@@ -96,7 +95,7 @@ class FullRssItemExporter(RssItemExporter):
                       docs=docs, ttl=ttl, *args, **kwargs)
 
 
-default_feed_settings = frozendict({'feed_file': os.path.join(os.path.dirname(__file__), 'tmp', 'feed.rss'),
+default_feed_settings = FrozenDict({'feed_file': os.path.join(os.path.dirname(__file__), 'tmp', 'feed.rss'),
                                     'feed_title': 'Title',
                                     'feed_link': 'http://example.com/feed',
                                     'feed_description': 'Description'})
