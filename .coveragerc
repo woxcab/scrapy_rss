@@ -1,6 +1,6 @@
 [run]
 branch = True
-include = scrapy_rss/*
+source = scrapy_rss
 omit =
     setup.py
     tests/*
