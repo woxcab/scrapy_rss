@@ -9,7 +9,10 @@ import six
 from lxml import etree
 import scrapy
 from scrapy import signals
-from scrapy.item import BaseItem
+try:
+    from scrapy.item import BaseItem
+except ImportError:
+    from scrapy.item import Item as BaseItem
 from tests.utils import RaisedItemPipelineManager
 from scrapy.exceptions import NotConfigured, CloseSpider
 from scrapy.utils.misc import load_object
@@ -17,7 +20,7 @@ from scrapy.utils.test import get_crawler
 from scrapy.core.scraper import Scraper
 from scrapy.crawler import Crawler
 
-from scrapy_rss.items import RssItem, ExtendableItem, RssedItem
+from scrapy_rss.items import RssItem, FeedItem, RssedItem
 from scrapy_rss.meta import ItemElement, ItemElementAttribute
 from scrapy_rss.exceptions import *
 from scrapy_rss.exporters import RssItemExporter
@@ -448,13 +451,13 @@ class TestExporting(RssTestCase):
             with CrawlerContext(**default_feed_settings) as context:
                 context.ipm.process_item(invalid_item, context.spider)
 
-        class InvalidSuperItem1(ExtendableItem):
+        class InvalidSuperItem1(FeedItem):
             pass
 
-        class InvalidSuperItem2(ExtendableItem):
+        class InvalidSuperItem2(FeedItem):
             field = scrapy.Field()
 
-        class InvalidSuperItem3(ExtendableItem):
+        class InvalidSuperItem3(FeedItem):
             rss = scrapy.Field()
 
         for invalid_item_cls in (InvalidSuperItem1, InvalidSuperItem2, InvalidSuperItem3):
@@ -473,7 +476,7 @@ class TestExporting(RssTestCase):
 
     @parameterized.expand(predefined_items.items.items())
     def test_single_item_in_the_feed(self, item_name, item):
-        class SuperItem(ExtendableItem):
+        class SuperItem(FeedItem):
             some_field = scrapy.Field()
 
             def __init__(self):
@@ -498,7 +501,7 @@ class TestExporting(RssTestCase):
 
     @parameterized.expand(predefined_items.ns_items)
     def test_single_ns_item_in_the_feed(self, item_name, namespaces, item_cls, item):
-        class SuperItem(ExtendableItem):
+        class SuperItem(FeedItem):
             some_field = scrapy.Field()
 
             def __init__(self):
@@ -575,7 +578,7 @@ class TestScraper:
         scraper._process_spidermw_output(NSItem0(), None, None, None)
         scraper._process_spidermw_output(NSItem1(), None, None, None)
         scraper._process_spidermw_output(NSItem2(), None, None, None)
-        scraper._process_spidermw_output(ExtendableItem(), None, None, None)
+        scraper._process_spidermw_output(FeedItem(), None, None, None)
         scraper._process_spidermw_output(RssedItem(), None, None, None)
         scraper.close_spider(spider)
 

@@ -1,12 +1,11 @@
 # -*- coding: utf-8 -*-
 
-import scrapy
-from scrapy.item import BaseItem
 from .elements import *
 from . import meta
+from .meta.item import FeedItem, ExtendableItem
 
 
-class RssItem(meta.item.BaseFeedItem):
+class RssItem(FeedItem):
     title = TitleElement()
     link = LinkElement()
     description = DescriptionElement()
@@ -19,14 +18,7 @@ class RssItem(meta.item.BaseFeedItem):
     source = SourceElement()
 
 
-class ExtendableItem(scrapy.Item):
-    def __setattr__(self, name, value):
-        if name in self.fields:
-            raise AttributeError("Use item[{!r}] = {!r} to set field value".format(name, value))
-        super(BaseItem, self).__setattr__(name, value)
-
-
-class RssedItem(ExtendableItem):
+class RssedItem(FeedItem):
     def __init__(self, *args, **kwargs):
         super(RssedItem, self).__init__(*args, **kwargs)
         self.rss = RssItem()

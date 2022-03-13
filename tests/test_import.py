@@ -6,6 +6,7 @@ import unittest
 class TestImport(unittest.TestCase):
     def test_module_level(self):
         from scrapy_rss import RssItem
+        from scrapy_rss import FeedItem
         from scrapy_rss import ExtendableItem
         from scrapy_rss import RssedItem
         import scrapy_rss
@@ -27,6 +28,7 @@ class TestImport(unittest.TestCase):
 
     def test_items(self):
         from scrapy_rss.items import RssItem
+        from scrapy_rss.items import FeedItem
         from scrapy_rss.items import ExtendableItem
         from scrapy_rss.items import RssedItem
 
@@ -38,7 +40,8 @@ class TestImport(unittest.TestCase):
         from scrapy_rss.meta import ItemElement
         from scrapy_rss.meta import MultipleElements
         from scrapy_rss.meta import ItemMeta
-        from scrapy_rss.meta import BaseFeedItem
+        from scrapy_rss.meta import FeedItem
+        from scrapy_rss.meta import ExtendableItem
 
     def test_pipelines(self):
         from scrapy_rss.pipelines import RssExportPipeline

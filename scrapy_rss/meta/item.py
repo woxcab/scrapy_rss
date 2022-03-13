@@ -2,7 +2,7 @@
 
 from copy import deepcopy
 import six
-from scrapy.item import BaseItem
+from scrapy.item import ItemMeta as BaseItemMeta, Item as BaseItem, MutableMapping
 
 try:
     from scrapy.item import _BaseItemMeta
@@ -14,7 +14,7 @@ from .nscomponent import NSComponentName
 from .element import ItemElement, MultipleElements
 
 
-class ItemMeta(_BaseItemMeta):
+class ItemMeta(BaseItemMeta):
     def __new__(mcs, cls_name, cls_bases, cls_attrs):
         cls_attrs['_elements'] = {}
         for cls_base in reversed(cls_bases):
@@ -61,19 +61,15 @@ class ItemMeta(_BaseItemMeta):
         return setter
 
 
-@six.add_metaclass(ItemMeta)
-class BaseFeedItem(BaseItem):
+class FeedItem(six.with_metaclass(ItemMeta, BaseItem)):
     """
     Attributes
     ----------
     elements : { NSComponentName : ItemElement }
         All elements of the item
     """
-
-    def __new__(cls, *args, **kwargs):
-        return super(BaseItem, cls).__new__(cls, *args, **kwargs)
-
-    def __init__(self):
+    def __init__(self, *args, **kwargs):
+        super(FeedItem, self).__init__(*args, **kwargs)
         new_elements = {}
         for elem_name, elem_descr in self._elements.items():
             new_element = deepcopy(getattr(self, elem_name.priv_name))
@@ -86,6 +82,11 @@ class BaseFeedItem(BaseItem):
             self.__class__.__name__,
             ", ".join("{}={!r}".format(elem_name, elem)
                       for elem_name, elem in self.elements.items()))
+
+    def __setattr__(self, name, value):
+        if name in self.fields:
+            raise AttributeError("Use item[{!r}] = {!r} to set field value".format(name, value))
+        super(MutableMapping, self).__setattr__(name, value)
 
     def get_namespaces(self, assigned_only=True):
         """
@@ -106,3 +107,6 @@ class BaseFeedItem(BaseItem):
             if not assigned_only or elem.assigned:
                 namespaces.update(elem.get_namespaces(assigned_only))
         return namespaces
+
+
+ExtendableItem = FeedItem  # Backward compatibility

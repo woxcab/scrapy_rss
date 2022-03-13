@@ -1,19 +1,20 @@
 # -*- coding: utf-8 -*-
 
 import unittest
+from parameterized import parameterized
 import scrapy
 import six
-from scrapy_rss import ExtendableItem, RssItem, RssedItem
+from scrapy_rss import FeedItem, RssItem, RssedItem
 from tests.utils import RssTestCase
 
 
-class TestExtendableItem(RssTestCase):
-    class MyItem1(ExtendableItem):
+class TestFeedItem(RssTestCase):
+    class MyItem1(FeedItem):
         def __init__(self, **kwargs):
             super(self.__class__, self).__init__(**kwargs)
             self.rss = RssItem()
 
-    class MyItem2(ExtendableItem):
+    class MyItem2(FeedItem):
         field = scrapy.Field()
         field2 = scrapy.Field()
 
@@ -28,6 +29,15 @@ class TestExtendableItem(RssTestCase):
         field = scrapy.Field()
         field2 = scrapy.Field()
 
+    def test_extendable_item(self):
+        from scrapy_rss import ExtendableItem as ExtendableItem1
+        from scrapy_rss.meta import ExtendableItem as ExtendableItem2
+        from scrapy_rss.meta.item import ExtendableItem as ExtendableItem3
+
+        self.assertIs(ExtendableItem1, FeedItem)
+        self.assertIs(ExtendableItem2, FeedItem)
+        self.assertIs(ExtendableItem3, FeedItem)
+
     def test_field_init(self):
         data = {'field': 'value1', 'field2': 2}
         for item_cls in (self.MyItem2, self.MyItem4):
@@ -41,14 +51,29 @@ class TestExtendableItem(RssTestCase):
         for key, value in d.items():
             self.assertEqual(item[key], value)
 
+    @parameterized.expand([
+        ('bad_key', 1),
+        ('elements', 'nothing')
+    ])
+    def test_bad_dict_init(self, key, value):
+        for item_cls in (self.MyItem1, self.MyItem2, self.MyItem3, self.MyItem4):
+            with six.assertRaisesRegex(self, KeyError, r'does not support field:'):
+                item_cls(**{key: value})
+
     def test_field_setter(self):
+        for item in (self.MyItem2(), self.MyItem4()):
+            item['field'] = 'value'
+            item.rss = None
+            item.new_attr = 'OK'
+
+    def test_bad_field_setter(self):
         for item in (self.MyItem2(), self.MyItem4()):
             with six.assertRaisesRegex(self, AttributeError,  r'Use item\[[^\]]+\] = .*? to set field value',
                                        msg="Allowed assignment to Scrapy fields [{} class]"
                                            .format(item.__class__.__name__)):
                 item.field = None
-            item.rss = None
-            item.new_attr = None
+            with six.assertRaisesRegex(self, KeyError, r'does not support field:'):
+                item['unknown_field'] = 'Bad'
 
     def test_field_getter(self):
         for item in (self.MyItem2(), self.MyItem4()):
@@ -67,12 +92,12 @@ class TestExtendableItem(RssTestCase):
                                 msg='[{} class]'.format(item_cls.__name__))
 
     def test_inheritance(self):
-        class Derived1(ExtendableItem):
+        class Derived1(FeedItem):
             pass
 
         Derived1()
 
-        class Derived2(ExtendableItem):
+        class Derived2(FeedItem):
             def __init__(self, **kwargs):
                 super(Derived2, self).__init__(**kwargs)
 
