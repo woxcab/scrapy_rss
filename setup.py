@@ -25,6 +25,7 @@ install_requires=['python-dateutil',
                   else 'scrapy<1.5.0' if sys.version_info[:2] == (3, 3)
                   else 'scrapy>=1.1,<1.8.0' if sys.version_info[:2] == (3, 4)
                   else 'scrapy>=1.1' if sys.version_info[:2] == (3, 5)
+                  else 'scrapy>=1.7.1' if sys.version_info[:2] >= (3, 10)
                   else 'scrapy>=1.3.1',
                   'six']
 if sys.version_info[:2] == (3, 3):
@@ -64,6 +65,7 @@ with open('README.rst') as readme:
             'Programming Language :: Python :: 3.7',
             'Programming Language :: Python :: 3.8',
             'Programming Language :: Python :: 3.9',
+            'Programming Language :: Python :: 3.10',
             'Topic :: Internet :: WWW/HTTP',
             'Topic :: Software Development :: Libraries :: Python Modules',
         ],
