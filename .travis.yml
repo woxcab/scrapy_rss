@@ -1,19 +1,29 @@
-sudo: false
+os: linux
 dist: bionic
 language: python
-python:
-    - "2.7"
-    - "3.5"
-    - "3.6"
-    - "3.7"
-    - "3.8"
-    - "3.9"
-    - "3.10"
-    - "3.11-dev"
+
 jobs:
-    allow_failures:
-        - python: "3.11-dev"
+  include:
+    - python: "3.3"
+      dist: precise
+    - python: "3.4"
+      dist: precise
+    - python: "2.7"
+    - python: "3.5"
+    - python: "3.6"
+    - python: "3.7"
+    - python: "3.8"
+    - python: "3.9"
+    - python: "3.10"
+    - python: "3.11-dev"
+      dist: focal
+  allow_failures:
+    - python: "3.3"
+    - python: "3.4"
+    - python: "3.11-dev"
+
 install:
     - pip install -U pip tox-travis codecov
 script: COVERAGE_FILE=.coverage tox
 after_success: codecov
+
