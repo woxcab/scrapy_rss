@@ -5,9 +5,15 @@ language: python
 jobs:
   include:
     - python: "3.3"
-      dist: precise
+      dist: trusty
+      install:
+        - sudo apt-get install -y python-tox python3-coverage
+        - pip install tox-travis<0.11 codecov
     - python: "3.4"
-      dist: precise
+      dist: trusty
+      install:
+        - sudo apt-get install -y python-tox python3-coverage
+        - pip install tox-travis<0.11 codecov
     - python: "2.7"
     - python: "3.5"
     - python: "3.6"
