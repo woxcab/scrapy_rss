@@ -6,10 +6,6 @@ scrapy_rss
    :target: https://pypi.python.org/pypi/scrapy_rss
    :alt: PyPI Version
 
-.. image:: https://img.shields.io/travis/woxcab/scrapy_rss/master.svg
-   :target: https://app.travis-ci.com/github/woxcab/scrapy_rss
-   :alt: Build Status
-
 .. image:: https://img.shields.io/badge/wheel-yes-brightgreen.svg
    :target: https://pypi.python.org/pypi/scrapy_rss
    :alt: Wheel Status
