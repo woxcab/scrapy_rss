@@ -27,6 +27,7 @@ install_requires=['python-dateutil',
                   else 'scrapy>=1.1' if sys.version_info[:2] == (3, 5)
                   else 'scrapy>=1.7.1' if sys.version_info[:2] >= (3, 10)
                   else 'scrapy>=1.3.1',
+                  'packaging',
                   'six']
 if sys.version_info[:2] == (3, 3):
     install_requires.extend(['cryptography<2.0', 'pyOpenSSL<17.3.0'])
