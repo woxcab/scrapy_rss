@@ -5,5 +5,10 @@ omit =
     setup.py
     tests/*
 
+[paths]
+source =
+    scrapy_rss
+    /home/*/scrapy_rss/scrapy_rss
+
 [html]
 directory = coverage_report 
