@@ -6,7 +6,7 @@ from scrapy.item import ItemMeta as BaseItemMeta, Item as BaseItem, MutableMappi
 
 try:
     from scrapy.item import _BaseItemMeta
-except ImportError:  # pragma: no cover
+except ImportError:
     _BaseItemMeta = type
 
 from ..exceptions import *
