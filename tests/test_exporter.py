@@ -332,15 +332,19 @@ class TestExporting(RssTestCase):
         combinations(default_feed_settings.items(), r)
         for r in range(1, len(default_feed_settings)))))
     def test_partial_required_settings(self, partial_settings):
-        partial_settings = dict(partial_settings)
-        undefined_settings = [name.upper() for name in set(default_feed_settings) - set(partial_settings)]
-        with six.assertRaisesRegex(self, NotConfigured,
-                                   '({})'.format('|'.join(undefined_settings))
-                                        if len(undefined_settings) > 1 else undefined_settings[0],
-                                   msg='The feed file, title, link and description must be specified, but the absence of {} is allowed'
-                                         .format(undefined_settings)):
-            with CrawlerContext(**partial_settings):
-                pass
+        with FeedSettings() as feed_settings:
+            partial_settings = dict(partial_settings)
+            if 'feed_file' in partial_settings:
+                partial_settings['feed_file'] = feed_settings['feed_file']
+            undefined_settings = [name.upper()
+                                  for name in set(default_feed_settings) - set(partial_settings)]
+            with six.assertRaisesRegex(self, NotConfigured,
+                                       '({})'.format('|'.join(undefined_settings))
+                                            if len(undefined_settings) > 1 else undefined_settings[0],
+                                       msg='The feed file, title, link and description must be specified, but the absence of {} is allowed'
+                                             .format(undefined_settings)):
+                with CrawlerContext(**partial_settings):
+                    pass
 
     def test_empty_feed(self):
         with self.assertRaises(CloseSpider):
