@@ -1,2 +1,3 @@
 xmlunittest
 parameterized
+backports.tempfile;python_version<"3.3"

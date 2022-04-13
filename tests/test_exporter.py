@@ -2,12 +2,15 @@
 
 import os
 from datetime import datetime
-from  itertools import chain, combinations
-from tempfile import TemporaryDirectory
+from itertools import chain, combinations
+try:
+    from tempfile import TemporaryDirectory
+except ImportError:
+    from backports.tempfile import TemporaryDirectory
 from parameterized import parameterized
-
 import six
 from lxml import etree
+
 import scrapy
 from scrapy import signals
 try:
