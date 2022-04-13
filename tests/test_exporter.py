@@ -3,6 +3,7 @@
 import os
 from datetime import datetime
 from  itertools import chain, combinations
+from tempfile import TemporaryDirectory
 from parameterized import parameterized
 
 import six
@@ -98,10 +99,19 @@ class FullRssItemExporter(RssItemExporter):
                       docs=docs, ttl=ttl, *args, **kwargs)
 
 
-default_feed_settings = FrozenDict({'feed_file': os.path.join(os.path.dirname(__file__), 'tmp', 'feed.rss'),
+default_feed_settings = FrozenDict({'feed_file': 'feed.rss',
                                     'feed_title': 'Title',
                                     'feed_link': 'http://example.com/feed',
                                     'feed_description': 'Description'})
+
+
+class FeedSettings(TemporaryDirectory):
+    def __enter__(self):
+        dirname = super(FeedSettings, self).__enter__()
+        feed_settings = dict(default_feed_settings)
+        feed_settings['feed_file'] = os.path.join(dirname, feed_settings['feed_file'])
+        feed_settings = FrozenDict(feed_settings)
+        return feed_settings
 
 
 class PredefinedItems(object):
@@ -339,231 +349,246 @@ class TestExporting(RssTestCase):
             with CrawlerContext(**feed_settings):
                 pass
 
-        with CrawlerContext(**default_feed_settings):
-            pass
+        with FeedSettings() as feed_settings:
+            with CrawlerContext(**feed_settings):
+                pass
 
-        with open(default_feed_settings['feed_file']) as data, \
-             open(os.path.join(os.path.dirname(__file__), 'expected_rss', 'empty_feed.rss')) as expected:
-            self.assertUnorderedXmlEquivalentOutputs(data.read(), expected.read())
+            with open(feed_settings['feed_file']) as data, \
+                 open(os.path.join(os.path.dirname(__file__), 'expected_rss', 'empty_feed.rss')) as expected:
+                self.assertUnorderedXmlEquivalentOutputs(data.read(), expected.read())
 
     def test_custom_exporters(self):
-        crawler_settings = dict(CrawlerContext.default_settings)
-        crawler_settings['FEED_EXPORTER'] = 'tests.test_exporter.FullRssItemExporter'
+        with FeedSettings() as feed_settings:
+            crawler_settings = dict(CrawlerContext.default_settings)
+            crawler_settings['FEED_EXPORTER'] = 'tests.test_exporter.FullRssItemExporter'
 
-        with CrawlerContext(crawler_settings=crawler_settings, **default_feed_settings):
-            pass
-        with open(default_feed_settings['feed_file']) as data, \
-             open(os.path.join(os.path.dirname(__file__), 'expected_rss', 'full_empty_feed.rss')) as expected:
-            self.assertUnorderedXmlEquivalentOutputs(data.read(), expected.read(), excepted_elements=None)
+            with CrawlerContext(crawler_settings=crawler_settings, **feed_settings):
+                pass
+            with open(feed_settings['feed_file']) as data, \
+                 open(os.path.join(os.path.dirname(__file__),
+                                   'expected_rss', 'full_empty_feed.rss')) as expected:
+                self.assertUnorderedXmlEquivalentOutputs(data.read(), expected.read(),
+                                                         excepted_elements=None)
 
-        crawler_settings['FEED_EXPORTER'] = FullRssItemExporter
-        with CrawlerContext(crawler_settings=crawler_settings, **default_feed_settings):
-            pass
-        with open(default_feed_settings['feed_file']) as data, \
-             open(os.path.join(os.path.dirname(__file__), 'expected_rss', 'full_empty_feed.rss')) as expected:
-            self.assertUnorderedXmlEquivalentOutputs(data.read(), expected.read(), excepted_elements=None)
+            crawler_settings['FEED_EXPORTER'] = FullRssItemExporter
+            with CrawlerContext(crawler_settings=crawler_settings, **feed_settings):
+                pass
+            with open(feed_settings['feed_file']) as data, \
+                 open(os.path.join(os.path.dirname(__file__),
+                                   'expected_rss', 'full_empty_feed.rss')) as expected:
+                self.assertUnorderedXmlEquivalentOutputs(data.read(), expected.read(),
+                                                         excepted_elements=None)
 
-        class InvalidRssItemExporter1(RssItemExporter):
-            def __init__(self, file, channel_title, channel_link, channel_description,
-                         managing_editor='Manager Name',
-                         *args, **kwargs):
-                super(InvalidRssItemExporter1, self) \
-                    .__init__(file, channel_title, channel_link, channel_description,
-                              managing_editor=managing_editor, *args, **kwargs)
+            class InvalidRssItemExporter1(RssItemExporter):
+                def __init__(self, file, channel_title, channel_link, channel_description,
+                             managing_editor='Manager Name',
+                             *args, **kwargs):
+                    super(InvalidRssItemExporter1, self) \
+                        .__init__(file, channel_title, channel_link, channel_description,
+                                  managing_editor=managing_editor, *args, **kwargs)
 
-        crawler_settings['FEED_EXPORTER'] = InvalidRssItemExporter1
-        with six.assertRaisesRegex(self, ValueError, 'managing_editor'):
-            with CrawlerContext(crawler_settings=crawler_settings, **default_feed_settings):
+            crawler_settings['FEED_EXPORTER'] = InvalidRssItemExporter1
+            with six.assertRaisesRegex(self, ValueError, 'managing_editor'):
+                with CrawlerContext(crawler_settings=crawler_settings, **feed_settings):
+                    pass
+
+            class InvalidRssItemExporter2(RssItemExporter):
+                def __init__(self, file, channel_title, channel_link, channel_description,
+                             webmaster='Webmaster Name',
+                             *args, **kwargs):
+                    super(InvalidRssItemExporter2, self) \
+                        .__init__(file, channel_title, channel_link, channel_description,
+                                  webmaster=webmaster, *args, **kwargs)
+
+            crawler_settings['FEED_EXPORTER'] = InvalidRssItemExporter2
+            with six.assertRaisesRegex(self, ValueError, 'webmaster'):
+                with CrawlerContext(crawler_settings=crawler_settings, **feed_settings):
+                    pass
+
+            class MultipleCategoriesRssItemExporter(RssItemExporter):
+                def __init__(self, file, channel_title, channel_link, channel_description,
+                             category=('category 1', 'category 2'),
+                             *args, **kwargs):
+                    super(MultipleCategoriesRssItemExporter, self) \
+                        .__init__(file, channel_title, channel_link, channel_description,
+                                  category=category, *args, **kwargs)
+
+            crawler_settings['FEED_EXPORTER'] = MultipleCategoriesRssItemExporter
+            with CrawlerContext(crawler_settings=crawler_settings, **feed_settings):
+                pass
+            with open(feed_settings['feed_file']) as data, \
+                 open(os.path.join(os.path.dirname(__file__),
+                                   'expected_rss', 'empty_feed_with_categories.rss')) as expected:
+                self.assertUnorderedXmlEquivalentOutputs(data.read(), expected.read())
+
+            class NoGeneratorRssItemExporter(RssItemExporter):
+                def __init__(self, file, channel_title, channel_link, channel_description,
+                             generator='',
+                             *args, **kwargs):
+                    super(NoGeneratorRssItemExporter, self) \
+                        .__init__(file, channel_title, channel_link, channel_description,
+                                  generator=generator, *args, **kwargs)
+
+            crawler_settings['FEED_EXPORTER'] = NoGeneratorRssItemExporter
+            with CrawlerContext(crawler_settings=crawler_settings, **feed_settings):
+                pass
+            with open(feed_settings['feed_file']) as data, \
+                 open(os.path.join(os.path.dirname(__file__), 'expected_rss', 'empty_feed_without_generator.rss')) as expected:
+                self.assertUnorderedXmlEquivalentOutputs(data.read(), expected.read(), excepted_elements='lastBuildDate')
+
+            class InvalidExporter(object):
                 pass
 
-        class InvalidRssItemExporter2(RssItemExporter):
-            def __init__(self, file, channel_title, channel_link, channel_description,
-                         webmaster='Webmaster Name',
-                         *args, **kwargs):
-                super(InvalidRssItemExporter2, self) \
-                    .__init__(file, channel_title, channel_link, channel_description,
-                              webmaster=webmaster, *args, **kwargs)
-
-        crawler_settings['FEED_EXPORTER'] = InvalidRssItemExporter2
-        with six.assertRaisesRegex(self, ValueError, 'webmaster'):
-            with CrawlerContext(crawler_settings=crawler_settings, **default_feed_settings):
-                pass
-
-        class MultipleCategoriesRssItemExporter(RssItemExporter):
-            def __init__(self, file, channel_title, channel_link, channel_description,
-                         category=('category 1', 'category 2'),
-                         *args, **kwargs):
-                super(MultipleCategoriesRssItemExporter, self) \
-                    .__init__(file, channel_title, channel_link, channel_description,
-                              category=category, *args, **kwargs)
-
-        crawler_settings['FEED_EXPORTER'] = MultipleCategoriesRssItemExporter
-        with CrawlerContext(crawler_settings=crawler_settings, **default_feed_settings):
-            pass
-        with open(default_feed_settings['feed_file']) as data, \
-             open(os.path.join(os.path.dirname(__file__), 'expected_rss', 'empty_feed_with_categories.rss')) as expected:
-            self.assertUnorderedXmlEquivalentOutputs(data.read(), expected.read())
-
-        class NoGeneratorRssItemExporter(RssItemExporter):
-            def __init__(self, file, channel_title, channel_link, channel_description,
-                         generator='',
-                         *args, **kwargs):
-                super(NoGeneratorRssItemExporter, self) \
-                    .__init__(file, channel_title, channel_link, channel_description,
-                              generator=generator, *args, **kwargs)
-
-        crawler_settings['FEED_EXPORTER'] = NoGeneratorRssItemExporter
-        with CrawlerContext(crawler_settings=crawler_settings, **default_feed_settings):
-            pass
-        with open(default_feed_settings['feed_file']) as data, \
-             open(os.path.join(os.path.dirname(__file__), 'expected_rss', 'empty_feed_without_generator.rss')) as expected:
-            self.assertUnorderedXmlEquivalentOutputs(data.read(), expected.read(), excepted_elements='lastBuildDate')
-
-        class InvalidExporter(object):
-            pass
-
-        crawler_settings['FEED_EXPORTER'] = InvalidExporter
-        with six.assertRaisesRegex(self, TypeError, 'FEED_EXPORTER'):
-            with CrawlerContext(crawler_settings=crawler_settings, **default_feed_settings):
-                pass
+            crawler_settings['FEED_EXPORTER'] = InvalidExporter
+            with six.assertRaisesRegex(self, TypeError, 'FEED_EXPORTER'):
+                with CrawlerContext(crawler_settings=crawler_settings, **feed_settings):
+                    pass
 
     def test_item_validation(self):
-        invalid_item = RssItem()
-        invalid_item.enclosure.url = 'http://example.com/content'
+        with FeedSettings() as feed_settings:
+            invalid_item = RssItem()
+            invalid_item.enclosure.url = 'http://example.com/content'
 
-        with six.assertRaisesRegex(self, InvalidRssItemAttributesError, 'required attributes .*? not set'):
-            with CrawlerContext(**default_feed_settings) as context:
-                context.ipm.process_item(invalid_item, context.spider)
+            with six.assertRaisesRegex(self, InvalidRssItemAttributesError,
+                                       r'required attributes .*? not set'):
+                with CrawlerContext(**feed_settings) as context:
+                    context.ipm.process_item(invalid_item, context.spider)
 
-        class NonStandardElement(ItemElement):
-            first_attribute = ItemElementAttribute(required=True, is_content=True)
-            second_attribute = ItemElementAttribute(required=True)
+            class NonStandardElement(ItemElement):
+                first_attribute = ItemElementAttribute(required=True, is_content=True)
+                second_attribute = ItemElementAttribute(required=True)
 
-        class NonStandardItem(RssItem):
-            element = NonStandardElement()
+            class NonStandardItem(RssItem):
+                element = NonStandardElement()
 
-        invalid_item = NonStandardItem()
-        with six.assertRaisesRegex(self, InvalidElementValueError, 'Could not assign'):
-            invalid_item.element = 'valid value'
-        invalid_item.element.first_attribute = 'valid value'
+            invalid_item = NonStandardItem()
+            with six.assertRaisesRegex(self, InvalidElementValueError, 'Could not assign'):
+                invalid_item.element = 'valid value'
+            invalid_item.element.first_attribute = 'valid value'
 
-        with six.assertRaisesRegex(self, InvalidRssItemAttributesError, 'required attributes .*? not set'):
-            with CrawlerContext(**default_feed_settings) as context:
-                context.ipm.process_item(invalid_item, context.spider)
+            with six.assertRaisesRegex(self, InvalidRssItemAttributesError,
+                                       r'required attributes .*? not set'):
+                with CrawlerContext(**feed_settings) as context:
+                    context.ipm.process_item(invalid_item, context.spider)
 
-        class InvalidSuperItem1(FeedItem):
-            pass
+            class InvalidSuperItem1(FeedItem):
+                pass
 
-        class InvalidSuperItem2(FeedItem):
-            field = scrapy.Field()
+            class InvalidSuperItem2(FeedItem):
+                field = scrapy.Field()
 
-        class InvalidSuperItem3(FeedItem):
-            rss = scrapy.Field()
+            class InvalidSuperItem3(FeedItem):
+                rss = scrapy.Field()
 
-        for invalid_item_cls in (InvalidSuperItem1, InvalidSuperItem2, InvalidSuperItem3):
-            with six.assertRaisesRegex(self, InvalidRssItemError, "Item must have 'rss'"):
-                with CrawlerContext(**default_feed_settings) as context:
-                    context.ipm.process_item(invalid_item_cls(), context.spider)
+            for invalid_item_cls in (InvalidSuperItem1, InvalidSuperItem2, InvalidSuperItem3):
+                with six.assertRaisesRegex(self, InvalidRssItemError, "Item must have 'rss'"):
+                    with CrawlerContext(**feed_settings) as context:
+                        context.ipm.process_item(invalid_item_cls(), context.spider)
 
     @parameterized.expand(zip([scrapy.Item, BaseItem, dict]))
     def test_bad_item_cls(self, item_cls):
-        crawler_settings = dict(CrawlerContext.default_settings)
-        crawler_settings['FEED_ITEM_CLASS'] = item_cls
+        with FeedSettings() as feed_settings:
+            crawler_settings = dict(CrawlerContext.default_settings)
+            crawler_settings['FEED_ITEM_CLASS'] = item_cls
 
-        with six.assertRaisesRegex(self, ValueError, 'must be RssItem'):
-            with CrawlerContext(crawler_settings=crawler_settings, **default_feed_settings):
-                pass
+            with six.assertRaisesRegex(self, ValueError, 'must be RssItem'):
+                with CrawlerContext(crawler_settings=crawler_settings, **feed_settings):
+                    pass
 
     @parameterized.expand(predefined_items.items.items())
     def test_single_item_in_the_feed(self, item_name, item):
-        class SuperItem(FeedItem):
-            some_field = scrapy.Field()
+        with FeedSettings() as feed_settings:
+            class SuperItem(FeedItem):
+                some_field = scrapy.Field()
 
-            def __init__(self):
-                super(SuperItem, self).__init__()
-                self.rss = RssItem()
+                def __init__(self):
+                    super(SuperItem, self).__init__()
+                    self.rss = RssItem()
 
-        with CrawlerContext(**default_feed_settings) as context:
-            context.ipm.process_item(item, context.spider)
-        with open(default_feed_settings['feed_file']) as data, \
-             open(os.path.join(os.path.dirname(__file__),
-                               'expected_rss', '{}.rss'.format(item_name))) as expected:
-            self.assertUnorderedXmlEquivalentOutputs(data=data.read(), expected=expected.read())
+            with CrawlerContext(**feed_settings) as context:
+                context.ipm.process_item(item, context.spider)
+            with open(feed_settings['feed_file']) as data, \
+                 open(os.path.join(os.path.dirname(__file__),
+                                   'expected_rss', '{}.rss'.format(item_name))) as expected:
+                self.assertUnorderedXmlEquivalentOutputs(data=data.read(), expected=expected.read())
 
-        super_item = SuperItem()
-        super_item.rss = item
-        with CrawlerContext(**default_feed_settings) as context:
-            context.ipm.process_item(super_item, context.spider)
-        with open(default_feed_settings['feed_file']) as data, \
-             open(os.path.join(os.path.dirname(__file__),
-                               'expected_rss', '{}.rss'.format(item_name))) as expected:
-            self.assertUnorderedXmlEquivalentOutputs(data=data.read(), expected=expected.read())
+            super_item = SuperItem()
+            super_item.rss = item
+            with CrawlerContext(**feed_settings) as context:
+                context.ipm.process_item(super_item, context.spider)
+            with open(feed_settings['feed_file']) as data, \
+                 open(os.path.join(os.path.dirname(__file__),
+                                   'expected_rss', '{}.rss'.format(item_name))) as expected:
+                self.assertUnorderedXmlEquivalentOutputs(data=data.read(), expected=expected.read())
 
     @parameterized.expand(predefined_items.ns_items)
     def test_single_ns_item_in_the_feed(self, item_name, namespaces, item_cls, item):
-        class SuperItem(FeedItem):
-            some_field = scrapy.Field()
+        with FeedSettings() as feed_settings:
+            class SuperItem(FeedItem):
+                some_field = scrapy.Field()
 
-            def __init__(self):
-                super(SuperItem, self).__init__()
-                self.rss = RssItem()
+                def __init__(self):
+                    super(SuperItem, self).__init__()
+                    self.rss = RssItem()
 
-        crawler_settings = dict(CrawlerContext.default_settings)
-        if namespaces is not None:
-            crawler_settings['FEED_NAMESPACES'] = namespaces
-        if item_cls is not None:
-            crawler_settings['FEED_ITEM_CLASS'] = item_cls
+            crawler_settings = dict(CrawlerContext.default_settings)
+            if namespaces is not None:
+                crawler_settings['FEED_NAMESPACES'] = namespaces
+            if item_cls is not None:
+                crawler_settings['FEED_ITEM_CLASS'] = item_cls
 
-        with CrawlerContext(crawler_settings=crawler_settings, **default_feed_settings) as context:
-            context.ipm.process_item(item, context.spider)
-        with open(default_feed_settings['feed_file']) as data, \
-             open(os.path.join(os.path.dirname(__file__),
-                               'expected_rss', '{}.rss'.format(item_name))) as expected:
-            self.assertUnorderedXmlEquivalentOutputs(data=data.read(), expected=expected.read())
+            with CrawlerContext(crawler_settings=crawler_settings, **feed_settings) as context:
+                context.ipm.process_item(item, context.spider)
+            with open(feed_settings['feed_file']) as data, \
+                 open(os.path.join(os.path.dirname(__file__),
+                                   'expected_rss', '{}.rss'.format(item_name))) as expected:
+                self.assertUnorderedXmlEquivalentOutputs(data=data.read(), expected=expected.read())
 
-        super_item = SuperItem()
-        super_item.rss = item
-        with CrawlerContext(crawler_settings=crawler_settings, **default_feed_settings) as context:
-            context.ipm.process_item(super_item, context.spider)
-        with open(default_feed_settings['feed_file']) as data, \
-             open(os.path.join(os.path.dirname(__file__),
-                               'expected_rss', '{}.rss'.format(item_name))) as expected:
-            self.assertUnorderedXmlEquivalentOutputs(data=data.read(), expected=expected.read())
+            super_item = SuperItem()
+            super_item.rss = item
+            with CrawlerContext(crawler_settings=crawler_settings, **feed_settings) as context:
+                context.ipm.process_item(super_item, context.spider)
+            with open(feed_settings['feed_file']) as data, \
+                 open(os.path.join(os.path.dirname(__file__),
+                                   'expected_rss', '{}.rss'.format(item_name))) as expected:
+                self.assertUnorderedXmlEquivalentOutputs(data=data.read(), expected=expected.read())
 
     def test_all_items_in_the_single_feed(self):
-        with open(os.path.join(os.path.dirname(__file__), 'expected_rss', 'empty_feed.rss'), 'rb') as feed_f:
-            feed_tree = etree.fromstring(feed_f.read())
-            feed_channel = feed_tree.xpath('//channel')[0]
-            with CrawlerContext(**default_feed_settings) as context:
-                for item_name, item in predefined_items.items.items():
-                    context.ipm.process_item(item, context.spider)
-                    with open(os.path.join(os.path.dirname(__file__),
-                                           'expected_rss', '{}.rss'.format(item_name)), 'rb') as item_f:
-                        item_tree = etree.fromstring(item_f.read())
-                        feed_channel.extend(item_tree.xpath('//item'))
-            with open(default_feed_settings['feed_file']) as data:
-                self.assertUnorderedXmlEquivalentOutputs(data.read(), feed_tree)
+        with FeedSettings() as feed_settings:
+            with open(os.path.join(os.path.dirname(__file__),
+                                   'expected_rss', 'empty_feed.rss'), 'rb') as feed_f:
+                feed_tree = etree.fromstring(feed_f.read())
+                feed_channel = feed_tree.xpath('//channel')[0]
+                with CrawlerContext(**feed_settings) as context:
+                    for item_name, item in predefined_items.items.items():
+                        context.ipm.process_item(item, context.spider)
+                        with open(os.path.join(os.path.dirname(__file__),
+                                               'expected_rss', '{}.rss'.format(item_name)), 'rb') as item_f:
+                            item_tree = etree.fromstring(item_f.read())
+                            feed_channel.extend(item_tree.xpath('//item'))
+                with open(feed_settings['feed_file']) as data:
+                    self.assertUnorderedXmlEquivalentOutputs(data.read(), feed_tree)
 
     def test_ns_items_in_the_single_feed(self):
-        base_filename, item_cls, _ = predefined_items.ns_items_of_same_cls[0]
-        with open(os.path.join(os.path.dirname(__file__),
-                               'expected_rss', '{}.rss'.format(base_filename)), 'rb') as feed_f:
-            feed_tree = etree.fromstring(feed_f.read())
-            feed_channel = feed_tree.xpath('//channel')[0]
-            for item in list(feed_channel.xpath('./item')):
-                feed_channel.remove(item)
-            feed_settings = dict(default_feed_settings)
-            crawler_settings = dict(CrawlerContext.default_settings)
-            crawler_settings['FEED_ITEM_CLS'] = item_cls
-            with CrawlerContext(crawler_settings=crawler_settings, **feed_settings) as context:
-                for item_name, item_cls, item in predefined_items.ns_items_of_same_cls:
-                    context.ipm.process_item(item, context.spider)
-                    with open(os.path.join(os.path.dirname(__file__),
-                                           'expected_rss', '{}.rss'.format(item_name)), 'rb') as item_f:
-                        item_tree = etree.fromstring(item_f.read())
-                        feed_channel.extend(item_tree.xpath('//item'))
-            with open(default_feed_settings['feed_file']) as data:
-                self.assertUnorderedXmlEquivalentOutputs(data.read(), feed_tree)
+        with FeedSettings() as feed_settings:
+            base_filename, item_cls, _ = predefined_items.ns_items_of_same_cls[0]
+            with open(os.path.join(os.path.dirname(__file__),
+                                   'expected_rss', '{}.rss'.format(base_filename)), 'rb') as feed_f:
+                feed_tree = etree.fromstring(feed_f.read())
+                feed_channel = feed_tree.xpath('//channel')[0]
+                for item in list(feed_channel.xpath('./item')):
+                    feed_channel.remove(item)
+                crawler_settings = dict(CrawlerContext.default_settings)
+                crawler_settings['FEED_ITEM_CLS'] = item_cls
+                with CrawlerContext(crawler_settings=crawler_settings, **feed_settings) as context:
+                    for item_name, item_cls, item in predefined_items.ns_items_of_same_cls:
+                        context.ipm.process_item(item, context.spider)
+                        with open(os.path.join(os.path.dirname(__file__),
+                                               'expected_rss', '{}.rss'.format(item_name)), 'rb') as item_f:
+                            item_tree = etree.fromstring(item_f.read())
+                            feed_channel.extend(item_tree.xpath('//item'))
+                with open(feed_settings['feed_file']) as data:
+                    self.assertUnorderedXmlEquivalentOutputs(data.read(), feed_tree)
 
 
 class TestScraper:
