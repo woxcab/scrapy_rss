@@ -1,0 +1,13 @@
+**/__pycache__
+**/*.pyc
+.idea
+build
+dist
+.git
+.tox
+.cov
+.coverage
+*.egg-info
+_trial_temp
+.cache
+update*.sh

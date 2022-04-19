@@ -1,0 +1,51 @@
+version: '3'
+
+x-base: &base
+  volumes:
+    - .:/home/testuser/scrapy_rss
+  user: "$USERID:$GROUPID"
+  environment:
+      - TOX_PARALLEL_NO_SPINNER=1
+
+x-build: &default-build
+  context: .
+  args:
+    UNAME: testuser
+    USERID: "$USERID"
+    GROUPID: "$GROUPID"
+    WORKDIR: "/home/testuser/scrapy_rss"
+
+services:
+  py27:
+    <<: *base
+    build:
+      <<: *default-build
+      target: py27
+  py33:
+    <<: *base
+    build:
+      <<: *default-build
+      target: py33
+  py34:
+    <<: *base
+    build:
+      <<: *default-build
+      target: py34
+  py35:
+    <<: *base
+    build:
+      <<: *default-build
+      target: py35
+  py3:
+    <<: *base
+    build:
+      <<: *default-build
+      target: py3
+  py311:
+    <<: *base
+    build:
+      <<: *default-build
+      target: py311
+    profiles:
+      - donotrun
+
