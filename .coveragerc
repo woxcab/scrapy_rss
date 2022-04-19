@@ -12,3 +12,6 @@ source =
 
 [html]
 directory = coverage_report 
+
+[xml]
+output = coverage.xml
