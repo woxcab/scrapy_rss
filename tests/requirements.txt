@@ -1,4 +1,10 @@
+tox
+tox-factor
+pytest
+pytest-xdist
+pytest-cov<2.11
+coverage<5
 xmlunittest
 parameterized
 enum34;python_version<"3.4"
-backports.tempfile;python_version<"3.3"
+backports.tempfile;python_version<"3.2"

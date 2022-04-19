@@ -20,22 +20,11 @@ with open(join(dirname(__file__), 'scrapy_rss/VERSION'), 'rt') as f:
     version = f.read().strip()
 
 
-install_requires=['python-dateutil',
-                  'scrapy>=1.3.1,<2.0' if  sys.version_info[0] < 3
-                  else 'scrapy<1.5.0' if sys.version_info[:2] == (3, 3)
-                  else 'scrapy>=1.1,<1.8.0' if sys.version_info[:2] == (3, 4)
-                  else 'scrapy>=1.1' if sys.version_info[:2] == (3, 5)
-                  else 'scrapy>=1.7.1' if sys.version_info[:2] >= (3, 10)
-                  else 'scrapy>=1.3.1',
-                  'packaging',
-                  'six']
-if sys.version_info[:2] == (3, 3):
-    install_requires.extend(['cryptography<2.0', 'pyOpenSSL<17.3.0'])
+with open(join(dirname(__file__), 'requirements.txt'), 'rt') as f:
+    install_requires = list(map(str.strip, f))
 
-
-with open(join(dirname(__file__), 'tests/requirements.txt'), 'rt') as f:
-    dev_requires = [l.strip() for l in f]
-dev_requires.extend(['tox', 'pytest', 'pytest-cov'])
+with open(join(dirname(__file__), 'tests', 'requirements.txt'), 'rt') as f:
+    dev_requires = list(map(str.strip, f))
 
 with open('README.rst') as readme:
     setup(
@@ -72,7 +61,7 @@ with open('README.rst') as readme:
         ],
         install_requires=install_requires,
         extras_require={
-            'dev': dev_requires
+            'testing': dev_requires
         },
         cmdclass={'bdist_wheel': bdist_wheel},
     )
