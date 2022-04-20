@@ -123,7 +123,7 @@ then define your own exporter that's inherited from :code:`RssItemExporter` clas
       def __init__(self, *args, **kwargs):
          kwargs['generator'] = kwargs.get('generator', 'Special generator')
          kwargs['language'] = kwargs.get('language', 'en-us')
-         super(CustomRssItemExporter, self).__init__(*args, **kwargs)
+         super(MyRssItemExporter, self).__init__(*args, **kwargs)
 
 And add :code:`FEED_EXPORTER` parameter to the Scrapy project settings
 or to the :code:`custom_settings` attribute of the spider:
