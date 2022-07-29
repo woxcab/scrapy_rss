@@ -29,6 +29,7 @@ jobs:
         path: .cov/.coverage*
         retention-days: 1
   coverage:
+    runs-on: ubuntu-latest
     name: Coverage combining and reporting
     needs: main-pythons-tests
     steps:
