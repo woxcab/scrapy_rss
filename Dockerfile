@@ -89,9 +89,8 @@ RUN git clone https://github.com/pyenv/pyenv.git ~/.pyenv && \
     pyenv versions --bare | tee ~/.pyenv/version .python-version && \
     for v in 3.6 3.7 3.8 3.9 3.10; do pip$v install -U pip; done && \
     pip3.9 install tox
-USER $UNAME
 ENTRYPOINT ["/bin/runcmd"]
-CMD ["echo", "py3 built"]
+CMD ["echo", "py3 is built"]
 
 
 FROM fedora:35 AS py311
