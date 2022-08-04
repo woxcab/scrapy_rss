@@ -2,26 +2,24 @@
 scrapy_rss
 ==========
 
-.. image:: https://img.shields.io/pypi/v/scrapy_rss.svg
+.. image:: https://img.shields.io/pypi/v/scrapy-rss.svg?style=flat-square
    :target: https://pypi.python.org/pypi/scrapy_rss
    :alt: PyPI Version
 
-.. image:: https://img.shields.io/badge/wheel-yes-brightgreen.svg
+.. image:: https://img.shields.io/pypi/wheel/scrapy-rss.svg?style=flat-square
    :target: https://pypi.python.org/pypi/scrapy_rss
    :alt: Wheel Status
 
-.. image:: https://img.shields.io/codecov/c/github/woxcab/scrapy_rss/master.svg
+.. image:: https://img.shields.io/codecov/c/github/woxcab/scrapy_rss/master.svg?style=flat-square
    :target: http://codecov.io/github/woxcab/scrapy_rss?branch=master
    :alt: Coverage report
 
+.. image:: https://img.shields.io/pypi/pyversions/scrapy-rss.svg?style=flat-square
+   :target: https://pypi.python.org/pypi/scrapy_rss
+   :alt: Supported python versions
+
+
 Tools to easy generate `RSS feed <http://www.rssboard.org/rss-specification>`_ that contains each scraped item using `Scrapy framework <https://github.com/scrapy/scrapy>`_.
-
-Package works with Python 2.7, 3.3, 3.4, 3.5, 3.6, 3.7, 3.8, 3.9 and 3.10.
-
-If you use Python 3.3 then you have to use Scrapy<1.5.0.
-
-If you use Python 2.7 then you have to use Scrapy<2.0.
-
 
 
 Table of Contents
