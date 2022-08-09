@@ -47,7 +47,6 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         python -m pip install 'coverage<5' codecov
-        ls -al .cov/
     - name: Combine .coverage 
       run: |
         python -m coverage combine .cov/.coverage*
