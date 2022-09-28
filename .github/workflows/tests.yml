@@ -5,6 +5,8 @@ on:
     branches:
       - develop
       - master
+    paths-ignore:
+      - 'scrapy_rss/VERSION'
 jobs:
   main-pythons-tests:
     runs-on: ubuntu-latest
