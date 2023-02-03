@@ -116,9 +116,11 @@ def main(docker_logfile, pytest_logfile):
                         if re.search(r'(?:error|fail(?:ure|ed)?)\b', line, flags=re.I):
                             failed = True
                         summary.append(line)
-                elif '__ summary __' in line:
-                    summary_title = line
+                elif re.search(r'(__ summary __|\.pkg.*_exit)', line):
+                    summary_title = '___________________________________ summary ____________________________________\n'
                     summary_reached = True
+                    if ' summary ' not in line:
+                        pytest_logger.write(line)
                 else:
                     pytest_logger.write(line)
             if container_process.returncode:
