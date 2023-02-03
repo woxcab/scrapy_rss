@@ -108,7 +108,7 @@ def main(docker_logfile, pytest_logfile):
                               bufsize=1) as container_process:
             summary_reached = False
             while container_process.poll() is None:
-                line = container_process.stdout.readline()
+                line = container_process.stdout.readline().lstrip()
                 if summary_reached:
                     if 'congratulations' in line:
                         congratulations_line = line
