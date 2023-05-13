@@ -99,9 +99,8 @@ def main(docker_logfile, pytest_logfile):
             specialargs.append('--sitepackages')
         if container not in nonparallel_pythons:
             specialargs.append('--parallel')
-        envlist_args = chain.from_iterable(zip(['-e']*len(envlist), envlist))
         with subprocess.Popen(['docker-compose', 'run', container, 'tox',
-                               *specialargs, *filtered_argv, *envlist_args],
+                               *specialargs, *filtered_argv, '-e', ','.join(envlist)],
                               env=sysenv,
                               stdout=subprocess.PIPE,
                               text=True,
