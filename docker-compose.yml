@@ -46,6 +46,4 @@ services:
     build:
       <<: *default-build
       target: py311
-    profiles:
-      - donotrun
 
