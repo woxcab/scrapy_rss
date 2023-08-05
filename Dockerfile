@@ -61,6 +61,20 @@ USER $UNAME
 WORKDIR $WORKDIR
 
 
+FROM alpine:3.9 AS py36
+ARG UNAME
+ARG USERID
+ARG GROUPID
+ARG WORKDIR
+RUN apk update && \
+    apk add build-base python3 python3-dev openssl-dev py3-lxml py3-cryptography py3-cffi libffi-dev py3-dateutil py3-pytest &&  \
+    addgroup -g $GROUPID $UNAME && \
+    adduser -u $USERID -S -s /bin/sh $UNAME $UNAME
+RUN pip3 install --disable-pip-version-check tox
+USER $UNAME
+WORKDIR $WORKDIR
+
+
 FROM alpine:3.15 AS py3
 ARG UNAME
 ARG USERID
@@ -85,23 +99,23 @@ RUN git clone https://github.com/pyenv/pyenv.git ~/.pyenv && \
     echo 'eval "$(pyenv init --path)"' >> ~/.profile && \
     echo 'eval "$(pyenv init -)"' >> ~/.profile && \
     source ~/.profile && \
-    for v in 3.6 3.7 3.8 3.9 3.10; do pyenv install "$v:latest"; done && \
+    for v in 3.6 3.7 3.8 3.9 3.10 3.11; do pyenv install "$v:latest"; done && \
     pyenv versions --bare | tee ~/.pyenv/version .python-version && \
-    for v in 3.6 3.7 3.8 3.9 3.10; do pip$v install -U pip; done && \
+    for v in 3.6 3.7 3.8 3.9 3.10 3.11; do pip$v install -U pip; done && \
     pip3.9 install tox
 ENTRYPOINT ["/bin/runcmd"]
 CMD ["echo", "py3 is built"]
 
 
-FROM fedora:35 AS py311
+FROM fedora:38 AS py312
 ADD https://bootstrap.pypa.io/get-pip.py /get-pip.py
 ARG UNAME
 ARG USERID
 ARG GROUPID
 ARG WORKDIR
 RUN dnf -y update && \
-    dnf -y install make automake gcc gcc-c++ kernel-devel gnupg ca-certificates libffi-devel libxml2-devel libxslt-devel python3.11 && \
-    python3.11 /get-pip.py && rm -f /get-pip.py && \
+    dnf -y install make automake gcc gcc-c++ kernel-devel gnupg ca-certificates libffi-devel libxml2-devel libxslt-devel python3.12 && \
+    python3.12 /get-pip.py && rm -f /get-pip.py && \
     groupadd -g $GROUPID -o $UNAME && \
     useradd -m -u $USERID -g $GROUPID -s /bin/bash $UNAME
 RUN pip install --disable-pip-version-check tox
