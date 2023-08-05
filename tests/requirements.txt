@@ -1,5 +1,4 @@
 tox
-tox-factor
 pytest
 pytest-xdist
 pytest-cov<2.11

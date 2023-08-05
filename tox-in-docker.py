@@ -13,8 +13,9 @@ tox-in-docker.py --help
 tox-in-docker.py
 tox-in-docker.py --recreate
 tox-in-docker.py -f py310 -f py39
+tox-in-docker.py -f scrapy2100
 tox-in-docker.py -e py38-scrapy260
-tox-in-docker.py -e "py{37,38,39,310}-scrapy260"
+tox-in-docker.py -e py38-scrapy260,py310-scrapy290
 """
 
 import os
@@ -24,10 +25,14 @@ import subprocess
 from collections import defaultdict
 from itertools import chain
 import tox
-from tox.session import load_config
+from tox.tox_env.python.api import PY_FACTORS_RE
+from tox.run import setup_state
 
 
 class UnknownEnvlist(ValueError):
+    pass
+
+class UnknownFactor(ValueError):
     pass
 
 
@@ -51,8 +56,9 @@ def main(docker_logfile, pytest_logfile):
     nonstandard_pythons = deprecated_pythons | {upcoming_python}
     pyfactor2container = lambda pyfactor: pyfactor if pyfactor in nonstandard_pythons else 'py3'
 
-    tox_config = load_config(sys.argv[1:])
-
+    tox_config = setup_state(sys.argv[1:])
+    default_tox_config = setup_state([])
+    default_tox_envs = set(default_tox_config.envs.iter())
     argv = iter(sys.argv[1:])
     filtered_argv = []
     for arg in argv:
@@ -65,17 +71,18 @@ def main(docker_logfile, pytest_logfile):
                 pass
 
     containers = defaultdict(list)
-    for testenv, testenv_config in tox_config.envconfigs.items():
-        if testenv in tox_config.envlist:
-            for pyfactor in testenv_config.factors:
-                if tox.PYTHON.PY_FACTORS_RE.match(pyfactor):
-                    containers[pyfactor2container(pyfactor)].append(testenv)
+    envs = set(tox_config.envs.iter())
+    for testenv in envs:
+        pyfactor = testenv.split('-', 1)[0]
+        if not PY_FACTORS_RE.match(pyfactor):
+            raise UnknownFactor(pyfactor)
+        containers[pyfactor2container(pyfactor)].append(testenv)
 
-    unknown_envlists = set(tox_config.envlist) - set(tox_config.envconfigs)
+    unknown_envlists = envs - default_tox_envs
+    unknown_envlists = {e for e in unknown_envlists if not e.startswith(upcoming_python)}
     if unknown_envlists:
         raise UnknownEnvlist('Environment lists ' + ', '.join(unknown_envlists)
                              + ' are not defined in the Tox configuration file')
-
     sysenv = os.environ.copy()
     sysenv["USERID"], sysenv["GROUPID"] = str(os.getuid()), str(os.getgid())
 
@@ -98,7 +105,7 @@ def main(docker_logfile, pytest_logfile):
         if container in deprecated_pythons:
             specialargs.append('--sitepackages')
         if container not in nonparallel_pythons:
-            specialargs.append('--parallel')
+            specialargs.extend(['-p', 'auto'])
         with subprocess.Popen(['docker-compose', 'run', container, 'tox',
                                *specialargs, *filtered_argv, '-e', ','.join(envlist)],
                               env=sysenv,
@@ -138,6 +145,7 @@ def main(docker_logfile, pytest_logfile):
                        stdout=docker_logfile, text=True, bufsize=1)
 
     exit(return_code)
+
 
 if __name__ == '__main__':
     with open(os.path.join('logs', 'docker.log'), 'wt') as docker_log, \
