@@ -10,6 +10,10 @@ scrapy_rss
    :target: https://pypi.python.org/pypi/scrapy_rss
    :alt: Wheel Status
 
+.. image:: https://github.com/woxcab/scrapy_rss/actions/workflows/tests.yml/badge.svg?branch=master
+   :target: https://github.com/woxcab/scrapy_rss/actions
+   :alt: Testing status
+
 .. image:: https://img.shields.io/codecov/c/github/woxcab/scrapy_rss/master.svg?style=flat-square
    :target: http://codecov.io/github/woxcab/scrapy_rss?branch=master
    :alt: Coverage report
@@ -19,7 +23,8 @@ scrapy_rss
    :alt: Supported python versions
 
 
-Tools to easy generate `RSS feed <http://www.rssboard.org/rss-specification>`_ that contains each scraped item using `Scrapy framework <https://github.com/scrapy/scrapy>`_.
+Tools to easy generate `RSS feed <http://www.rssboard.org/rss-specification>`_
+that contains each scraped item using `Scrapy framework <https://github.com/scrapy/scrapy>`_.
 
 
 Table of Contents
