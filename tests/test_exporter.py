@@ -612,6 +612,7 @@ class TestScraper:
             pass
         scraper = Scraper(crawler)
         scraper.open_spider(spider)
+        scraper.crawler.spider = spider
         scraper._process_spidermw_output(RssItem(), None, None, None)
         scraper._process_spidermw_output(NSItem0(), None, None, None)
         scraper._process_spidermw_output(NSItem1(), None, None, None)
