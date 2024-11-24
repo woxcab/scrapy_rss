@@ -33,7 +33,7 @@ jobs:
             python-version: '3.13'
     runs-on: ${{ matrix.env.platform }}
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: Set up Python ${{ matrix.env.python-version }} from the repository
       if: ${{ matrix.env.python-version == '2.7' }}
       run: |
@@ -42,7 +42,7 @@ jobs:
         python get-pip.py
     - name: Set up Python ${{ matrix.env.python-version }} using actions
       if: ${{ matrix.env.python-version != '2.7' }}
-      uses: actions/setup-python@v3
+      uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.env.python-version }}
     - name: Install dependencies
@@ -62,13 +62,13 @@ jobs:
     name: Coverage combining and reporting
     needs: main-pythons-tests
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - uses: actions/download-artifact@v4
       with:
         name: coverage
         path: .cov
     - name: Set up Python 3.11
-      uses: actions/setup-python@v3
+      uses: actions/setup-python@v5
       with:
         python-version: '3.11'
     - name: Install dependencies
@@ -81,7 +81,7 @@ jobs:
         python -m coverage xml
         python -m coverage report
     - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v3
+      uses: codecov/codecov-action@v5
       env:
         CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
       with:
