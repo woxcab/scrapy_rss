@@ -13,7 +13,7 @@ tox-in-docker.py --help
 tox-in-docker.py
 tox-in-docker.py --recreate
 tox-in-docker.py -f py310 -f py39
-tox-in-docker.py -f scrapy2100
+tox-in-docker.py -f scrapy2.10.0
 tox-in-docker.py -e py38-scrapy260
 tox-in-docker.py -e py38-scrapy260,py310-scrapy290
 """
