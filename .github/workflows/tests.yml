@@ -53,7 +53,7 @@ jobs:
       run: tox
     - uses: actions/upload-artifact@v4
       with:
-        name: coverage
+        name: coverage-${{ strategy.job-index }}
         path: .cov/.coverage*
         retention-days: 1
         include-hidden-files: true
@@ -65,8 +65,9 @@ jobs:
     - uses: actions/checkout@v4
     - uses: actions/download-artifact@v4
       with:
-        name: coverage
+        pattern: coverage-*
         path: .cov
+        merge-multiple: true
     - name: Set up Python 3.11
       uses: actions/setup-python@v5
       with:
