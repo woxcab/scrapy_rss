@@ -23,6 +23,7 @@ from scrapy.utils.misc import load_object
 from scrapy.utils.test import get_crawler
 from scrapy.core.scraper import Scraper
 from scrapy.crawler import Crawler
+from scrapy.logformatter import LogFormatter
 
 from scrapy_rss.items import RssItem, FeedItem, RssedItem
 from scrapy_rss.meta import ItemElement, ItemElementAttribute
@@ -604,8 +605,14 @@ class TestScraper:
 
     def test_spider_output_handling(self):
         spider = self.MySpider()
-        scraper = Scraper(Crawler(self.MySpider))
+        crawler = Crawler(self.MySpider)
+        try:
+            crawler._apply_settings()
+        except AttributeError:
+            pass
+        scraper = Scraper(crawler)
         scraper.open_spider(spider)
+        scraper.crawler.spider = spider
         scraper._process_spidermw_output(RssItem(), None, None, None)
         scraper._process_spidermw_output(NSItem0(), None, None, None)
         scraper._process_spidermw_output(NSItem1(), None, None, None)

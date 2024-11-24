@@ -5,7 +5,7 @@ x-base: &base
     - .:/home/testuser/scrapy_rss
   user: "$USERID:$GROUPID"
   environment:
-      - TOX_PARALLEL_NO_SPINNER=1
+    - TOX_PARALLEL_NO_SPINNER=1
 
 x-build: &default-build
   context: .
@@ -36,16 +36,19 @@ services:
     build:
       <<: *default-build
       target: py35
+  py36:
+    <<: *base
+    build:
+      <<: *default-build
+      target: py36
   py3:
     <<: *base
     build:
       <<: *default-build
       target: py3
-  py311:
+  py314:
     <<: *base
     build:
       <<: *default-build
-      target: py311
-    profiles:
-      - donotrun
+      target: py314
 
