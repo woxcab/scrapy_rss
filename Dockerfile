@@ -107,14 +107,14 @@ ENTRYPOINT ["/bin/runcmd"]
 CMD ["echo", "py3 is built"]
 
 
-FROM fedora:40 AS py313
+FROM fedora:40 AS py314
 ADD https://bootstrap.pypa.io/get-pip.py /get-pip.py
 ARG UNAME
 ARG USERID
 ARG GROUPID
 ARG WORKDIR
 RUN dnf -y update && \
-    dnf -y install make automake gcc gcc-c++ kernel-devel gnupg ca-certificates libffi-devel libxml2-devel libxslt-devel python3.13 python3.13-devel && \
+    dnf -y install make automake gcc gcc-c++ kernel-devel gnupg ca-certificates libffi-devel libxml2-devel libxslt-devel python3.14 python3.14-devel && \
     python3.13 /get-pip.py && rm -f /get-pip.py && \
     groupadd -g $GROUPID -o $UNAME && \
     useradd -m -u $USERID -g $GROUPID -s /bin/bash $UNAME
