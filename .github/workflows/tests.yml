@@ -13,9 +13,9 @@ jobs:
       fail-fast: false
       matrix:
         env:
-          - platform: 'ubuntu-20.04'
+          - platform: 'ubuntu-22.04'
             python-version: 2.7
-          - platform: 'ubuntu-20.04'
+          - platform: 'ubuntu-22.04'
             python-version: 3.6
           - platform: 'ubuntu-22.04'
             python-version: 3.7
@@ -37,7 +37,8 @@ jobs:
     - name: Set up Python ${{ matrix.env.python-version }} from the repository
       if: ${{ matrix.env.python-version == '2.7' }}
       run: |
-        sudo update-alternatives --install /usr/bin/python python /usr/bin/python2 1
+        sudo apt install python2.7
+        sudo update-alternatives --install /usr/bin/python python /usr/bin/python2.7 1
         curl https://bootstrap.pypa.io/pip/2.7/get-pip.py --output get-pip.py
         python get-pip.py
     - name: Set up Python ${{ matrix.env.python-version }} using actions
