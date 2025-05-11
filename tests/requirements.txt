@@ -2,7 +2,7 @@ tox
 pytest
 pytest-xdist
 pytest-cov<2.11
-pytest-asyncio;python_version>"2"
+pytest-asyncio;python_version>="3"
 coverage<5
 xmlunittest
 parameterized
