@@ -16,8 +16,6 @@ jobs:
           - platform: 'ubuntu-22.04'
             python-version: 2.7
           - platform: 'ubuntu-22.04'
-            python-version: 3.6
-          - platform: 'ubuntu-22.04'
             python-version: 3.7
           - platform: 'ubuntu-22.04'
             python-version: 3.8
