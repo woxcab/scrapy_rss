@@ -1,8 +1,12 @@
 # -*- coding: utf-8 -*-
-
 import os
+import sys
 from datetime import datetime
 from itertools import chain, combinations
+from inspect import signature, iscoroutinefunction
+import warnings
+
+
 try:
     from tempfile import TemporaryDirectory
 except ImportError:
@@ -10,6 +14,7 @@ except ImportError:
 from parameterized import parameterized
 import six
 from lxml import etree
+from packaging.version import Version
 
 import scrapy
 from scrapy import signals
@@ -24,13 +29,14 @@ from scrapy.utils.test import get_crawler
 from scrapy.core.scraper import Scraper
 from scrapy.crawler import Crawler
 from scrapy.logformatter import LogFormatter
+from twisted.internet import reactor # not used but required
 
 from scrapy_rss.items import RssItem, FeedItem, RssedItem
 from scrapy_rss.meta import ItemElement, ItemElementAttribute
 from scrapy_rss.exceptions import *
 from scrapy_rss.exporters import RssItemExporter
 
-import unittest
+import pytest
 from tests.utils import RssTestCase, FrozenDict
 
 
@@ -599,29 +605,68 @@ class TestExporting(RssTestCase):
                     self.assertUnorderedXmlEquivalentOutputs(data.read(), feed_tree)
 
 
-class TestScraper:
-    class MySpider(scrapy.Spider):
-        name = 'spider'
+if Version(scrapy.__version__) >= Version('2.13.0'):
+    import asyncio
 
-    def test_spider_output_handling(self):
-        spider = self.MySpider()
-        crawler = Crawler(self.MySpider)
-        try:
-            crawler._apply_settings()
-        except AttributeError:
-            pass
-        scraper = Scraper(crawler)
-        scraper.open_spider(spider)
-        scraper.crawler.spider = spider
-        scraper._process_spidermw_output(RssItem(), None, None, None)
-        scraper._process_spidermw_output(NSItem0(), None, None, None)
-        scraper._process_spidermw_output(NSItem1(), None, None, None)
-        scraper._process_spidermw_output(NSItem2(), None, None, None)
-        scraper._process_spidermw_output(FeedItem(), None, None, None)
-        scraper._process_spidermw_output(RssedItem(), None, None, None)
-        scraper.close_spider(spider)
+    class TestAsyncScraper:
+        class MySpider(scrapy.Spider):
+            name = 'spider'
+            custom_settings = {}
+
+
+
+        @pytest.mark.parametrize("twisted_reactor,init_reactor", [
+            (None, False),
+            ('twisted.internet.epollreactor.EPollReactor', False),
+            ('twisted.internet.asyncioreactor.AsyncioSelectorReactor', True),
+        ])
+        async def test_spider_output_handling(self, twisted_reactor, init_reactor):
+            spider = self.MySpider()
+            spider.custom_settings['TWISTED_REACTOR'] = twisted_reactor
+            if init_reactor and "twisted.internet.reactor" in sys.modules:
+                del sys.modules["twisted.internet.reactor"]
+            crawler = Crawler(self.MySpider, init_reactor=init_reactor)
+            try:
+                crawler._apply_settings()
+            except AttributeError:
+                pass
+            scraper = Scraper(crawler)
+            scraper.open_spider(spider)
+            scraper.crawler.spider = spider
+            dummy_params = (None,)
+            await scraper._process_spidermw_output(RssItem(), *dummy_params).asFuture(asyncio.get_running_loop())
+            await scraper._process_spidermw_output(NSItem0(), *dummy_params).asFuture(asyncio.get_running_loop())
+            await scraper._process_spidermw_output(NSItem1(), *dummy_params).asFuture(asyncio.get_running_loop())
+            await scraper._process_spidermw_output(NSItem2(), *dummy_params).asFuture(asyncio.get_running_loop())
+            await scraper._process_spidermw_output(FeedItem(), *dummy_params).asFuture(asyncio.get_running_loop())
+            await scraper._process_spidermw_output(RssedItem(), *dummy_params).asFuture(asyncio.get_running_loop())
+            scraper.close_spider()
+
+else:
+    class TestSyncScraper:
+        class MySpider(scrapy.Spider):
+            name = 'spider'
+
+        def test_spider_output_handling(self):
+            spider = self.MySpider()
+            crawler = Crawler(self.MySpider)
+            try:
+                crawler._apply_settings()
+            except AttributeError:
+                pass
+            scraper = Scraper(crawler)
+            scraper.open_spider(spider)
+            scraper.crawler.spider = spider
+            dummy_params = (None,) * 3
+            scraper._process_spidermw_output(RssItem(), *dummy_params)
+            scraper._process_spidermw_output(NSItem0(), *dummy_params)
+            scraper._process_spidermw_output(NSItem1(), *dummy_params)
+            scraper._process_spidermw_output(NSItem2(), *dummy_params)
+            scraper._process_spidermw_output(FeedItem(), *dummy_params)
+            scraper._process_spidermw_output(RssedItem(), *dummy_params)
+            scraper.close_spider(spider)
 
 
 if __name__ == '__main__':
-    unittest.main()
+    pytest.main()
 
