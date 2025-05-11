@@ -102,12 +102,19 @@ def main(docker_logfile, pytest_logfile):
             continue
 
         specialargs = []
+        pytest_ini = ''
+        if container == 'py27':
+            pytest_ini = 'pytest2.7.ini'
         if container in deprecated_pythons:
             specialargs.append('--sitepackages')
         if container not in nonparallel_pythons:
             specialargs.extend(['-p', 'auto'])
+        pytest_ini_args = []
+        if pytest_ini:
+            pytest_ini_args = ['-c', pytest_ini]
         with subprocess.Popen(['docker-compose', 'run', container, 'tox',
-                               *specialargs, *filtered_argv, '-e', ','.join(envlist)],
+                               *specialargs, *filtered_argv, '-e', ','.join(envlist),
+                               '--', *pytest_ini_args],
                               env=sysenv,
                               stdout=subprocess.PIPE,
                               text=True,
