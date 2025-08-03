@@ -96,6 +96,21 @@ USER $UNAME
 WORKDIR $WORKDIR
 
 
+FROM alpine:3.13 AS py38
+ADD https://bootstrap.pypa.io/pip/3.5/get-pip.py /get-pip.py
+ARG UNAME
+ARG USERID
+ARG GROUPID
+ARG WORKDIR
+RUN apk update && \
+    apk add build-base python3 python3-dev openssl-dev py3-lxml py3-cryptography py3-cffi libffi-dev py3-dateutil &&  \
+    addgroup -g $GROUPID $UNAME && \
+    adduser -u $USERID -S -s /bin/sh $UNAME $UNAME
+RUN python3 get-pip.py --no-setuptools --no-wheel "pip < 25" && rm -f get-pip.py && \
+    pip3 install --disable-pip-version-check tox
+USER $UNAME
+WORKDIR $WORKDIR
+
 
 FROM alpine:3.19 AS py3
 ARG UNAME
