@@ -78,6 +78,25 @@ USER $UNAME
 WORKDIR $WORKDIR
 
 
+FROM alpine:3.10 AS py37
+ARG UNAME
+ARG USERID
+ARG GROUPID
+ARG WORKDIR
+RUN apk update && \
+    apk add build-base curl cargo python3 python3-dev openssl-dev py3-lxml py3-cryptography py3-cffi libffi-dev py3-dateutil py3-openssl &&  \
+    addgroup -g $GROUPID $UNAME && \
+    ln -s /usr/bin/python3 /usr/bin/python && \
+    adduser -u $USERID -S -s /bin/sh $UNAME $UNAME
+ENV CRYPTOGRAPHY_DONT_BUILD_RUST=1
+USER root
+RUN pip3 install --disable-pip-version-check setuptools==47.3.1 wheel==0.42.0 && \
+    pip3 install --disable-pip-version-check attrs==19.2.0 Automat==20.2.0 PyDispatcher==2.0.5 Twisted==21.2.0 apipkg==1.5 constantly==15.1.0 coverage==5.5 cssselect==1.1.0 cryptography==3.4.6 execnet==1.8.0 exceptiongroup==1.2.2 frozendict==1.2 h2==3.2.0 hpack==3.0.0 hyperframe==5.2.0 hyperlink==21.0.0 importlib-metadata==6.7.0 incremental==21.3.0 iniconfig==1.1.1 itemadapter==0.2.0 itemloaders==1.0.4 jmespath==0.10.0 packaging==23.2 parameterized==0.8.1 parsel==1.6.0 priority==1.3.0 protego==0.1.16 pyasn1==0.4.8 pyasn1-modules==0.2.8 pyOpenSSL==21.0.0 pyparsing==2.4.7 pytest-cov==2.11.1 pytest-forked==1.3.0 pytest-xdist==2.2.1 pytest-asyncio==0.21.2 queuelib==1.5.0 service-identity==18.1.0 toml==0.10.2 typing-extensions==4.7.1 w3lib==1.22.0 xmlunittest==0.5.0 zipp==3.4.1 zope.interface==5.3.0 pyproject-api==1.5.3 platformdirs==3.11.0 virtualenv==20.26.6 tox==4.8.0
+USER $UNAME
+WORKDIR $WORKDIR
+
+
+
 FROM alpine:3.19 AS py3
 ARG UNAME
 ARG USERID
