@@ -1,5 +1,3 @@
-version: '3'
-
 x-base: &base
   volumes:
     - .:/home/testuser/scrapy_rss

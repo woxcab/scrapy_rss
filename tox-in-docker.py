@@ -95,7 +95,7 @@ def main(docker_logfile, pytest_logfile):
     pytest_logger = DuplicateOutput(pytest_logfile)
 
     for container, envlist in containers.items():
-        up = subprocess.run(['docker-compose', 'up', '--build', container],
+        up = subprocess.run(['docker', 'compose', 'up', '--build', container],
                             env=sysenv,
                             stdout=docker_logfile, text=True, bufsize=1)
         if up.returncode:
