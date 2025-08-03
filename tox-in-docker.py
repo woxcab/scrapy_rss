@@ -95,7 +95,7 @@ def main(docker_logfile, pytest_logfile):
     pytest_logger = DuplicateOutput(pytest_logfile)
 
     for container, envlist in containers.items():
-        up = subprocess.run(['docker', 'compose', 'up', '--build', container],
+        up = subprocess.run(['docker', 'compose', 'up', '--build', '--remove-orphans', container],
                             env=sysenv,
                             stdout=docker_logfile, text=True, bufsize=1)
         if up.returncode:
@@ -112,7 +112,7 @@ def main(docker_logfile, pytest_logfile):
         pytest_ini_args = []
         if pytest_ini:
             pytest_ini_args = ['-c', pytest_ini]
-        with subprocess.Popen(['docker-compose', 'run', container, 'tox',
+        with subprocess.Popen(['docker-compose', 'run', '--remove-orphans', container, 'tox',
                                *specialargs, *filtered_argv, '-e', ','.join(envlist),
                                '--', *pytest_ini_args],
                               env=sysenv,
