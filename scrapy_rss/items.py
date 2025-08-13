@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from .elements import *
+from .rss.item_elements import *
 from . import meta
 from .meta.item import FeedItem, ExtendableItem
 

@@ -1,9 +1,23 @@
 # -*- coding: utf-8 -*-
 
-import unittest
+from importlib import import_module
+import pytest
 
 
-class TestImport(unittest.TestCase):
+class TestImport:
+    ITEM_ELEMENTS_CLASSES = [
+        'TitleElement',
+        'LinkElement',
+        'DescriptionElement',
+        'AuthorElement',
+        'CategoryElement',
+        'CommentsElement',
+        'EnclosureElement',
+        'GuidElement',
+        'PubDateElement',
+        'SourceElement',
+    ]
+
     def test_module_level(self):
         from scrapy_rss import RssItem
         from scrapy_rss import FeedItem
@@ -11,17 +25,18 @@ class TestImport(unittest.TestCase):
         from scrapy_rss import RssedItem
         import scrapy_rss
 
-    def test_elements(self):
-        from scrapy_rss.elements import TitleElement
-        from scrapy_rss.elements import LinkElement
-        from scrapy_rss.elements import DescriptionElement
-        from scrapy_rss.elements import AuthorElement
-        from scrapy_rss.elements import CategoryElement
-        from scrapy_rss.elements import CommentsElement
-        from scrapy_rss.elements import EnclosureElement
-        from scrapy_rss.elements import GuidElement
-        from scrapy_rss.elements import PubDateElement
-        from scrapy_rss.elements import SourceElement
+    @pytest.mark.parametrize('item_element_cls', ITEM_ELEMENTS_CLASSES)
+    def test_item_elements(self, item_element_cls):
+        item_elements_module = import_module('scrapy_rss.rss.item_elements')
+        getattr(item_elements_module, item_element_cls)
+
+    @pytest.mark.parametrize('item_element_cls', ITEM_ELEMENTS_CLASSES)
+    def test_item_elements_from_old_path(self, item_element_cls):
+        old_module = import_module('scrapy_rss.elements')
+        old_element = getattr(old_module, item_element_cls)
+        new_module = import_module('scrapy_rss.rss.item_elements')
+        new_element = getattr(new_module, item_element_cls)
+        assert old_element is new_element
 
     def test_exporters(self):
         from scrapy_rss.exporters import RssItemExporter
@@ -51,4 +66,4 @@ class TestImport(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    unittest.main()
+    pytest.main()
