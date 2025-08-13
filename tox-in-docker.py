@@ -16,6 +16,7 @@ tox-in-docker.py -f py310 -f py39
 tox-in-docker.py -f scrapy2.10.0
 tox-in-docker.py -e py38-scrapy260
 tox-in-docker.py -e py38-scrapy260,py310-scrapy290
+tox-in-docker.py -e py38-scrapy260 -- tests/test_exporter.py
 """
 
 import os
@@ -61,14 +62,20 @@ def main(docker_logfile, pytest_logfile):
     default_tox_envs = set(default_tox_config.envs.iter())
     argv = iter(sys.argv[1:])
     filtered_argv = []
+    double_dashed = False
+    filtered_pytest_argv = []
     for arg in argv:
-        if arg not in {'-e', '-f'}:
-            filtered_argv.append(arg)
-        else:
+        if double_dashed:
+            filtered_pytest_argv.append(arg)
+        elif arg == '--':
+            double_dashed = True
+        elif arg in {'-e', '-f'}:
             try:
                 next(argv)
             except StopIteration:
                 pass
+        else:
+            filtered_argv.append(arg)
 
     containers = defaultdict(list)
     envs = set(tox_config.envs.iter())
@@ -109,12 +116,12 @@ def main(docker_logfile, pytest_logfile):
             specialargs.append('--sitepackages')
         if container not in nonparallel_pythons:
             specialargs.extend(['-p', 'auto'])
-        pytest_ini_args = []
+        pytest_args = filtered_pytest_argv
         if pytest_ini:
-            pytest_ini_args = ['-c', pytest_ini]
+            pytest_args = ['-c', pytest_ini] + pytest_args
         with subprocess.Popen(['docker-compose', 'run', '--remove-orphans', container, 'tox',
                                *specialargs, *filtered_argv, '-e', ','.join(envlist),
-                               '--', *pytest_ini_args],
+                               '--', *pytest_args],
                               env=sysenv,
                               stdout=subprocess.PIPE,
                               text=True,
