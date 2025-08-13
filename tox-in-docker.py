@@ -110,8 +110,8 @@ def main(docker_logfile, pytest_logfile):
 
         specialargs = []
         pytest_ini = ''
-        if container == 'py27':
-            pytest_ini = 'pytest2.7.ini'
+        if container in {'py27', 'py33', 'py34'}:
+            pytest_ini = 'pytest-sync-only.ini'
         if container in deprecated_pythons:
             specialargs.append('--sitepackages')
         if container not in nonparallel_pythons:
