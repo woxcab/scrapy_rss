@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from importlib import import_module
+import sys
 import pytest
 
 
@@ -32,7 +33,11 @@ class TestImport:
 
     @pytest.mark.parametrize('item_element_cls', ITEM_ELEMENTS_CLASSES)
     def test_item_elements_from_old_path(self, item_element_cls):
-        old_module = import_module('scrapy_rss.elements')
+        old_module_name = 'scrapy_rss.elements'
+        if old_module_name in sys.modules:
+            del sys.modules[old_module_name]
+        with pytest.warns(DeprecationWarning, match='Use scrapy_rss.rss.item_elements'):
+            old_module = import_module(old_module_name)
         old_element = getattr(old_module, item_element_cls)
         new_module = import_module('scrapy_rss.rss.item_elements')
         new_element = getattr(new_module, item_element_cls)

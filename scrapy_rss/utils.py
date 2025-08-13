@@ -53,3 +53,6 @@ def deprecated(reason):
         return wrapped
 
     return decorator
+
+def deprecated_module(reason):
+    warnings.warn(reason, category=DeprecationWarning, stacklevel=2)

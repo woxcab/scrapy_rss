@@ -11,7 +11,7 @@ import sys
 from tests.utils import RssTestCase, get_dict_attr
 
 from scrapy_rss.items import RssItem
-from scrapy_rss.elements import *
+from scrapy_rss.rss.item_elements import *
 from scrapy_rss.meta import ElementAttribute, Element, MultipleElements
 from scrapy_rss.exceptions import InvalidElementValueError
 
