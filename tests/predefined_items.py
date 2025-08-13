@@ -1,31 +1,31 @@
 # -*- coding: utf-8 -*-
-from scrapy_rss.meta import ItemElement, ItemElementAttribute
+from scrapy_rss.meta import Element, ElementAttribute
 from scrapy_rss import RssItem
 
 
 class PredefinedItems(object):
     def __init__(self, *args, **kwargs):
-        class NSElement0(ItemElement):
-            attr01 = ItemElementAttribute(ns_prefix="prefix01", ns_uri="id01")
+        class NSElement0(Element):
+            attr01 = ElementAttribute(ns_prefix="prefix01", ns_uri="id01")
 
-        class NSElement1(ItemElement):
-            prefix11__attr11 = ItemElementAttribute(ns_uri="id11")
-            prefix12__attr12 = ItemElementAttribute(ns_prefix="prefix12", ns_uri="id12")
+        class NSElement1(Element):
+            prefix11__attr11 = ElementAttribute(ns_uri="id11")
+            prefix12__attr12 = ElementAttribute(ns_prefix="prefix12", ns_uri="id12")
 
-        class NSElement2(ItemElement):
-            attr21 = ItemElementAttribute(is_content=True)
-            pseudo_prefix22__attr22 = ItemElementAttribute(ns_prefix="prefix22", ns_uri="id22")
+        class NSElement2(Element):
+            attr21 = ElementAttribute(is_content=True)
+            pseudo_prefix22__attr22 = ElementAttribute(ns_prefix="prefix22", ns_uri="id22")
 
-        class NSElement3(ItemElement):
-            attr31 = ItemElementAttribute(is_content=True)
-            attr32 = ItemElementAttribute(ns_prefix="prefixa", ns_uri="id32")
+        class NSElement3(Element):
+            attr31 = ElementAttribute(is_content=True)
+            attr32 = ElementAttribute(ns_prefix="prefixa", ns_uri="id32")
 
-        class NSElement4(ItemElement):
-            attr41 = ItemElementAttribute()
-            prefix42__attr41 = ItemElementAttribute(ns_uri="id42")
+        class NSElement4(Element):
+            attr41 = ElementAttribute()
+            prefix42__attr41 = ElementAttribute(ns_uri="id42")
 
         class NSItem0(RssItem):
-            elem0 = ItemElement()
+            elem0 = Element()
             elem1 = NSElement0(ns_prefix="el_prefix1", ns_uri="el_id1")
             el_prefix2__elem2 = NSElement1(ns_uri="el_id2")
             el_prefix3__elem3 = NSElement2(ns_prefix="el_prefix3", ns_uri="el_id3")

@@ -11,7 +11,7 @@ except ImportError:
 
 from ..exceptions import *
 from .nscomponent import NSComponentName
-from .element import ItemElement, MultipleElements
+from .element import Element, MultipleElements
 
 
 class ItemMeta(BaseItemMeta):
@@ -21,11 +21,11 @@ class ItemMeta(BaseItemMeta):
             if isinstance(cls_base, ItemMeta):
                 cls_attrs['_elements'].update(cls_base._elements)
                 for attr_name, attr_value in cls_base.__dict__.items():
-                    if isinstance(attr_value, ItemElement):
+                    if isinstance(attr_value, Element):
                         cls_attrs[attr_name] = attr_value
         elements = {NSComponentName(elem_name, elem_descr.ns_prefix, elem_descr.ns_uri):
                     elem_descr for elem_name, elem_descr in cls_attrs.items()
-                    if isinstance(elem_descr, ItemElement)}
+                    if isinstance(elem_descr, Element)}
         for elem_name, elem in elements.items():
             if not elem.ns_prefix:
                 elem.ns_prefix = elem_name.ns_prefix
@@ -65,7 +65,7 @@ class FeedItem(six.with_metaclass(ItemMeta, BaseItem)):
     """
     Attributes
     ----------
-    elements : { NSComponentName : ItemElement }
+    elements : { NSComponentName : Element }
         All elements of the item
     """
     def __init__(self, *args, **kwargs):

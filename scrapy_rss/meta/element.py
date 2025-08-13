@@ -4,15 +4,16 @@ from copy import deepcopy
 import re
 import six
 
-from .attribute import ItemElementAttribute
+from .attribute import ElementAttribute
 from .nscomponent import BaseNSComponent, NSComponentName
+from ..utils import deprecated
 
 
-class ItemElementMeta(type):
+class ElementMeta(type):
     def __new__(mcs, cls_name, cls_bases, cls_attrs):
         elem_attrs = {NSComponentName(attr_name, ns_prefix=attr_descr.ns_prefix, ns_uri=attr_descr.ns_uri):
                       attr_descr for attr_name, attr_descr in cls_attrs.items()
-                      if isinstance(attr_descr, ItemElementAttribute)}
+                      if isinstance(attr_descr, ElementAttribute)}
         for attr_name, attr in elem_attrs.items():
             if not attr.ns_prefix:
                 attr.ns_prefix = attr_name.ns_prefix
@@ -28,7 +29,7 @@ class ItemElementMeta(type):
                                    mcs.build_attr_setter(attr_name))
                           for attr_name, attr_descr in elem_attrs.items()})
 
-        return super(ItemElementMeta, mcs).__new__(mcs, cls_name, cls_bases, cls_attrs)
+        return super(ElementMeta, mcs).__new__(mcs, cls_name, cls_bases, cls_attrs)
 
     def __init__(cls, cls_name, cls_bases, cls_attrs):
         cls._assigned = False
@@ -52,7 +53,7 @@ class ItemElementMeta(type):
                                       for attr in (getattr(self, attr_name.priv_name),)
                                       if attr.value is not None}
 
-        super(ItemElementMeta, cls).__init__(cls_name, cls_bases, cls_attrs)
+        super(ElementMeta, cls).__init__(cls_name, cls_bases, cls_attrs)
 
     @staticmethod
     def build_attr_getter(name):
@@ -83,14 +84,14 @@ class ItemElementMeta(type):
         return setter
 
 
-@six.add_metaclass(ItemElementMeta)
-class ItemElement(BaseNSComponent):
+@six.add_metaclass(ElementMeta)
+class Element(BaseNSComponent):
     """
     Base class for elements
 
     Attributes
     ----------
-    attrs : {NSComponentName : ItemElementAttribute}
+    attrs : {NSComponentName : ElementAttribute}
         All attributes of the element
     required_attrs : set of NSComponentName
         Required element attributes
@@ -131,7 +132,7 @@ class ItemElement(BaseNSComponent):
                 del kwargs[attr_name]
 
         try:
-            super(ItemElement, self).__init__(**kwargs)
+            super(Element, self).__init__(**kwargs)
         except TypeError:
             raise ValueError("Passed arguments {}. "
                              "But constructor of class '{}' supports only the next named arguments: {}"
@@ -139,7 +140,7 @@ class ItemElement(BaseNSComponent):
                                      [str(a) for a in self.attrs]))
 
     def __repr__(self):
-        s_match = re.match(r'^[^(]+\((.*?)\)$', super(ItemElement, self).__repr__())
+        s_match = re.match(r'^[^(]+\((.*?)\)$', super(Element, self).__repr__())
         s_repr = s_match.group(1) if s_match else ''
         attrs_repr = ", ".join("{}={!r}".format(attr_name, attr)
                                for attr_name, attr in self.attrs.items())
@@ -155,20 +156,20 @@ class ItemElement(BaseNSComponent):
                      or getattr(self, str(self.content_arg)) is not None))
 
     def get_namespaces(self, assigned_only=True):
-        namespaces = super(ItemElement, self).get_namespaces()
+        namespaces = super(Element, self).get_namespaces()
         for attr in self.attrs.values():
             if not assigned_only or attr.value is not None:
                 namespaces.update(attr.get_namespaces(assigned_only))
         return namespaces
 
 
-class MultipleElements(ItemElement):
+class MultipleElements(Element):
     """
     Represents elements of the same base class
     """
 
     def __init__(self, base_element_cls, **kwargs):
-        if not isinstance(base_element_cls, ItemElementMeta):
+        if not isinstance(base_element_cls, ElementMeta):
             raise TypeError("Invalid type of elements class: {}".format(base_element_cls))
         self.base_element_cls = base_element_cls
         super(MultipleElements, self).__init__(**kwargs)
@@ -202,7 +203,7 @@ class MultipleElements(ItemElement):
 
         Parameters
         ----------
-        elem : ItemElement or { str : Any }
+        elem : Element or { str : Any }
             New element as element instance or dictionary of attributes' values
         """
         self.elements.append(self._check_value(elem))
@@ -214,7 +215,7 @@ class MultipleElements(ItemElement):
 
         Parameters
         ----------
-        iterable : iterable of (ItemElement or { str : Any })
+        iterable : iterable of (Element or { str : Any })
             Iterable of elements as element instances or dictionaries of attributes' values
         """
         for elem in iterable:
@@ -226,7 +227,7 @@ class MultipleElements(ItemElement):
 
         Parameters
         ----------
-        value : ItemElement or { str : Any } or iterable of (ItemElement or { str : Any })
+        value : Element or { str : Any } or iterable of (Element or { str : Any })
             New element(s) as element instance(s) or dictionary(-ies) of attributes' values
         """
         if isinstance(value, list):
@@ -309,3 +310,13 @@ class MultipleElements(ItemElement):
         for elem in self.elements:
             namespaces.update(elem.get_namespaces(assigned_only))
         return namespaces
+
+
+# backward compatibility
+@deprecated("Use ElementMeta class instead")
+class ItemElementMeta(ElementMeta):
+    pass
+
+@deprecated("Use Element class instead")
+class ItemElement(Element):
+    pass

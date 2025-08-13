@@ -16,7 +16,7 @@ from scrapy.pipelines import ItemPipelineManager
 from lxml import etree
 from xmlunittest import XmlTestCase
 
-from scrapy_rss.meta import ItemElement, MultipleElements
+from scrapy_rss.meta import Element, MultipleElements
 from scrapy_rss.items import RssItem
 
 try:
@@ -296,12 +296,12 @@ class RssTestCase(UnorderedXmlTestCase):
                 self.addTypeEqualityFunc((elem.__class__, None), self.assertRssElementEqualsToValue)
 
     def assertRssElementEqualsToValue(self, element, value, msg=None):
-        if isinstance(value, ItemElement):
+        if isinstance(value, Element):
             raise NotImplemented
         self.assertEqual(getattr(element, str(element.content_arg)), value, msg)
 
     def assertMultipleRssElementsEqualsToValues(self, multiple_element, values, msg=None):
-        if isinstance(values, ItemElement):
+        if isinstance(values, Element):
             raise NotImplemented
         if len(multiple_element) == 1:
             self.assertRssElementEqualsToValue(multiple_element, values, msg)

@@ -2,9 +2,10 @@
 
 import re
 from .nscomponent import BaseNSComponent
+from ..utils import deprecated
 
 
-class ItemElementAttribute(BaseNSComponent):
+class ElementAttribute(BaseNSComponent):
     def __init__(self, value=None, serializer=lambda x: str(x),
                  required=False, is_content=False, **kwargs):
         """
@@ -21,7 +22,7 @@ class ItemElementAttribute(BaseNSComponent):
         is_content : bool
              Whether the "attribute" is an element content
         """
-        super(ItemElementAttribute, self).__init__(**kwargs)
+        super(ElementAttribute, self).__init__(**kwargs)
         if is_content and self.ns_uri:
             raise ValueError("Content cannot have namespace")
         self.__required = required
@@ -50,8 +51,14 @@ class ItemElementAttribute(BaseNSComponent):
         return self.__is_content
 
     def __repr__(self):
-        s_match = re.match(r'^[^(]+\((.*?)\)$', super(ItemElementAttribute, self).__repr__())
+        s_match = re.match(r'^[^(]+\((.*?)\)$', super(ElementAttribute, self).__repr__())
         s_repr = ", " + s_match.group(1) if s_match else ''
         return "{}(value={!r}, serializer={!r}, required={!r}, is_content={!r}{})"\
             .format(self.__class__.__name__, self.value, self.serializer,
                     self.__required, self.__is_content, s_repr)
+
+
+# backward compatibility
+@deprecated("Use ElementAttribute class instead")
+class ItemElementAttribute(ElementAttribute):
+    pass

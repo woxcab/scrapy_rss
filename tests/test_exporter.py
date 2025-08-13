@@ -24,7 +24,7 @@ from scrapy.utils.misc import load_object
 from scrapy.utils.test import get_crawler
 
 from scrapy_rss.items import RssItem, FeedItem
-from scrapy_rss.meta import ItemElement, ItemElementAttribute
+from scrapy_rss.meta import Element, ElementAttribute
 from scrapy_rss.exceptions import *
 from scrapy_rss.exporters import RssItemExporter
 
@@ -255,9 +255,9 @@ class TestExporting(RssTestCase):
                 with CrawlerContext(**feed_settings) as context:
                     context.ipm.process_item(invalid_item, context.spider)
 
-            class NonStandardElement(ItemElement):
-                first_attribute = ItemElementAttribute(required=True, is_content=True)
-                second_attribute = ItemElementAttribute(required=True)
+            class NonStandardElement(Element):
+                first_attribute = ElementAttribute(required=True, is_content=True)
+                second_attribute = ElementAttribute(required=True)
 
             class NonStandardItem(RssItem):
                 element = NonStandardElement()

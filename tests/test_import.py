@@ -50,13 +50,25 @@ class TestImport:
     def test_meta(self):
         from scrapy_rss.meta import BaseNSComponent
         from scrapy_rss.meta import NSComponentName
-        from scrapy_rss.meta import ItemElementAttribute
-        from scrapy_rss.meta import ItemElementMeta
-        from scrapy_rss.meta import ItemElement
+        from scrapy_rss.meta import ElementAttribute
+        from scrapy_rss.meta import ElementMeta
+        from scrapy_rss.meta import Element
         from scrapy_rss.meta import MultipleElements
         from scrapy_rss.meta import ItemMeta
         from scrapy_rss.meta import FeedItem
         from scrapy_rss.meta import ExtendableItem
+
+    @pytest.mark.parametrize('old_cls_name,new_cls_name,args',
+                             [('ItemElementAttribute', 'ElementAttribute', []),
+                              ('ItemElementMeta', 'ElementMeta', ['some_name', (), {}]),
+                              ('ItemElement', 'Element', [])])
+    def test_old_meta(self, old_cls_name, new_cls_name, args):
+        module = import_module('scrapy_rss.meta')
+        old_cls = getattr(module, old_cls_name)
+        new_cls = getattr(module, new_cls_name)
+        assert issubclass(old_cls, new_cls)
+        with pytest.warns(DeprecationWarning, match='Use {} class'.format(new_cls_name)):
+            old_cls(*args)
 
     def test_pipelines(self):
         from scrapy_rss.pipelines import RssExportPipeline
