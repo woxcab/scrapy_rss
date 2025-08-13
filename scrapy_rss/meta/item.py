@@ -4,6 +4,8 @@ from copy import deepcopy
 import six
 from scrapy.item import ItemMeta as BaseItemMeta, Item as BaseItem, MutableMapping
 
+from ..utils import deprecated
+
 try:
     from scrapy.item import _BaseItemMeta
 except ImportError:
@@ -109,4 +111,7 @@ class FeedItem(six.with_metaclass(ItemMeta, BaseItem)):
         return namespaces
 
 
-ExtendableItem = FeedItem  # Backward compatibility
+# Backward compatibility
+@deprecated("Use FeedItem class instead")
+class ExtendableItem(FeedItem):
+    pass

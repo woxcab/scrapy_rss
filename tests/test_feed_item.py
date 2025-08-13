@@ -29,14 +29,14 @@ class TestFeedItem(RssTestCase):
         field = scrapy.Field()
         field2 = scrapy.Field()
 
-    def test_extendable_item(self):
-        from scrapy_rss import ExtendableItem as ExtendableItem1
-        from scrapy_rss.meta import ExtendableItem as ExtendableItem2
-        from scrapy_rss.meta.item import ExtendableItem as ExtendableItem3
+    def test_feed_item(self):
+        from scrapy_rss import FeedItem as FeedItem1
+        from scrapy_rss.meta import FeedItem as FeedItem2
+        from scrapy_rss.meta.item import FeedItem as FeedItem3
 
-        self.assertIs(ExtendableItem1, FeedItem)
-        self.assertIs(ExtendableItem2, FeedItem)
-        self.assertIs(ExtendableItem3, FeedItem)
+        self.assertIs(FeedItem1, FeedItem)
+        self.assertIs(FeedItem2, FeedItem)
+        self.assertIs(FeedItem3, FeedItem)
 
     def test_field_init(self):
         data = {'field': 'value1', 'field2': 2}

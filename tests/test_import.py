@@ -44,7 +44,6 @@ class TestImport:
     def test_items(self):
         from scrapy_rss.items import RssItem
         from scrapy_rss.items import FeedItem
-        from scrapy_rss.items import ExtendableItem
         from scrapy_rss.items import RssedItem
 
     def test_meta(self):
@@ -56,12 +55,12 @@ class TestImport:
         from scrapy_rss.meta import MultipleElements
         from scrapy_rss.meta import ItemMeta
         from scrapy_rss.meta import FeedItem
-        from scrapy_rss.meta import ExtendableItem
 
     @pytest.mark.parametrize('old_cls_name,new_cls_name,args',
                              [('ItemElementAttribute', 'ElementAttribute', []),
                               ('ItemElementMeta', 'ElementMeta', ['some_name', (), {}]),
-                              ('ItemElement', 'Element', [])])
+                              ('ItemElement', 'Element', []),
+                              ('ExtendableItem', 'FeedItem', [])])
     def test_old_meta(self, old_cls_name, new_cls_name, args):
         module = import_module('scrapy_rss.meta')
         old_cls = getattr(module, old_cls_name)

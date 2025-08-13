@@ -2,7 +2,10 @@
 
 from .rss.item_elements import *
 from . import meta
-from .meta.item import FeedItem, ExtendableItem
+from .meta.item import FeedItem
+
+# Backward compatibility
+from .meta.item import ExtendableItem
 
 
 class RssItem(FeedItem):
