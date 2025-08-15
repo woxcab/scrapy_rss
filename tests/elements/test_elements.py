@@ -9,6 +9,7 @@ import six
 import sys
 
 from tests.utils import RssTestCase, get_dict_attr
+from tests.elements import NS_ATTRS, NS_ELEM_NAMES, ATTR_VALUES
 
 from scrapy_rss.items import RssItem
 from scrapy_rss.rss.item_elements import *
@@ -16,22 +17,12 @@ from scrapy_rss.meta import ElementAttribute, Element, MultipleElements
 from scrapy_rss.exceptions import InvalidElementValueError
 
 
-ns_attrs = {'attr1': ElementAttribute(ns_prefix='prefix1', ns_uri='id1'),
-            'prefix2__attr2': ElementAttribute(ns_uri='id2'),
-            'prefix3__attr3': ElementAttribute(ns_prefix='prefix3', ns_uri='id3'),
-            'pseudo_prefix4__attr4': ElementAttribute(ns_prefix='prefix4', ns_uri='id4')}
 
-ns_elem_names = {'elem1': {'ns_prefix': 'el_prefix1', 'ns_uri': 'el_id1'},
-                 'el_prefix2__elem2': {'ns_uri': 'el_id2'},
-                 'el_prefix3__elem3': {'ns_prefix': 'el_prefix3', 'ns_uri': 'el_id3'},
-                 'el_pseudo_prefix4__elem4': {'ns_prefix': 'el_prefix4', 'ns_uri': 'el_id4'},}
-
-values = [None, 0, 1, '', '1', 'long текст']
 
 
 class TestRepr(RssTestCase):
     @parameterized.expand((value, required, is_content, ns_prefix, ns_uri)
-                          for value in values
+                          for value in ATTR_VALUES
                           for required in (True, False)
                           for is_content in (True, False)
                           for ns_prefix in (None, '', 'prefix')
@@ -48,8 +39,8 @@ class TestRepr(RssTestCase):
                     re.escape(repr(ns_prefix or '')), re.escape(repr(ns_uri or ''))))
 
     @parameterized.expand((attr_name, attr, elem_kwargs)
-                          for attr_name, attr in chain([("attr0", ElementAttribute())], ns_attrs.items())
-                          for elem_kwargs in chain([{}], ns_elem_names.values()))
+                          for attr_name, attr in chain([("attr0", ElementAttribute())], NS_ATTRS.items())
+                          for elem_kwargs in chain([{}], NS_ELEM_NAMES.values()))
     def test_element_with_single_attr(self, attr_name, attr, elem_kwargs):
         elem_cls_name = "Element0"
         elem_cls = type(elem_cls_name, (Element,), {attr_name: attr})
@@ -65,9 +56,9 @@ class TestRepr(RssTestCase):
 
 
     @parameterized.expand(product(combinations(
-        chain([("attr0", ElementAttribute())], ns_attrs.items()),
+        chain([("attr0", ElementAttribute())], NS_ATTRS.items()),
         3),
-        chain([{}], ns_elem_names.values())))
+        chain([{}], NS_ELEM_NAMES.values())))
     def test_element_with_multiple_attrs(self, attrs, elem_kwargs):
         attrs = dict(attrs)
         elem_cls_name = "Element0"
@@ -89,8 +80,8 @@ class TestRepr(RssTestCase):
             "{!r}\nis not equal to one of:\n{}".format(elem, "\n".join(elem_reprs))
 
     @parameterized.expand((attr_name, attr, elem_name, elem_kwargs)
-                          for attr_name, attr in chain([("attr0", ElementAttribute())], ns_attrs.items())
-                          for elem_name, elem_kwargs in chain([('elem0', {})], ns_elem_names.items()))
+                          for attr_name, attr in chain([("attr0", ElementAttribute())], NS_ATTRS.items())
+                          for elem_name, elem_kwargs in chain([('elem0', {})], NS_ELEM_NAMES.items()))
     def test_item_with_single_elem(self, attr_name, attr, elem_name, elem_kwargs):
         elem_cls_name = "Element0"
         item_cls_name = "Item0"
@@ -107,8 +98,8 @@ class TestRepr(RssTestCase):
                                                  ", ".join(default_elems_repr))
 
     @parameterized.expand(product(
-        combinations(chain([("attr0", ElementAttribute())], ns_attrs.items()), 3),
-        combinations(chain([("elem0", {})], ns_elem_names.items()), 3)))
+        combinations(chain([("attr0", ElementAttribute())], NS_ATTRS.items()), 3),
+        combinations(chain([("elem0", {})], NS_ELEM_NAMES.items()), 3)))
     def test_item_with_multiple_elems(self, attrs, elems_descr):
         elems_names, elems_kwargs = zip(*elems_descr)
         item_cls_name = "Item0"
@@ -241,7 +232,7 @@ class TestSimpleElements(RssTestCase):
 
     @parameterized.expand((elem, str(elem_name), value)
                           for elem_name, elem in RssItem().elements.items()
-                          for value in values)
+                          for value in ATTR_VALUES)
     def test_item_properties_v1(self, elem, elem_name, value):
         item = RssItem()
         if elem.required_attrs:
@@ -293,7 +284,7 @@ class TestSimpleElements(RssTestCase):
     @parameterized.expand((elem, str(attr), value)
                           for elem in RssItem().elements.values()
                           for attr in elem.attrs
-                          for value in values
+                          for value in ATTR_VALUES
                           if not isinstance(elem, MultipleElements))
     def test_element_init_with_single_kwarg(self, elem, attr_name, value):
         elem_cls = elem.__class__
@@ -304,7 +295,7 @@ class TestSimpleElements(RssTestCase):
                           for bad_attr in chain(('impossible_attr',),
                                                 set(attr for elem in RssItem().elements.values() for attr in elem.attrs)
                                                 - set(elem.attrs))
-                          for value in values
+                          for value in ATTR_VALUES
                           if not isinstance(elem, MultipleElements))
     def test_element_init_with_bad_kwarg(self, elem, bad_attr_name, value):
         elem_cls = elem.__class__
@@ -315,7 +306,7 @@ class TestSimpleElements(RssTestCase):
 
     @parameterized.expand((elem, value)
                           for elem in RssItem().elements.values()
-                          for value in values
+                          for value in ATTR_VALUES
                           if not isinstance(elem, MultipleElements))
     def test_element_init_content_arg(self, elem, value):
         elem_cls = elem.__class__
@@ -331,7 +322,7 @@ class TestSimpleElements(RssTestCase):
 
     @parameterized.expand((elem, value1, value2)
                           for elem in RssItem().elements.values()
-                          for value1, value2 in zip(values, values)
+                          for value1, value2 in zip(ATTR_VALUES, ATTR_VALUES)
                           if not isinstance(elem, MultipleElements))
     def test_element_init_with_multiple_args(self, elem, value1, value2):
         elem_cls = elem.__class__
@@ -350,7 +341,7 @@ class TestSimpleElements(RssTestCase):
     @parameterized.expand((str(elem_name), str(attr_name), value)
                           for elem_name, elem_descr in RssItem().elements.items()
                           for attr_name in elem_descr.attrs
-                          for value in values)
+                          for value in ATTR_VALUES)
     def test_element_setattr(self, elem_name, attr_name, value):
         item = RssItem()
         elem = getattr(item, elem_name)
@@ -548,8 +539,8 @@ class TestMultipleElements(RssTestCase):
 
 class TestNamespacedElements(RssTestCase):
     @parameterized.expand((elem_name, ns_kwargs, attr_name, attr)
-                          for elem_name, ns_kwargs in ns_elem_names.items()
-                          for attr_name, attr in ns_attrs.items())
+                          for elem_name, ns_kwargs in NS_ELEM_NAMES.items()
+                          for attr_name, attr in NS_ATTRS.items())
     def test_access_by_name(self, elem_name, ns_kwargs, attr_name, attr):
         elem_cls = type("Element0", (Element,), {attr_name: attr})
         elem = elem_cls(**ns_kwargs)
@@ -568,8 +559,8 @@ class TestNamespacedElements(RssTestCase):
 
 
     @parameterized.expand((elem_name, attr_name, attr)
-                          for elem_name in ns_elem_names
-                          for attr_name, attr in ns_attrs.items())
+                          for elem_name in NS_ELEM_NAMES
+                          for attr_name, attr in NS_ATTRS.items())
     def test_attr_namespace(self, elem_name, attr_name, attr):
         elem_cls = type("Element0", (Element,), {attr_name: attr})
         elem = elem_cls()
@@ -580,15 +571,15 @@ class TestNamespacedElements(RssTestCase):
         self.assertEqual(actual_attr.ns_uri, attr.ns_uri)
 
 
-    @parameterized.expand(zip(ns_elem_names.values()))
+    @parameterized.expand(zip(NS_ELEM_NAMES.values()))
     def test_content_attr_namespace(self, ns_kwargs):
         with six.assertRaisesRegex(self, ValueError, "Content cannot have namespace"):
             ElementAttribute(is_content=True, **ns_kwargs)
 
 
     @parameterized.expand((elem_name, ns_kwargs, attr_name, attr)
-                          for elem_name, ns_kwargs in ns_elem_names.items()
-                          for attr_name, attr in ns_attrs.items())
+                          for elem_name, ns_kwargs in NS_ELEM_NAMES.items()
+                          for attr_name, attr in NS_ATTRS.items())
     def test_elem_namespace(self, elem_name, ns_kwargs, attr_name, attr):
         elem_cls = type("Element0", (Element,), {attr_name: attr})
         elem = elem_cls(**ns_kwargs)
@@ -601,7 +592,7 @@ class TestNamespacedElements(RssTestCase):
         self.assertEqual(actual_elem.ns_uri, ns_kwargs["ns_uri"])
 
 
-    @parameterized.expand(combinations(ns_attrs.values(), 1))
+    @parameterized.expand(combinations(NS_ATTRS.values(), 1))
     def test_attr_get_namespaces(self, attr):
         actual_namespaces = attr.get_namespaces()
         self.assertIsInstance(actual_namespaces, set)
@@ -613,10 +604,10 @@ class TestNamespacedElements(RssTestCase):
 
 
     @parameterized.expand((elem_name, ns_kwargs, deepcopy(attrs))
-                          for elem_name, ns_kwargs in ns_elem_names.items()
-                          for attrs in chain(combinations(ns_attrs.items(), 1),
-                                             combinations(ns_attrs.items(), 2),
-                                             combinations(ns_attrs.items(), 3)))
+                          for elem_name, ns_kwargs in NS_ELEM_NAMES.items()
+                          for attrs in chain(combinations(NS_ATTRS.items(), 1),
+                                             combinations(NS_ATTRS.items(), 2),
+                                             combinations(NS_ATTRS.items(), 3)))
     def test_elem_get_namespaces_with_value(self, elem_name, ns_kwargs, attrs):
         elem_cls = type("Element0", (Element,), dict(attrs))
         elem_kwargs = ns_kwargs.copy()
@@ -630,10 +621,10 @@ class TestNamespacedElements(RssTestCase):
 
 
     @parameterized.expand((elem_name, ns_kwargs, deepcopy(attrs))
-                          for elem_name, ns_kwargs in ns_elem_names.items()
-                          for attrs in chain(combinations(ns_attrs.items(), 1),
-                                             combinations(ns_attrs.items(), 2),
-                                             combinations(ns_attrs.items(), 3)))
+                          for elem_name, ns_kwargs in NS_ELEM_NAMES.items()
+                          for attrs in chain(combinations(NS_ATTRS.items(), 1),
+                                             combinations(NS_ATTRS.items(), 2),
+                                             combinations(NS_ATTRS.items(), 3)))
     def test_elem_get_namespaces_without_value(self, elem_name, ns_kwargs, attrs):
         elem_cls = type("Element0", (Element,), dict(attrs))
         elem = elem_cls(**ns_kwargs)
