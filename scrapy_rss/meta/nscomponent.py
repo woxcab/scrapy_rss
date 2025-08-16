@@ -124,7 +124,7 @@ class NSComponentName(BaseNSComponent):
         ----------
         name : str
             the component name that can optionally contain a namespace prefix
-            using delimiter __ (double underscores) such as ns__name
+            using delimiter __ (double underscores) such as nsprefix__name
         ns_prefix : str or None
             a namespace prefix
         ns_uri : str or None
@@ -171,7 +171,7 @@ class NSComponentName(BaseNSComponent):
     def pub_name(self):
         """
         Get component name with namespace URI in the Python public notation format
-        such as **uri__name** or **name** if no namespace
+        such as **nsprefix__name** or **name** if no namespace
 
         Returns
         -------
@@ -184,7 +184,7 @@ class NSComponentName(BaseNSComponent):
     def priv_name(self):
         """
         Get component name with namespace URI in the Python pseudo-private notation format
-        such as **__uri__name** or **__name** if no namespace
+        such as **__nsprefix__name** or **__name** if no namespace
 
         Returns
         -------
