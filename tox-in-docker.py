@@ -16,6 +16,7 @@ tox-in-docker.py -f py310 -f py39
 tox-in-docker.py -f scrapy2.10.0
 tox-in-docker.py -e py38-scrapy260
 tox-in-docker.py -e py38-scrapy260,py310-scrapy290
+tox-in-docker.py -e py27-scrapy184,py33-scrapy140,py34-scrapy174,py35-scrapy230,py36-scrapy263,py37-scrapy290,py38-scrapy2.11.2,{py39,py310,py311,py312,py313}-scrapylatest
 tox-in-docker.py -e py38-scrapy260 -- tests/test_exporter.py
 """
 
@@ -24,8 +25,6 @@ import sys
 import re
 import subprocess
 from collections import defaultdict
-from itertools import chain
-import tox
 from tox.tox_env.python.api import PY_FACTORS_RE
 from tox.run import setup_state
 
