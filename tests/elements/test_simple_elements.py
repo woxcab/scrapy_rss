@@ -9,6 +9,7 @@ from tests.utils import RssTestCase, get_dict_attr
 from tests.elements import NS_ATTRS, NS_ELEM_NAMES, ATTR_VALUES
 
 from scrapy_rss.items import RssItem
+from scrapy_rss.exceptions import InvalidAttributeValueError
 from scrapy_rss.rss.item_elements import *
 from scrapy_rss.meta import ElementAttribute, Element, MultipleElements
 
@@ -242,6 +243,18 @@ class TestSimpleElements(RssTestCase):
         elem = getattr(item, elem_name)
         setattr(elem, attr_name, value)
         self.assertEqual(getattr(elem, attr_name), value)
+
+    @parameterized.expand((str(elem_name), str(attr_name), value)
+                          for elem_name, elem_descr in RssItem().elements.items()
+                          for attr_name in elem_descr.attrs
+                          for value in ATTR_VALUES)
+    def test_attribute_setattr_from_cls(self, elem_name, attr_name, value):
+        item = RssItem()
+        elem = getattr(item, elem_name)
+        new_attr = ElementAttribute(value)
+        with six.assertRaisesRegex(self, InvalidAttributeValueError,
+                                   'attribute value cannot be instance of ElementAttribute class'):
+            setattr(elem, attr_name, new_attr)
 
     def test_multi_content_element(self):
         with six.assertRaisesRegex(self, ValueError, r"More than one attributes.*as content"):

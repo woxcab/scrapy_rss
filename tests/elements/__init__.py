@@ -14,3 +14,6 @@ NS_ELEM_NAMES = {'elem1': {'ns_prefix': 'el_prefix1', 'ns_uri': 'el_id1'},
                  'el_pseudo_prefix4__elem4': {'ns_prefix': 'el_prefix4', 'ns_uri': 'el_id4'}, }
 
 ATTR_VALUES = [None, 0, 1, '', '1', 'long текст']
+NO_NONE_ATTR_VALUES = [v for v in ATTR_VALUES if v is not None]
+
+ATTR_URL_VALUES = [None, 'http://example.com/']

@@ -112,6 +112,29 @@ class TestRepr(RssTestCase):
             item_repr = "{}({})".format(item_cls_name, ", ".join(elems_reprs))
             assert repr(item) == item_repr
 
+    @parameterized.expand(product(product(ATTR_VALUES, repeat=2),
+                                  product(*([{'prefix': '', 'uri': ''},
+                                             {'prefix': 'pre_fix{}'.format(n),
+                                              'uri': 'http://example{}.com'.format(n)}]
+                                            for n in range(4)))))
+    def test_nested_element(self, attr_values, ns):
+        class Element1(Element):
+            attr10 = ElementAttribute(ns_prefix=ns[3]['prefix'], ns_uri=ns[3]['uri'])
+
+        class Element0(Element):
+            attr00 = ElementAttribute(ns_prefix=ns[1]['prefix'], ns_uri=ns[1]['uri'])
+            elem01 = Element1(ns_prefix=ns[2]['prefix'], ns_uri=ns[2]['uri'])
+
+        elem = Element0(ns_prefix=ns[0]['prefix'], ns_uri=ns[0]['uri'])
+        elem.attr00 = attr_values[0]
+        elem.elem01.attr10 = attr_values[1]
+
+        repr(elem)
+        if sys.version_info >= (3, 7): # insertion ordered dict
+            expected_repr = "Element0(attr00=ElementAttribute(value={attr_values[0]!r}, serializer={attr_serializer!r}, required=False, is_content=False, ns_prefix={ns[1][prefix]!r}, ns_uri={ns[1][uri]!r}), elem01=Element1(attr10=ElementAttribute(value={attr_values[1]!r}, serializer={attr_serializer!r}, required=False, is_content=False, ns_prefix={ns[3][prefix]!r}, ns_uri={ns[3][uri]!r}), ns_prefix={ns[2][prefix]!r}, ns_uri={ns[2][uri]!r}), ns_prefix={ns[0][prefix]!r}, ns_uri={ns[0][uri]!r})".format(attr_values=attr_values, attr_serializer=ElementAttribute().serializer, ns=ns)
+            self.assertEqual(expected_repr, repr(elem))
+
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -50,6 +50,10 @@ class ElementAttribute(BaseNSComponent):
         """
         return self.__is_content
 
+    @property
+    def assigned(self):
+        return self.value is not None
+
     def __repr__(self):
         s_match = re.match(r'^[^(]+\((.*?)\)$', super(ElementAttribute, self).__repr__())
         s_repr = ", " + s_match.group(1) if s_match else ''

@@ -11,6 +11,7 @@ try:
 except ImportError:
     _BaseItemMeta = type
 
+from .meta_utils import _build_component_setter
 from ..exceptions import *
 from .nscomponent import NSComponentName
 from .element import Element, MultipleElements
@@ -36,31 +37,13 @@ class ItemMeta(BaseItemMeta):
         cls_attrs.update({elem_name.priv_name: elem_descriptor
                           for elem_name, elem_descriptor in elements.items()})
         cls_attrs.update({elem_name.pub_name: property(mcs.build_elem_getter(elem_name),
-                                                       mcs.build_elem_setter(elem_name, elem_descr))
-                          for elem_name, elem_descr in elements.items()})
+                                                       _build_component_setter(elem_name))
+                          for elem_name in elements})
         return super(ItemMeta, mcs).__new__(mcs, cls_name, cls_bases, cls_attrs)
 
     @staticmethod
     def build_elem_getter(elem_name):
         return lambda self: getattr(self, elem_name.priv_name)
-
-    @staticmethod
-    def build_elem_setter(elem_name, elem_descriptor):
-        def setter(self, new_value):
-            if isinstance(elem_descriptor, MultipleElements):
-                multi_elem = getattr(self, elem_name.priv_name)
-                multi_elem.clear()
-                multi_elem.add(new_value)
-            elif isinstance(new_value, elem_descriptor.__class__):
-                setattr(self, elem_name.priv_name, new_value)
-            elif isinstance(new_value, dict):
-                setattr(self, elem_name.priv_name, elem_descriptor.__class__(**new_value))
-            elif not elem_descriptor.required_attrs and elem_descriptor.content_arg:
-                elem = getattr(self, elem_name.priv_name)
-                setattr(elem, elem_descriptor.content_arg.pub_name, new_value)
-            else:
-                raise InvalidElementValueError(elem_name, elem_descriptor.__class__, new_value)
-        return setter
 
 
 class FeedItem(six.with_metaclass(ItemMeta, BaseItem)):

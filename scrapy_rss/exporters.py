@@ -164,7 +164,7 @@ class RssItemExporter(XmlItemExporter):
                                                             list(elem_value.required_attrs),
                                                             elem_value.content_arg)
 
-                    attrs = elem_value.serialize()
+                    attrs = elem_value.serialize_attrs()
                     content = attrs.pop(elem_descr.content_arg.xml_name, None) if elem_descr.content_arg else None
                     undeclared_elem_namespaces = {ns_prefix: ns_uri
                                                   for ns_prefix, ns_uri in elem_descr.get_namespaces()

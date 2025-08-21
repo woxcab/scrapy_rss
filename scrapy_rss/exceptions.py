@@ -1,5 +1,15 @@
 # -*- coding: utf-8 -*-
 
+class InvalidAttributeValueError(ValueError):
+    def __init__(self, attr_name, value):
+        self.attr_name = attr_name
+        self.value = value
+
+    def __str__(self):
+        return ("Could not assign value <{value}> to attribute '{attr_name}': "
+                "attribute value cannot be instance of ElementAttribute class"
+                .format(value=self.value, attr_name=self.attr_name))
+
 
 class InvalidElementValueError(ValueError):
     def __init__(self, elem_name, elem_cls, value):

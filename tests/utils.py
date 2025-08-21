@@ -1,13 +1,10 @@
 # -*- coding: utf-8 -*-
 
 from collections import Counter
-import itertools
 
 from unittest.util import safe_repr
 import difflib
-import re
 from os.path import commonprefix
-import sys
 import pprint
 import six
 
@@ -72,6 +69,61 @@ def get_dict_attr(obj,attr):
         if attr in obj.__dict__:
             return obj.__dict__[attr]
     raise AttributeError
+
+
+def _get_all_attributes_paths(root):
+    """
+    Get list of all attributes paths on each nesting level
+
+    Parameters
+    ----------
+    root : Element
+
+    Returns
+    -------
+    List of tuples of str
+    """
+    paths = []
+    current_path = []
+    def traverse_components(element, name):
+        current_path.append(name)
+        for attr_name, attr in element.attrs.items():
+            path = current_path + [attr_name.name]
+            paths.append(path)
+        if element.children:
+            for child_name, child in element.children.items():
+                traverse_components(child, child_name.name)
+        current_path.pop()
+    traverse_components(root, '')
+    return [tuple(path[1:]) for path in paths]
+
+
+def _convert_flat_paths_to_dict_with_values(paths, values):
+    """
+    Convert list of paths to dict
+    ([['a', 'b', 'c'], ['a', 'd']], [0, 1]) -> {'a': {'b': {'c': 0}, 'd': 1}}
+
+    Parameters
+    ----------
+    paths : list of iterables of str
+    values
+        Value for each path in paths
+
+    Returns
+    -------
+    dict
+    """
+    assert len(paths) == len(values)
+    result = {}
+    for path_idx, path in enumerate(paths):
+        current = result
+        for comp_idx, component in enumerate(path):
+            is_attr = (len(path) - 1 == comp_idx)
+            if component not in current:
+                current[component] = values[path_idx] if is_attr else {}
+            if not is_attr:
+                current = current[component]
+    return result
 
 
 iteritems = getattr(dict, 'iteritems', dict.items) # py2-3 compatibility
