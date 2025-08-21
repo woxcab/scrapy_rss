@@ -8,8 +8,7 @@ class InvalidElementValueError(ValueError):
         self.value = value
 
     def __str__(self):
-        return ("Could not assign value '{value}' to element '{elem_name}': "
-                "element requires attributes or value is not instance of '{elem_cls}'. "
+        return ("Could not assign value <{value}> to element <{elem_name}> of class <{elem_cls}>. "
                 "For attributes modification use properties: element.attribute_name = attribute_value. "
                 "For multiple allowed elements use list: category_element = ['cat1', 'cat2', 'cat3']"
                 .format(value=self.value, elem_name=self.elem_name, elem_cls=self.elem_cls))
