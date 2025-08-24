@@ -6,6 +6,9 @@ from ..exceptions import NoNamespaceURIError
 
 
 class BaseNSComponent(object):
+    _ns_prefix = ''
+    _ns_uri = ''
+
     def __init__(self, ns_prefix=None, ns_uri=None):
         """
         Base class for elements, attributes and its names that can be namespaced
