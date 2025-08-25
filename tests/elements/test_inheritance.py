@@ -83,7 +83,7 @@ class TestInheritance(RssTestCase):
         self.assertIsInstance(elem.child21, ChildElement2)
         self.assertIsNot(elem.child20, elem.child21)
 
-    @parameterized.expand(range(3, 6))
+    @parameterized.expand((level,) for level in range(3, 6))
     def test_inherited_children_with_attrs(self, level):
         elem = Element5()
         self.assertEqual(3*2, len(elem.children))
