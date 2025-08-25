@@ -121,8 +121,13 @@ class Element(BaseNSComponent):
             raise ValueError("Constructor of class '{}' supports only single unnamed argument "
                              "that is interpreted as content of element".format(self.__class__.__name__))
 
-        if args and str(self.content_arg) not in kwargs:
-            kwargs[str(self.content_arg)] = args[0]
+        if args:
+            if isinstance(args[0], MutableMapping):
+                args[0].update(kwargs)
+                kwargs = args[0]
+                args = tuple()
+            elif str(self.content_arg) not in kwargs:
+                kwargs[str(self.content_arg)] = args[0]
 
         new_attrs = {}
         new_children = {}
