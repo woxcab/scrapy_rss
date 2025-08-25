@@ -89,7 +89,7 @@ class TestRepr(RssTestCase):
             default_elems_repr = ("{}={!r}".format(name, value)
                                   for name, value in chain(RssItem().elements.items(),
                                                            [(elem_name, elem)]))
-            assert repr(item) == "{}({})".format(item_cls_name,
+            assert repr(item) == "{}({}, ns_prefix='', ns_uri='')".format(item_cls_name,
                                                  ", ".join(default_elems_repr))
 
     @parameterized.expand(product(
@@ -109,7 +109,7 @@ class TestRepr(RssTestCase):
             elems_reprs = ("{}={}".format(elem_name, elem)
                            for elem_name, elem in chain(RssItem().elements.items(),
                                                         zip(elems_names, elem_instances)))
-            item_repr = "{}({})".format(item_cls_name, ", ".join(elems_reprs))
+            item_repr = "{}({}, ns_prefix='', ns_uri='')".format(item_cls_name, ", ".join(elems_reprs))
             assert repr(item) == item_repr
 
     @parameterized.expand(product(product(ATTR_VALUES, repeat=2),

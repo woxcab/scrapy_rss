@@ -195,7 +195,7 @@ class TestSimpleElements(RssTestCase):
                           if not isinstance(elem, MultipleElements))
     def test_element_init_with_bad_kwarg(self, elem, bad_attr_name, value):
         elem_cls = elem.__class__
-        with six.assertRaisesRegex(self, ValueError, 'supports only the next named arguments',
+        with six.assertRaisesRegex(self, KeyError, 'Element does not support components:',
                                      msg="Invalid attribute '{}' was passed to '{}' initializer"
                                          .format(bad_attr_name, elem_cls.__name__)):
             elem_cls(**{bad_attr_name: value})

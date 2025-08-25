@@ -57,7 +57,7 @@ class TestFeedItem(RssTestCase):
     ])
     def test_bad_dict_init(self, key, value):
         for item_cls in (self.MyItem1, self.MyItem2, self.MyItem3, self.MyItem4):
-            with six.assertRaisesRegex(self, KeyError, r'does not support field:'):
+            with six.assertRaisesRegex(self, KeyError, r'does not support components: '):
                 item_cls(**{key: value})
 
     def test_field_setter(self):

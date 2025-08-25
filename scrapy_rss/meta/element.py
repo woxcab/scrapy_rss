@@ -6,15 +6,26 @@ from itertools import chain
 
 import six
 
-from .meta_utils import _build_component_setter
+from scrapy.item import MutableMapping
+
 from .attribute import ElementAttribute
 from .nscomponent import BaseNSComponent, NSComponentName
-from ..exceptions import InvalidElementValueError
+from ..exceptions import InvalidElementValueError, InvalidAttributeValueError
 from ..utils import deprecated
 
 
 class ElementMeta(type):
     def __new__(mcs, cls_name, cls_bases, cls_attrs):
+        cls_attrs['_attrs'] = {}
+        cls_attrs['_children'] = {}
+        for cls_base in reversed(cls_bases):
+            if isinstance(cls_base, ElementMeta):
+                cls_attrs['_attrs'].update(cls_base._attrs)
+                cls_attrs['_children'].update(cls_base._children)
+                for comp_name, comp_value in cls_base.__dict__.items():
+                    if (isinstance(comp_value.__class__, ElementMeta)
+                            or isinstance(comp_value, ElementAttribute)):
+                        cls_attrs[comp_name] = comp_value
         elem_attrs = {NSComponentName(attr_name, ns_prefix=attr_descr.ns_prefix, ns_uri=attr_descr.ns_uri):
                       attr_descr for attr_name, attr_descr in cls_attrs.items()
                       if isinstance(attr_descr, ElementAttribute)}
@@ -24,7 +35,7 @@ class ElementMeta(type):
         if sum(attr.is_content for attr in elem_attrs.values()) > 1:
             raise ValueError("More than one attributes that's interpreted as content in the element '{}' specification"
                              .format(cls_name))
-        cls_attrs['_attrs'] = elem_attrs
+        cls_attrs['_attrs'].update(elem_attrs)
 
         children = {NSComponentName(elem_name, ns_prefix=elem_descr.ns_prefix, ns_uri=elem_descr.ns_uri):
                     elem_descr for elem_name, elem_descr in cls_attrs.items()
@@ -32,13 +43,13 @@ class ElementMeta(type):
         for elem_name, elem in children.items():
             if not elem.ns_prefix:
                 elem.ns_prefix = elem_name.ns_prefix
-        cls_attrs['_children'] = children
+        cls_attrs['_children'].update(children)
 
         cls_attrs.update({comp_name.priv_name: comp_descr
                           for comp_name, comp_descr in chain(elem_attrs.items(), children.items())})
         cls_attrs.update({comp_name.pub_name:
                           property(mcs.build_component_getter(comp_name),
-                                   _build_component_setter(comp_name))
+                                   mcs.build_component_setter(comp_name))
                           for comp_name in chain(elem_attrs, children)})
 
         return super(ElementMeta, mcs).__new__(mcs, cls_name, cls_bases, cls_attrs)
@@ -87,13 +98,51 @@ class ElementMeta(type):
             return component.value if isinstance(component, ElementAttribute) else component
         return getter
 
+    @staticmethod
+    def build_component_setter(name):
+        """
+        Build attribute or element setter
+
+        Parameters
+        ----------
+        name : NSComponentName
+            name of an attribute or child element
+        """
+
+        def setter(self, value):
+            component = getattr(self, name.priv_name)
+            if isinstance(component, ElementAttribute):
+                if isinstance(value, ElementAttribute):
+                    raise InvalidAttributeValueError(name, value)
+                component.value = value
+            elif any('{}.{}'.format(cls.__module__,
+                                    cls.__name__) == 'scrapy_rss.meta.element.MultipleElements'
+                     for cls in component.__class__.mro()):  # isinstance(value, MultipleElements)
+                component.clear()
+                component.add(value)
+            elif isinstance(value, component.__class__):
+                setattr(self, name.priv_name, value)
+            elif any('{}.{}'.format(cls.__module__,
+                                    cls.__name__) == 'scrapy_rss.meta.element.Element'
+                     for cls in value.__class__.mro()):  # isinstance(value, Element)
+                raise InvalidElementValueError(name, component.__class__, value)
+            elif isinstance(value, dict):
+                setattr(self, name.priv_name, component.__class__(**value))
+            elif not component.required_attrs and component.content_arg:
+                setattr(component, component.content_arg.pub_name, value)
+            else:
+                raise InvalidElementValueError(name, component.__class__, value)
+            self._assigned = value is not None
+
+        return setter
+
 
 @six.add_metaclass(ElementMeta)
 class Element(BaseNSComponent):
     """
     Base class for elements
 
-    Attributes
+    Properties
     ----------
     attrs : {NSComponentName : ElementAttribute}
         All attributes of the element
@@ -150,10 +199,10 @@ class Element(BaseNSComponent):
         try:
             super(Element, self).__init__(**kwargs)
         except TypeError:
-            raise ValueError("Passed arguments {}. "
-                             "But constructor of class '{}' supports only the next named arguments: {}"
-                             .format(list(kwargs.keys()), self.__class__.__name__,
-                                     [str(a) for a in chain(self.attrs, self.children)]))
+            raise KeyError("Element does not support components: {}. "
+                           "Constructor of class '{}' supports only the next named arguments: {}"
+                           .format(list(kwargs.keys()), self.__class__.__name__,
+                                   [str(a) for a in chain(self.attrs, self.children)]))
 
     def __repr__(self):
         s_match = re.match(r'^[^(]+\((.*?)\)$', super(Element, self).__repr__())

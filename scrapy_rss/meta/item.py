@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 
-from copy import deepcopy
 import six
 from scrapy.item import ItemMeta as BaseItemMeta, Item as BaseItem, MutableMapping
 
@@ -11,62 +10,37 @@ try:
 except ImportError:
     _BaseItemMeta = type
 
-from .meta_utils import _build_component_setter
-from ..exceptions import *
-from .nscomponent import NSComponentName
-from .element import Element, MultipleElements
+from .element import Element, MultipleElements, ElementMeta
 
 
-class ItemMeta(BaseItemMeta):
-    def __new__(mcs, cls_name, cls_bases, cls_attrs):
-        cls_attrs['_elements'] = {}
-        for cls_base in reversed(cls_bases):
-            if isinstance(cls_base, ItemMeta):
-                cls_attrs['_elements'].update(cls_base._elements)
-                for attr_name, attr_value in cls_base.__dict__.items():
-                    if isinstance(attr_value, Element):
-                        cls_attrs[attr_name] = attr_value
-        elements = {NSComponentName(elem_name, elem_descr.ns_prefix, elem_descr.ns_uri):
-                    elem_descr for elem_name, elem_descr in cls_attrs.items()
-                    if isinstance(elem_descr, Element)}
-        for elem_name, elem in elements.items():
-            if not elem.ns_prefix:
-                elem.ns_prefix = elem_name.ns_prefix
-        cls_attrs['_elements'].update(elements)
-        cls_attrs['elements'] = property(lambda self: self._elements)
-        cls_attrs.update({elem_name.priv_name: elem_descriptor
-                          for elem_name, elem_descriptor in elements.items()})
-        cls_attrs.update({elem_name.pub_name: property(mcs.build_elem_getter(elem_name),
-                                                       _build_component_setter(elem_name))
-                          for elem_name in elements})
-        return super(ItemMeta, mcs).__new__(mcs, cls_name, cls_bases, cls_attrs)
-
-    @staticmethod
-    def build_elem_getter(elem_name):
-        return lambda self: getattr(self, elem_name.priv_name)
+class ItemMeta(ElementMeta, BaseItemMeta):
+    pass
 
 
-class FeedItem(six.with_metaclass(ItemMeta, BaseItem)):
+class FeedItem(six.with_metaclass(ItemMeta, Element, BaseItem)):
     """
-    Attributes
+    Properties
     ----------
     elements : { NSComponentName : Element }
         All elements of the item
     """
-    def __init__(self, *args, **kwargs):
-        super(FeedItem, self).__init__(*args, **kwargs)
-        new_elements = {}
-        for elem_name, elem_descr in self._elements.items():
-            new_element = deepcopy(getattr(self, elem_name.priv_name))
-            setattr(self, elem_name.priv_name, new_element)
-            new_elements[elem_name] = new_element
-        self._elements = new_elements
 
-    def __repr__(self):
-        return "{}({})".format(
-            self.__class__.__name__,
-            ", ".join("{}={!r}".format(elem_name, elem)
-                      for elem_name, elem in self.elements.items()))
+    def __init__(self, *args, **kwargs):
+        if len(args) == 1 and isinstance(args[0], MutableMapping):
+            args[0].update(kwargs)
+            kwargs = args[0]
+            args = tuple()
+        fields_kwargs = {}
+        for key in list(kwargs):
+            if key in self.fields:
+                fields_kwargs[key] = kwargs[key]
+                del kwargs[key]
+        Element.__init__(self, *args, **kwargs)
+        BaseItem.__init__(self, **fields_kwargs)
+
+    @property
+    def elements(self):
+        return self._children
 
     def __setattr__(self, name, value):
         if name in self.fields:
