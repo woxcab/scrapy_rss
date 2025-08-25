@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import locale
+import functools
 import warnings
 
 import six
@@ -26,7 +27,7 @@ def format_rfc822(date):
     return date
 
 
-def deprecated(reason):
+def deprecated_class(reason):
     """
     Decorator which can be used to mark classes
     as deprecated. It will result in a warning being emitted
@@ -42,7 +43,9 @@ def deprecated(reason):
 
         def wrapped_cls(cls, *args, **kwargs):
             msg = "Class {name} is deprecated. {reason}".format(name=wrapped_name, reason=reason)
+            warnings.simplefilter('always', DeprecationWarning)  # turn off filter
             warnings.warn(msg, category=DeprecationWarning, stacklevel=2)
+            warnings.simplefilter('default', DeprecationWarning)  # reset filter
             if old_new1 is object.__new__:
                 return old_new1(cls)
             # actually, we don't know the real signature of *old_new1*
@@ -54,5 +57,20 @@ def deprecated(reason):
 
     return decorator
 
+def deprecated_func(func, reason):
+    if not isinstance(reason, six.string_types):
+        raise TypeError('Unsupported type: ' + repr(type(reason)))
+
+    @functools.wraps(func)
+    def new_func(*args, **kwargs):
+        warnings.simplefilter('always', DeprecationWarning)  # turn off filter
+        warnings.warn(reason, category=DeprecationWarning, stacklevel=2)
+        warnings.simplefilter('default', DeprecationWarning)  # reset filter
+        return func(*args, **kwargs)
+    return new_func
+
+
 def deprecated_module(reason):
+    warnings.simplefilter('always', DeprecationWarning)  # turn off filter
     warnings.warn(reason, category=DeprecationWarning, stacklevel=2)
+    warnings.simplefilter('default', DeprecationWarning)  # reset filter

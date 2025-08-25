@@ -139,7 +139,7 @@ class TestInheritance(RssTestCase):
         elem = Element5()
         setattr(elem, elem_name, value)
         child = getattr(elem, elem_name)
-        actual_value = getattr(child, str(child.content_arg))
+        actual_value = getattr(child, str(child.content_name))
         self.assertEqual(value, actual_value)
 
     @parameterized.expand((unpack,
@@ -155,7 +155,7 @@ class TestInheritance(RssTestCase):
             elem = Element5(dict_value)
         for elem_name, expected_value in dict_value.items():
             child = getattr(elem, elem_name)
-            actual_value = getattr(child, str(child.content_arg))
+            actual_value = getattr(child, str(child.content_name))
             self.assertEqual(expected_value, actual_value)
 
 

@@ -350,7 +350,7 @@ class RssTestCase(UnorderedXmlTestCase):
     def assertRssElementEqualsToValue(self, element, value, msg=None):
         if isinstance(value, Element):
             raise NotImplemented
-        self.assertEqual(getattr(element, str(element.content_arg)), value, msg)
+        self.assertEqual(getattr(element, str(element.content_name)), value, msg)
 
     def assertMultipleRssElementsEqualsToValues(self, multiple_element, values, msg=None):
         if isinstance(values, Element):
@@ -358,6 +358,6 @@ class RssTestCase(UnorderedXmlTestCase):
         if len(multiple_element) == 1:
             self.assertRssElementEqualsToValue(multiple_element, values, msg)
         else:
-            self.assertSequenceEqual([getattr(elem, str(elem.content_arg)) for elem in multiple_element], values, msg)
+            self.assertSequenceEqual([getattr(elem, str(elem.content_name)) for elem in multiple_element], values, msg)
 
 

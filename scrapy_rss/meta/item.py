@@ -3,7 +3,7 @@
 import six
 from scrapy.item import ItemMeta as BaseItemMeta, Item as BaseItem, MutableMapping
 
-from ..utils import deprecated
+from ..utils import deprecated_class
 
 try:
     from scrapy.item import _BaseItemMeta
@@ -69,6 +69,6 @@ class FeedItem(six.with_metaclass(ItemMeta, Element, BaseItem)):
 
 
 # Backward compatibility
-@deprecated("Use FeedItem class instead")
+@deprecated_class("Use FeedItem class instead")
 class ExtendableItem(FeedItem):
     pass

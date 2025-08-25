@@ -162,10 +162,10 @@ class RssItemExporter(XmlItemExporter):
                     if not elem_value.is_valid():
                         raise InvalidRssItemAttributesError(elem_name,
                                                             list(elem_value.required_attrs),
-                                                            elem_value.content_arg)
+                                                            elem_value.content_name)
 
                     attrs = elem_value.serialize_attrs()
-                    content = attrs.pop(elem_descr.content_arg.xml_name, None) if elem_descr.content_arg else None
+                    content = attrs.pop(elem_descr.content_name.xml_name, None) if elem_descr.content_name else None
                     undeclared_elem_namespaces = {ns_prefix: ns_uri
                                                   for ns_prefix, ns_uri in elem_descr.get_namespaces()
                                                   if (ns_prefix not in self._namespaces 

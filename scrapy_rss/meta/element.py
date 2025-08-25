@@ -11,7 +11,7 @@ from scrapy.item import MutableMapping
 from .attribute import ElementAttribute
 from .nscomponent import BaseNSComponent, NSComponentName
 from ..exceptions import InvalidElementValueError, InvalidAttributeValueError
-from ..utils import deprecated
+from ..utils import deprecated_class, deprecated_func
 
 
 class ElementMeta(type):
@@ -67,12 +67,17 @@ class ElementMeta(type):
                                if attr_descr.required and not attr_descr.is_content}
         cls.required_attrs = property(lambda self: self._required_attrs)
 
-        cls._content_arg = None
+        cls._content_name = None
         for attr_name, attr_descr in cls._attrs.items():
             if attr_descr.is_content:
-                cls._content_arg = attr_name
+                cls._content_name = attr_name
                 break
-        cls.content_arg = property(lambda self: self._content_arg)
+        cls.content_name = property(lambda self: self._content_name)
+        # backward compatibility
+        cls.content_arg = property(deprecated_func(
+            lambda self: self._content_name,
+            'Property <content_arg> is deprecated, use property <content_name> instead.'
+        ))
 
         cls.serialize_attrs = lambda self: {
             attr_name.xml_name: attr.serializer(attr.value)
@@ -128,8 +133,8 @@ class ElementMeta(type):
                 raise InvalidElementValueError(name, component.__class__, value)
             elif isinstance(value, dict):
                 setattr(self, name.priv_name, component.__class__(**value))
-            elif not component.required_attrs and component.content_arg:
-                setattr(component, component.content_arg.pub_name, value)
+            elif not component.required_attrs and component.content_name:
+                setattr(component, component.content_name.pub_name, value)
             else:
                 raise InvalidElementValueError(name, component.__class__, value)
             self._assigned = value is not None
@@ -150,7 +155,7 @@ class Element(BaseNSComponent):
         All children elements of this element
     required_attrs : set of NSComponentName
         Required element attributes excluding content attribute
-    content_arg : NSComponentName or None
+    content_name : NSComponentName or None
         Name of an attribute that's interpreted as the element content
     assigned : bool
         Whether a non-None value is assigned to any attribute or child element of this element
@@ -163,7 +168,7 @@ class Element(BaseNSComponent):
     """
 
     def __init__(self, *args, **kwargs):
-        if not self.content_arg and args:
+        if not self.content_name and args:
             raise ValueError("Element of type '{}' does not support unnamed arguments (no content)"
                              .format(self.__class__.__name__))
         if len(args) > 1:
@@ -175,8 +180,8 @@ class Element(BaseNSComponent):
                 args[0].update(kwargs)
                 kwargs = args[0]
                 args = tuple()
-            elif str(self.content_arg) not in kwargs:
-                kwargs[str(self.content_arg)] = args[0]
+            elif str(self.content_name) not in kwargs:
+                kwargs[str(self.content_name)] = args[0]
 
         new_attrs = {}
         new_children = {}
@@ -220,8 +225,8 @@ class Element(BaseNSComponent):
         return (
             not self.assigned
             or all(getattr(self, str(attr_name)) is not None for attr_name in self.required_attrs)
-                and (not self.content_arg or not self.attrs[self.content_arg].required
-                     or getattr(self, str(self.content_arg)) is not None)
+                and (not self.content_name or not self.attrs[self.content_name].required
+                     or getattr(self, str(self.content_name)) is not None)
                 and all(child.is_valid() for child in self._children.values())
         )
 
@@ -245,7 +250,7 @@ class MultipleElements(Element):
         super(MultipleElements, self).__init__(**kwargs)
         self.elements = []
         self._kwargs = kwargs
-        self._content_arg = base_element_cls._content_arg
+        self._content_name = base_element_cls._content_name
 
         def serializer():
             raise NotImplementedError('Class MultipleElements does not support serialization')
@@ -383,10 +388,10 @@ class MultipleElements(Element):
 
 
 # backward compatibility
-@deprecated("Use ElementMeta class instead")
+@deprecated_class("Use ElementMeta class instead")
 class ItemElementMeta(ElementMeta):
     pass
 
-@deprecated("Use Element class instead")
+@deprecated_class("Use Element class instead")
 class ItemElement(Element):
     pass

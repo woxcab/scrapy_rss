@@ -2,7 +2,7 @@
 
 import re
 from .nscomponent import BaseNSComponent
-from ..utils import deprecated
+from ..utils import deprecated_class
 
 
 class ElementAttribute(BaseNSComponent):
@@ -63,6 +63,6 @@ class ElementAttribute(BaseNSComponent):
 
 
 # backward compatibility
-@deprecated("Use ElementAttribute class instead")
+@deprecated_class("Use ElementAttribute class instead")
 class ItemElementAttribute(ElementAttribute):
     pass

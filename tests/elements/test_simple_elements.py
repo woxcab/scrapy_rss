@@ -3,6 +3,7 @@
 import unittest
 from parameterized import parameterized
 from itertools import chain
+import pytest
 import six
 
 from tests.utils import RssTestCase, get_dict_attr
@@ -204,11 +205,13 @@ class TestSimpleElements(RssTestCase):
                           for elem in RssItem().elements.values()
                           for value in ATTR_VALUES
                           if not isinstance(elem, MultipleElements))
-    def test_element_init_content_arg(self, elem, value):
+    def test_element_init_content_name(self, elem, value):
         elem_cls = elem.__class__
-        if elem.content_arg:
+        if elem.content_name:
             el = elem_cls(value)
-            self.assertEqual(el, getattr(el, str(el.content_arg)))
+            self.assertEqual(el, getattr(el, str(el.content_name)))
+            with pytest.warns(DeprecationWarning, match='Property <content_arg> is deprecated'):
+                self.assertEqual(el, getattr(el, str(el.content_arg)))
             self.assertEqual(el, value)
         else:
             with six.assertRaisesRegex(self, ValueError, 'does not support unnamed arguments',
@@ -222,7 +225,7 @@ class TestSimpleElements(RssTestCase):
                           if not isinstance(elem, MultipleElements))
     def test_element_init_with_multiple_args(self, elem, value1, value2):
         elem_cls = elem.__class__
-        if elem.content_arg:
+        if elem.content_name:
             with six.assertRaisesRegex(self, ValueError, 'supports only single unnamed argument',
                                          msg="Invalid attribute was passed to '{}' initializer "
                                              "(element must not have content)".format(elem_cls.__name__)):
