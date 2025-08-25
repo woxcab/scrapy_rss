@@ -13,10 +13,13 @@ tox-in-docker.py --help
 tox-in-docker.py
 tox-in-docker.py --recreate
 tox-in-docker.py -f py310 -f py39
-tox-in-docker.py -f scrapylatest
+tox-in-docker.py -m latest  # run tests with latest Scrapy on each Python version
+tox-in-docker.py -m deprecated_latest  # run tests with latest Scrapy on each deprecated Python version
+tox-in-docker.py -m actual_latest  # run tests with latest Scrapy on each actual Python version
+tox-in-docker.py -m single_latest  # run tests with latest Scrapy on latest Python version
 tox-in-docker.py -e py38-scrapy260
 tox-in-docker.py -e py38-scrapy260,py310-scrapy290
-tox-in-docker.py -e py27-scrapy184,py33-scrapy140,py34-scrapy174,py35-scrapy230,py36-scrapy263,py37-scrapy290,py38-scrapy2.11.2
+tox-in-docker.py -e py312-scrapy2.13.0 -e py313-scrapy2.13.0
 tox-in-docker.py -e py38-scrapy260 -- tests/test_exporter.py
 tox-in-docker.py -e py38-scrapy260 -- -vv tests/elements/test_repr.py
 """
@@ -69,7 +72,7 @@ def main(docker_logfile, pytest_logfile):
             filtered_pytest_argv.append(arg)
         elif arg == '--':
             double_dashed = True
-        elif arg in {'-e', '-f'}:
+        elif arg in {'-e', '-f', '-m'}:
             try:
                 next(argv)
             except StopIteration:
