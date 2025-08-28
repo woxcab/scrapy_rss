@@ -28,7 +28,7 @@ class ElementMeta(type):
                         cls_attrs[comp_name] = comp_value
         elem_attrs = {NSComponentName(attr_name, ns_prefix=attr_descr.ns_prefix, ns_uri=attr_descr.ns_uri):
                       attr_descr for attr_name, attr_descr in cls_attrs.items()
-                      if isinstance(attr_descr, ElementAttribute)}
+                      if isinstance(attr_descr, ElementAttribute) and not attr_name.startswith('__')}
         for attr_name, attr in elem_attrs.items():
             if not attr.ns_prefix:
                 attr.ns_prefix = attr_name.ns_prefix
@@ -39,7 +39,7 @@ class ElementMeta(type):
 
         children = {NSComponentName(elem_name, ns_prefix=elem_descr.ns_prefix, ns_uri=elem_descr.ns_uri):
                     elem_descr for elem_name, elem_descr in cls_attrs.items()
-                    if isinstance(elem_descr.__class__, ElementMeta)}
+                    if isinstance(elem_descr.__class__, ElementMeta) and not elem_name.startswith('__')}
         for elem_name, elem in children.items():
             if not elem.ns_prefix:
                 elem.ns_prefix = elem_name.ns_prefix
