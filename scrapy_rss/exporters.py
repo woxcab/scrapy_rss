@@ -193,5 +193,5 @@ class RssItemExporter(XmlItemExporter):
         self.xg.endElement(self.channel_element)
         self.xg.endElementNS((None, self.root_element), self.root_element)
         for ns_prefix, ns_uri in self._namespaces.items():
-            self.xg.startPrefixMapping(ns_prefix, ns_uri)
+            self.xg.endPrefixMapping(ns_prefix)
         self.xg.endDocument()
