@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import os
+import re
 from datetime import datetime
 from itertools import chain, combinations
 
@@ -11,6 +12,7 @@ except ImportError:
 from parameterized import parameterized
 import six
 from lxml import etree
+from packaging.version import Version
 
 import scrapy
 from scrapy import signals
@@ -32,6 +34,8 @@ import pytest
 from tests.predefined_items import PredefinedItems
 from tests.utils import RssTestCase, FrozenDict
 
+if Version(scrapy.__version__) >= Version('2.13'):
+    from twisted.internet import reactor # not used but it's required
 
 if six.PY2:
     import sys
@@ -250,7 +254,7 @@ class TestExporting(RssTestCase):
             invalid_item = RssItem()
             invalid_item.enclosure.url = 'http://example.com/content'
 
-            with six.assertRaisesRegex(self, InvalidRssItemAttributesError,
+            with six.assertRaisesRegex(self, InvalidFeedItemAttributesError,
                                        r'required attributes .*? not set'):
                 with CrawlerContext(**feed_settings) as context:
                     context.ipm.process_item(invalid_item, context.spider)
@@ -267,7 +271,7 @@ class TestExporting(RssTestCase):
                 invalid_item.element = 'valid value'
             invalid_item.element.first_attribute = 'valid value'
 
-            with six.assertRaisesRegex(self, InvalidRssItemAttributesError,
+            with six.assertRaisesRegex(self, InvalidFeedItemAttributesError,
                                        r'required attributes .*? not set'):
                 with CrawlerContext(**feed_settings) as context:
                     context.ipm.process_item(invalid_item, context.spider)
@@ -282,7 +286,7 @@ class TestExporting(RssTestCase):
                 rss = scrapy.Field()
 
             for invalid_item_cls in (InvalidSuperItem1, InvalidSuperItem2, InvalidSuperItem3):
-                with six.assertRaisesRegex(self, InvalidRssItemError, "Item must have 'rss'"):
+                with six.assertRaisesRegex(self, InvalidFeedItemError, "Item must have 'rss'"):
                     with CrawlerContext(**feed_settings) as context:
                         context.ipm.process_item(invalid_item_cls(), context.spider)
 
@@ -306,21 +310,16 @@ class TestExporting(RssTestCase):
                     super(SuperItem, self).__init__()
                     self.rss = RssItem()
 
-            with CrawlerContext(**feed_settings) as context:
-                context.ipm.process_item(item, context.spider)
-            with open(feed_settings['feed_file']) as data, \
-                 open(os.path.join(os.path.dirname(__file__),
-                                   'expected_rss', '{}.rss'.format(item_name))) as expected:
-                self.assertUnorderedXmlEquivalentOutputs(data=data.read(), expected=expected.read())
-
             super_item = SuperItem()
             super_item.rss = item
-            with CrawlerContext(**feed_settings) as context:
-                context.ipm.process_item(super_item, context.spider)
-            with open(feed_settings['feed_file']) as data, \
-                 open(os.path.join(os.path.dirname(__file__),
-                                   'expected_rss', '{}.rss'.format(item_name))) as expected:
-                self.assertUnorderedXmlEquivalentOutputs(data=data.read(), expected=expected.read())
+
+            for current_item in (item, super_item):
+                with CrawlerContext(**feed_settings) as context:
+                    context.ipm.process_item(current_item, context.spider)
+                with open(feed_settings['feed_file']) as data, \
+                     open(os.path.join(os.path.dirname(__file__),
+                                       'expected_rss', '{}.rss'.format(item_name))) as expected:
+                    self.assertUnorderedXmlEquivalentOutputs(data=data.read(), expected=expected.read())
 
     @parameterized.expand(predefined_items.ns_items)
     def test_single_ns_item_in_the_feed(self, item_name, namespaces, item_cls, item):
@@ -355,6 +354,8 @@ class TestExporting(RssTestCase):
                 self.assertUnorderedXmlEquivalentOutputs(data=data.read(), expected=expected.read())
 
     def test_all_items_in_the_single_feed(self):
+        copy_raw_text_for_items = {'full_nested_item'}
+        raw_items_text = ''
         with FeedSettings() as feed_settings:
             with open(os.path.join(os.path.dirname(__file__),
                                    'expected_rss', 'empty_feed.rss'), 'rb') as feed_f:
@@ -365,10 +366,18 @@ class TestExporting(RssTestCase):
                         context.ipm.process_item(item, context.spider)
                         with open(os.path.join(os.path.dirname(__file__),
                                                'expected_rss', '{}.rss'.format(item_name)), 'rb') as item_f:
-                            item_tree = etree.fromstring(item_f.read())
-                            feed_channel.extend(item_tree.xpath('//item'))
+                            if item_name in copy_raw_text_for_items:
+                                match = re.search(r'<item.*</item>',
+                                                   item_f.read().decode('utf-8'),
+                                                   flags=re.S)
+                                raw_items_text += match.group(0) + '\n'
+                            else:
+                                item_tree = etree.fromstring(item_f.read())
+                                feed_channel.extend(item_tree.xpath('//item'))
+                expected = etree.tostring(feed_tree).decode('utf-8')
+                expected = expected.replace('</channel>', raw_items_text + '\n</channel>')
                 with open(feed_settings['feed_file']) as data:
-                    self.assertUnorderedXmlEquivalentOutputs(data.read(), feed_tree)
+                    self.assertUnorderedXmlEquivalentOutputs(data.read(), expected)
 
     def test_ns_items_in_the_single_feed(self):
         with FeedSettings() as feed_settings:

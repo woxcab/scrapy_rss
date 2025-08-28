@@ -2,6 +2,7 @@
 
 from itertools import chain
 from collections import Counter
+from operator import itemgetter
 
 from packaging import version
 from datetime import datetime
@@ -82,7 +83,7 @@ class RssItemExporter(XmlItemExporter):
         elif isinstance(namespaces, (list, tuple)):
             namespaces = dict(namespaces)
         namespaces_iter = namespaces.items() if isinstance(namespaces, dict) else namespaces
-        item_cls_namespaces = item_cls().get_namespaces(False)
+        item_cls_namespaces = item_cls().get_namespaces(False, attrs_only=False)
         self._namespaces = {}
         skipped_ns_prefixes = set()
         for ns_prefix, ns_uri in chain(namespaces_iter, item_cls_namespaces):
@@ -93,15 +94,74 @@ class RssItemExporter(XmlItemExporter):
                 skipped_ns_prefixes.add(ns_prefix)
             else:
                 self._namespaces[ns_prefix] = ns_uri
+        self._started_ns_counter = Counter()
+
 
     if version.parse(scrapy.__version__) < version.parse('1.4.0'):
         def _export_xml_field(self, name, serialized_value, depth):
             return super(RssItemExporter, self)._export_xml_field(name, serialized_value)
 
+    def _export_xml_element(self, element, xml_name=None, attrs_only_namespaces=True):
+        """
+        Export the element as an XML element
+
+        Parameters
+        ----------
+        element : Element
+        xml_name : (str or None, str) or None
+            Name of the base XML element in the format **(ns_uri, name)**.
+            If it's None then export children XML elements only without parent element
+        attrs_only_namespaces : bool
+            Whether extract namespaces from attributes and itself only
+        """
+        if not isinstance(element, meta.Element):
+            raise ValueError('Argument element must be instance of <Element>, not <{!r}>'.format(element))
+
+        if xml_name:
+            namespaces = element.get_namespaces(attrs_only=attrs_only_namespaces)
+            attrs_namespaces = element.get_namespaces(attrs_only=True)
+            new_namespaces = namespaces - set(self._started_ns_counter)
+            count_prefixes = Counter(map(itemgetter(0), new_namespaces))
+            # ignore multiple namespaces with the same prefix
+            new_namespaces = {ns for ns in namespaces
+                              if count_prefixes[ns[0]] == 1
+                              or ns in attrs_namespaces and ns not in self._started_ns_counter}
+            self._started_ns_counter.update(new_namespaces)
+            qname = '{}:{}'.format(element.ns_prefix, xml_name[1]) if element.ns_prefix else xml_name
+
+            for ns_prefix, ns_uri in new_namespaces:
+                self.xg.startPrefixMapping(ns_prefix, ns_uri)
+
+        element_instances = element if isinstance(element, meta.MultipleElements) else (element,)
+        for instance in element_instances:
+            if not instance.is_valid():
+                raise InvalidFeedItemAttributesError(instance)
+
+            attrs = instance.serialize_attrs()
+            content = attrs.pop(instance.content_name.xml_name, None) if instance.content_name else None
+            if xml_name:
+                self.xg.startElementNS(xml_name, qname, attrs)
+            if content:
+                self.xg.characters(content)
+            for child_name, child in instance.children.items():
+                if child.assigned:
+                    self._export_xml_element(child, child_name.xml_name)
+            if xml_name:
+                self.xg.endElementNS(xml_name, qname)
+
+        if xml_name:
+            for ns_prefix, ns_uri in new_namespaces:
+                self.xg.endPrefixMapping(ns_prefix)
+            self._started_ns_counter -= Counter(new_namespaces)
+
+
     def start_exporting(self):
         self.xg.startDocument()
+
         for ns_prefix, ns_uri in self._namespaces.items():
             self.xg.startPrefixMapping(ns_prefix, ns_uri)
+        self._started_ns_counter.update(self._namespaces.items())
+
         root_attrs = {(None, 'version'): '2.0'}
         self.xg.startElementNS((None, self.root_element), self.root_element, root_attrs)
         self.xg.startElement(self.channel_element, {})
@@ -138,60 +198,17 @@ class RssItemExporter(XmlItemExporter):
 
     def export_item(self, item):
         if not isinstance(item, RssItem) and not isinstance(getattr(item, 'rss', None), RssItem):
-            raise InvalidRssItemError("Item must have 'rss' field of type 'RssItem'")
+            raise InvalidFeedItemError("Item must have 'rss' field of type 'RssItem'")
         if not isinstance(item, RssItem):
             item = item.rss
 
-        item_namespaces = set()
-        if item.__class__ is not self._item_cls:
-            item_namespaces = item.get_namespaces()
-            item_namespaces -= set(self._namespaces.items())
-            ns_prefix_count = Counter(ns_prefix for ns_prefix, _ in item_namespaces)
-            item_namespaces = {ns for ns in item_namespaces if ns_prefix_count[ns[0]] == 1}
-        item_namespaces = dict(item_namespaces)
+        self._export_xml_element(item, (None, self.item_element), attrs_only_namespaces=False)
 
-        for elem_ns_prefix, elem_ns_uri in item_namespaces.items():
-            self.xg.startPrefixMapping(elem_ns_prefix, elem_ns_uri)
-        self.xg.startElementNS((None, self.item_element), self.item_element, {})
-
-        for elem_name, elem_descr in item.elements.items():
-            elem_value = getattr(item, str(elem_name))
-            if elem_value.assigned:
-                elem_values = elem_value if isinstance(elem_value, meta.MultipleElements) else (elem_value,)
-                for elem_value in elem_values:
-                    if not elem_value.is_valid():
-                        raise InvalidRssItemAttributesError(elem_name,
-                                                            list(elem_value.required_attrs),
-                                                            elem_value.content_name)
-
-                    attrs = elem_value.serialize_attrs()
-                    content = attrs.pop(elem_descr.content_name.xml_name, None) if elem_descr.content_name else None
-                    undeclared_elem_namespaces = {ns_prefix: ns_uri
-                                                  for ns_prefix, ns_uri in elem_descr.get_namespaces()
-                                                  if (ns_prefix not in self._namespaces 
-                                                      or self._namespaces[ns_prefix] != ns_uri)
-                                                  and (ns_prefix not in item_namespaces 
-                                                       or item_namespaces[ns_prefix] != ns_uri)}
-                    if elem_name.ns_prefix:
-                        elem_qname = '{}:{}'.format(elem_name.ns_prefix, elem_name.name)
-                    else:
-                        elem_qname = elem_name.name
-                    for ns_prefix, ns_uri in undeclared_elem_namespaces.items():
-                        self.xg.startPrefixMapping(ns_prefix, ns_uri)
-                    self.xg.startElementNS(elem_name.xml_name, elem_qname, attrs)
-                    if content:
-                        self.xg.characters(content)
-                    self.xg.endElementNS(elem_name.xml_name, elem_qname)
-                    for ns_prefix, ns_uri in undeclared_elem_namespaces.items():
-                        self.xg.endPrefixMapping(ns_prefix)
-
-        self.xg.endElementNS((None, self.item_element), self.item_element)
-        for elem_ns_prefix in item_namespaces:
-            self.xg.endPrefixMapping(elem_ns_prefix)
 
     def finish_exporting(self):
         self.xg.endElement(self.channel_element)
         self.xg.endElementNS((None, self.root_element), self.root_element)
         for ns_prefix, ns_uri in self._namespaces.items():
             self.xg.endPrefixMapping(ns_prefix)
+        self._started_ns_counter -= Counter(self._namespaces.items())
         self.xg.endDocument()

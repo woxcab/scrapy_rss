@@ -7,6 +7,7 @@ import difflib
 from os.path import commonprefix
 import pprint
 import six
+from lxml.etree import XMLSyntaxError
 
 from twisted.python.failure import Failure
 from scrapy.pipelines import ItemPipelineManager
@@ -194,7 +195,7 @@ class UnorderedXmlTestCase(XmlTestCase):
 
     @staticmethod
     def _str_to_bytes(data):
-        if isinstance(data, str):
+        if isinstance(data, six.string_types):
             return data.encode(encoding='utf-8')
         if not isinstance(data, bytes):
             raise ValueError("Passing data must be string or bytes array")
@@ -215,15 +216,20 @@ class UnorderedXmlTestCase(XmlTestCase):
     def assertUnorderedXmlEquivalentOutputs(self, data, expected, excepted_elements = ('lastBuildDate', 'generator')):
         """
         Children and text subnodes of each element in XML are considered as unordered set.
-        Therefore if two XML files has different order of same elements then these XMLs are same.
+        Therefore, if two XML files has different order of same elements then these XMLs are same.
         """
         if not excepted_elements:
             excepted_elements = ()
         if isinstance(excepted_elements, six.string_types):
             excepted_elements = (excepted_elements,)
 
-        data = data if isinstance(data, etree._Element) \
-            else etree.fromstring(self._str_to_bytes(data))
+        try:
+            data = data if isinstance(data, etree._Element) \
+                else etree.fromstring(self._str_to_bytes(data))
+        except XMLSyntaxError as e:
+            print('Given invalid XML data: ', data)
+            raise e
+
         for excepted_element in excepted_elements:
             for element in data.xpath('//{}'.format(excepted_element)):
                 element.getparent().remove(element)

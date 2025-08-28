@@ -24,23 +24,29 @@ class InvalidElementValueError(ValueError):
                 .format(value=self.value, elem_name=self.elem_name, elem_cls=self.elem_cls))
 
 
-class InvalidRssItemError(ValueError):
+class InvalidFeedItemError(ValueError):
     pass
 
 
-class InvalidRssItemAttributesError(ValueError):
-    def __init__(self, rss_element, required_attrs, content_name):
-        self.rss_element = rss_element
-        self.required_attrs = required_attrs
-        self.content_name = content_name
+class InvalidFeedItemAttributesError(ValueError):
+    def __init__(self, element):
+        """
+
+        Parameters
+        ----------
+        element : Element
+        """
+        self.element = element
 
     def __str__(self):
-        if self.content_name:
-            return "The next required attributes of RSS element '{}' ({}) "\
+        if self.element.content_name:
+            return "The next required attributes of feed element '{!r}' ({}) "\
                    "or required content ('{}' argument) are not set" \
-                   .format(self.rss_element, ", ".join(str(a) for a in self.required_attrs), self.content_name)
-        return "The next required attributes of RSS element '{}' are not set: {}" \
-            .format(self.rss_element, ", ".join(str(a) for a in self.required_attrs))
+                   .format(self.element,
+                           ", ".join(map(str, self.element.required_attrs)),
+                           self.element.content_name)
+        return "The next required attributes of feed element '{}' are not set: {}" \
+            .format(self.element, ", ".join(map(str, self.element.required_attrs)))
 
 
 class NoNamespaceURIError(ValueError):

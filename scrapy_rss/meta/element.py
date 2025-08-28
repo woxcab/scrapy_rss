@@ -230,9 +230,25 @@ class Element(BaseNSComponent):
                 and all(child.is_valid() for child in self._children.values())
         )
 
-    def get_namespaces(self, assigned_only=True):
+    def get_namespaces(self, assigned_only=True, attrs_only=False):
+        """
+        Get namespaces of the element
+
+        Parameters
+        ----------
+        assigned_only : bool
+            whether return namespaces of assigned attributes and children only
+        attrs_only
+            whether return namespaces of assigned attributes only (skip children)
+
+        Returns
+        -------
+        set of (str or None, str or None)
+            Set of pairs (namespace_prefix, namespace_uri)
+        """
         namespaces = super(Element, self).get_namespaces()
-        for comp in chain(self.attrs.values(), self.children.values()):
+        for comp in chain(self.attrs.values(),
+                          self.children.values() if not attrs_only else []):
             if not assigned_only or comp.assigned:
                 namespaces.update(comp.get_namespaces(assigned_only))
         return namespaces
@@ -331,6 +347,9 @@ class MultipleElements(Element):
             self._assigned = False
         return elem
 
+    def is_valid(self):
+        return all(element.is_valid() for element in self.elements)
+
     def __delitem__(self, index):
         self.elements.__delitem__(index)
         if not self.elements:
@@ -380,7 +399,7 @@ class MultipleElements(Element):
         base_cls_repr = "base_element_cls={!r}".format(self.base_element_cls)
         return "{}({})".format(self.__class__.__name__, ", ".join(filter(None, [base_cls_repr, s_repr])))
 
-    def get_namespaces(self, assigned_only=True):
+    def get_namespaces(self, assigned_only=True, attrs_only=False):
         namespaces = super(MultipleElements, self).get_namespaces()
         for elem in self.elements:
             namespaces.update(elem.get_namespaces(assigned_only))

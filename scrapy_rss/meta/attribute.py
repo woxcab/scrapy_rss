@@ -54,6 +54,24 @@ class ElementAttribute(BaseNSComponent):
     def assigned(self):
         return self.value is not None
 
+    def get_namespaces(self, assigned_only=True):
+        """
+        Get namespaces of the attribute
+
+        Parameters
+        ----------
+        assigned_only : bool
+            whether return namespace only if the attribute is assigned
+
+        Returns
+        -------
+        set of (str or None, str or None)
+            Set of pairs **(namespace_prefix, namespace_uri)**
+        """
+        if not assigned_only or self.assigned:
+            return super(ElementAttribute, self).get_namespaces()
+        return set()
+
     def __repr__(self):
         s_match = re.match(r'^[^(]+\((.*?)\)$', super(ElementAttribute, self).__repr__())
         s_repr = ", " + s_match.group(1) if s_match else ''

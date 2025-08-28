@@ -47,26 +47,6 @@ class FeedItem(six.with_metaclass(ItemMeta, Element, BaseItem)):
             raise AttributeError("Use item[{!r}] = {!r} to set field value".format(name, value))
         super(MutableMapping, self).__setattr__(name, value)
 
-    def get_namespaces(self, assigned_only=True):
-        """
-        Get all namespaces of the elements and its attributes
-
-        Parameters
-        ----------
-        assigned_only : bool
-            Whether to return namespaces of assigned components only
-
-        Returns
-        -------
-        set of (str or None, str or None)
-            Set of pairs (namespace_prefix, namespace_uri)
-        """
-        namespaces = set()
-        for elem in self.elements.values():
-            if not assigned_only or elem.assigned:
-                namespaces.update(elem.get_namespaces(assigned_only))
-        return namespaces
-
 
 # Backward compatibility
 @deprecated_class("Use FeedItem class instead")

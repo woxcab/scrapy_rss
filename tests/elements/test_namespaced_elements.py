@@ -72,7 +72,7 @@ class TestNamespacedElements(RssTestCase):
     def test_attr_get_namespaces(self, attr):
         actual_namespaces = attr.get_namespaces()
         self.assertIsInstance(actual_namespaces, set)
-        self.assertEqual(actual_namespaces, {(attr.ns_prefix, attr.ns_uri)})
+        self.assertEqual(actual_namespaces, set())
         
         actual_namespaces = attr.get_namespaces(False)
         self.assertIsInstance(actual_namespaces, set)
@@ -200,6 +200,45 @@ class TestNamespacedElements(RssTestCase):
         actual_namespaces = item.get_namespaces()
         self.assertIsInstance(actual_namespaces, set)
         self.assertEqual(actual_namespaces, expected_namespaces)
+        for comp_name, comp in chain(item.attrs.items(), item.children.items()):
+            self.assertNotIn('__', comp_name.name)
+
+    def test_namespace_inheritance(self):
+        class Element0(Element):
+            attr00 = ElementAttribute(is_content=True)
+
+        class Element1(Element):
+            attr10 = ElementAttribute(ns_prefix='attr_prefix10', ns_uri='attr_id10')
+            attr_prefix11__attr11 = ElementAttribute(ns_uri='attr_id11')
+            attr_prefix__attr12 = ElementAttribute(ns_prefix='attr_prefix12', ns_uri='attr_id12')
+            elem00 = Element0(ns_prefix='el_prefix10', ns_uri='el_id10')
+            el_prefix11__attr11 = Element0(ns_uri='el_id11')
+            el_fake_prefix__attr12 = Element0(ns_prefix='el_prefix12', ns_uri='el_id12')
+
+        class Element2(Element1):
+            attr_prefix20__attr20 = ElementAttribute(ns_uri='attr_id20')
+            el_prefix21__attr11 = Element0(ns_uri='el_id21')
+
+        elem = Element2()
+        elem.attr10 = 'attr10'
+        elem.attr_prefix11__attr11 = 'attr_prefix11__attr11'
+        elem.attr_prefix__attr12 = 'attr_prefix__attr12'
+        elem.elem00.attr00 = 'elem00.attr00'
+        elem.el_prefix11__attr11.attr00 = 'el_prefix11__attr11.attr00'
+        elem.el_fake_prefix__attr12.attr00 = 'el_fake_prefix__attr12.attr00'
+        elem.attr_prefix20__attr20 = 'attr_prefix20__attr20'
+        elem.el_prefix21__attr11 = 'el_prefix21__attr11.attr00'
+
+        expected_namespaces = {
+            ('attr_prefix10', 'attr_id10'), ('attr_prefix11', 'attr_id11'), ('attr_prefix12', 'attr_id12'),
+            ('el_prefix10', 'el_id10'), ('el_prefix11', 'el_id11'), ('el_prefix12', 'el_id12'),
+            ('attr_prefix20', 'attr_id20'), ('el_prefix21', 'el_id21')
+        }
+        actual_namespaces = elem.get_namespaces()
+        self.assertIsInstance(actual_namespaces, set)
+        self.assertEqual(actual_namespaces, expected_namespaces)
+        for comp_name, comp in chain(elem.attrs.items(), elem.children.items()):
+            self.assertNotIn('__', comp_name.name, msg="Name {!r} of component {!r} contains namespace prefix".format(comp_name, comp))
 
 
 if __name__ == "__main__":

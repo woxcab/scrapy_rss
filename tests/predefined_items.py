@@ -51,10 +51,33 @@ class PredefinedItems(object):
             elem4 = NSElement4()
             elem5 = NSElement4()
 
+        class NSItem4(NSItem1):
+            attr1 = ElementAttribute(ns_prefix="attr_prefix", ns_uri="attr_id1", required=True)
+            attr2 = ElementAttribute(ns_prefix="el_prefix", ns_uri="attr_id2", required=True)
+
+        class NSItemNested0(RssItem):
+            elem = NSItem0()
+
+        class NSItemNested1(RssItem):
+            elem = NSItem1(ns_prefix="el_prefix", ns_uri="el_id")
+
+        class NSItemNested2(RssItem):
+            el_prefix__elem = NSItem2(ns_uri="el_id")
+
+        class NSItemNested3(RssItem):
+            el_pseudo_prefix__elem = NSItem3(ns_prefix="el_prefix", ns_uri="el_id")
+
+        class NSItemFullNested(RssItem):
+            elem0 = NSItem0()
+            elem1 = NSItem1(ns_prefix="el_prefix1", ns_uri="el_id1")
+            el_prefix2__elem2 = NSItem2(ns_uri="el_id2")
+            elem3 = NSItem3(ns_uri="el_id2")
+
         PredefinedItems.NSItem0 = NSItem0
         PredefinedItems.NSItem1 = NSItem1
         PredefinedItems.NSItem2 = NSItem2
         PredefinedItems.NSItem3 = NSItem3
+        PredefinedItems.NSItem4 = NSItem4
 
         minimal_item = RssItem()
         minimal_item.title = 'Title of minimal item'
@@ -88,23 +111,35 @@ class PredefinedItems(object):
         item_with_enclosure.enclosure.length = 0
         item_with_enclosure.enclosure.type = 'text/plain'
 
+        nested_item0 = NSItemNested0()
+        nested_item1 = NSItemNested1()
+        nested_item2 = NSItemNested2()
+        nested_item3 = NSItemNested3()
+        full_nested_item = NSItemFullNested()
+
+        for item in [nested_item0, nested_item1, nested_item2, nested_item3, full_nested_item]:
+            item.title = "Title of {}() instance".format(item.__class__.__name__)
+
         item_with_unique_ns = NSItem0()
-        item_with_unique_ns.title = "Title of item with unique namespaces"
-        item_with_unique_ns.elem1.attr01 = ""
-        item_with_unique_ns.el_prefix2__elem2.prefix11__attr11 = 0
-        item_with_unique_ns.el_prefix2__elem2.prefix12__attr12 = ""
-        item_with_unique_ns.el_prefix3__elem3.attr21 = "value3_21"
-        item_with_unique_ns.el_prefix3__elem3.pseudo_prefix22__attr22 = 42
-        item_with_unique_ns.el_pseudo_prefix4__elem4.attr01 = ""
+        for item in [item_with_unique_ns, nested_item0.elem, full_nested_item.elem0]:
+            item.title = "Title of item with unique namespaces"
+            item.elem1.attr01 = ""
+            item.el_prefix2__elem2.prefix11__attr11 = 0
+            item.el_prefix2__elem2.prefix12__attr12 = ""
+            item.el_prefix3__elem3.attr21 = "value3_21"
+            item.el_prefix3__elem3.pseudo_prefix22__attr22 = 42
+            item.el_pseudo_prefix4__elem4.attr01 = ""
 
         item_with_non_unique_ns = NSItem1()
-        item_with_non_unique_ns.title = "Title of item with unique namespaces"
-        item_with_non_unique_ns.elem1.attr01 = "-"
-        item_with_non_unique_ns.el_prefix__elem2.prefix11__attr11 = -1
-        item_with_non_unique_ns.el_prefix__elem2.prefix12__attr12 = "-"
-        item_with_non_unique_ns.elem3.attr21 = "yet another value3_21"
-        item_with_non_unique_ns.elem3.pseudo_prefix22__attr22 = 4224
-        item_with_non_unique_ns.el_pseudo_prefix4__elem4.attr01 = "-"
+        for item in [item_with_non_unique_ns, nested_item1.elem, full_nested_item.elem1]:
+            item.title = "Title of item with unique namespaces"
+            item.elem1.attr01 = "-"
+            item.el_prefix__elem2.prefix11__attr11 = -1
+            item.el_prefix__elem2.prefix12__attr12 = "-"
+            item.elem3.attr21 = "yet another value3_21"
+            item.elem3.pseudo_prefix22__attr22 = 4224
+            item.el_pseudo_prefix4__elem4.attr01 = "-"
+            item.attr = "Some value"
 
         item_with_non_unique_ns2 = NSItem1()
         item_with_non_unique_ns2.title = "Title of item with unique namespaces 2"
@@ -115,36 +150,57 @@ class PredefinedItems(object):
         item_with_non_unique_ns2.el_pseudo_prefix4__elem4.attr01 = ""
 
         item_with_same_ns_prefixes = NSItem2()
-        item_with_same_ns_prefixes.title = "Title of item with same namespace prefixes"
-        item_with_same_ns_prefixes.elem1.attr31 = "Content value 11ё"
-        item_with_same_ns_prefixes.prefix__elem2.attr32 = "Attribute value 22"
-        item_with_same_ns_prefixes.elem3.attr31 = "Content value 11"
-        item_with_same_ns_prefixes.elem3.attr32 = "Attribute value 32"
-        item_with_same_ns_prefixes.el_pseudo_prefix4__elem4.attr32 = ""
+        for item in [item_with_same_ns_prefixes, nested_item2.el_prefix__elem, full_nested_item.el_prefix2__elem2]:
+            item.title = "Title of item with same namespace prefixes"
+            item.elem1.attr31 = "Content value 11ё"
+            item.prefix__elem2.attr32 = "Attribute value 22"
+            item.elem3.attr31 = "Content value 11"
+            item.elem3.attr32 = "Attribute value 32"
+            item.el_pseudo_prefix4__elem4.attr32 = ""
 
         item_with_default_nses = NSItem3()
-        item_with_default_nses.title = "Title of item with default namespaces"
-        item_with_default_nses.elem1.attr31 = "Content value 11ё"
-        item_with_default_nses.elem2.attr32 = "Attribute value 22"
-        item_with_default_nses.elem3.attr31 = "Content value 11"
-        item_with_default_nses.elem3.attr32 = "Attribute value 32"
-        item_with_default_nses.el_pseudo_prefix4__elem3.attr32 = ""
-        item_with_default_nses.elem4.attr41 = "A41 b"
-        item_with_default_nses.elem4.prefix42__attr41 = "0"
+        for item in [item_with_default_nses, nested_item3.el_pseudo_prefix__elem, full_nested_item.elem3]:
+            item.title = "Title of item with default namespaces"
+            item.elem1.attr31 = "Content value 11ё"
+            item.elem2.attr32 = "Attribute value 22"
+            item.elem3.attr31 = "Content value 11"
+            item.elem3.attr32 = "Attribute value 32"
+            item.el_pseudo_prefix4__elem3.attr32 = ""
+            item.elem4.attr41 = "A41 b"
+            item.elem4.prefix42__attr41 = "0"
+
+        item_with_non_unique_ns_attrs = NSItem4()
+        item_with_non_unique_ns_attrs.title = "Title of item with non-unique namespaces in attributes"
+        item_with_non_unique_ns_attrs.elem1.attr01 = "#"
+        item_with_non_unique_ns_attrs.el_prefix__elem2.prefix11__attr11 = -71
+        item_with_non_unique_ns_attrs.el_prefix__elem2.prefix12__attr12 = "+"
+        item_with_non_unique_ns_attrs.elem3.attr21 = "yet another value3_21 here"
+        item_with_non_unique_ns_attrs.elem3.pseudo_prefix22__attr22 = 1224
+        item_with_non_unique_ns_attrs.el_pseudo_prefix4__elem4.attr01 = "+-"
+        item_with_non_unique_ns_attrs.attr1 = "Attribute value 1"
+        item_with_non_unique_ns_attrs.attr2 = "Attribute value 2"
+
 
         self.items = {
-             'minimal_item': minimal_item,
-             'minimal_item2': minimal_item2,
-             'simple_item': simple_item,
-             'item_with_single_category': item_with_single_category,
-             'item_with_multiple_categories': item_with_multiple_categories,
-             'item_with_guid': item_with_guid,
-             'item_with_unicode': item_with_unicode,
-             'item_with_enclosure': item_with_enclosure,
-             'item_with_unique_ns': item_with_unique_ns,
-             'item_with_non_unique_ns': item_with_non_unique_ns,
-             'item_with_same_ns_prefixes': item_with_same_ns_prefixes,
-             'item_with_default_nses': item_with_default_nses}
+            'minimal_item': minimal_item,
+            'minimal_item2': minimal_item2,
+            'simple_item': simple_item,
+            'item_with_single_category': item_with_single_category,
+            'item_with_multiple_categories': item_with_multiple_categories,
+            'item_with_guid': item_with_guid,
+            'item_with_unicode': item_with_unicode,
+            'item_with_enclosure': item_with_enclosure,
+            'item_with_unique_ns': item_with_unique_ns,
+            'item_with_non_unique_ns': item_with_non_unique_ns,
+            'item_with_same_ns_prefixes': item_with_same_ns_prefixes,
+            'item_with_default_nses': item_with_default_nses,
+            'item_with_non_unique_ns_attrs': item_with_non_unique_ns_attrs,
+            'nested_item0': nested_item0,
+            'nested_item1': nested_item1,
+            'nested_item2': nested_item2,
+            'nested_item3': nested_item3,
+            'full_nested_item': full_nested_item,
+        }
 
         self.ns_items_of_same_cls = [
             ('item_with_non_unique_ns5', NSItem1, item_with_non_unique_ns),

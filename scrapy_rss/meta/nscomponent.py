@@ -99,19 +99,14 @@ class BaseNSComponent(object):
         return "{}(ns_prefix={!r}, ns_uri={!r})"\
             .format(self.__class__.__name__, self._ns_prefix, self._ns_uri)
 
-    def get_namespaces(self, assigned_only=True):
+    def get_namespaces(self):
         """
-        Get all namespaces of the component and its children
-
-        Parameters
-        ----------
-        assigned_only : bool
-            whether return namespaces of assigned children only
+        Get namespace of the component
 
         Returns
         -------
         set of (str or None, str or None)
-            Set of pairs (namespace_prefix, namespace_uri)
+            Set of pair **(namespace_prefix, namespace_uri)** or empty set
         """
         if self._ns_uri:
             return {(self._ns_prefix, self._ns_uri)}
