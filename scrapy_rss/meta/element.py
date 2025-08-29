@@ -64,7 +64,7 @@ class ElementMeta(type):
 
         cls._required_attrs = {attr_name
                                for attr_name, attr_descr in cls._attrs.items()
-                               if attr_descr.required and not attr_descr.is_content}
+                               if attr_descr.required}
         cls.required_attrs = property(lambda self: self._required_attrs)
 
         cls._content_name = None
@@ -133,7 +133,10 @@ class ElementMeta(type):
                 raise InvalidElementValueError(name, component.__class__, value)
             elif isinstance(value, dict):
                 setattr(self, name.priv_name, component.__class__(**value))
-            elif not component.required_attrs and component.content_name:
+            elif (component.content_name
+                  and (not component.required_attrs
+                       or len(component.required_attrs) == 1
+                           and component.content_name in component.required_attrs)):
                 setattr(component, component.content_name.pub_name, value)
             else:
                 raise InvalidElementValueError(name, component.__class__, value)
@@ -154,7 +157,7 @@ class Element(BaseNSComponent):
     children : {NSComponentName : Element}
         All children elements of this element
     required_attrs : set of NSComponentName
-        Required element attributes excluding content attribute
+        Required element attributes
     content_name : NSComponentName or None
         Name of an attribute that's interpreted as the element content
     assigned : bool
@@ -224,9 +227,7 @@ class Element(BaseNSComponent):
         """
         return (
             not self.assigned
-            or all(getattr(self, str(attr_name)) is not None for attr_name in self.required_attrs)
-                and (not self.content_name or not self.attrs[self.content_name].required
-                     or getattr(self, str(self.content_name)) is not None)
+            or all(getattr(self, attr_name.priv_name).assigned for attr_name in self.required_attrs)
                 and all(child.is_valid() for child in self._children.values())
         )
 
