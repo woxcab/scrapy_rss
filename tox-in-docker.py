@@ -58,7 +58,7 @@ def main(docker_logfile, pytest_logfile):
     upcoming_python = 'py314'
     nonparallel_pythons = {'py33', 'py34'}
     nonstandard_pythons = deprecated_pythons | {upcoming_python}
-    pyfactor2container = lambda pyfactor: pyfactor if pyfactor in nonstandard_pythons else 'py3'
+    pyfactor2container = lambda pyf: pyf if pyf in nonstandard_pythons else 'py3'
 
     tox_config = setup_state(sys.argv[1:])
     default_tox_config = setup_state([])
@@ -98,7 +98,6 @@ def main(docker_logfile, pytest_logfile):
 
     summary = []
     summary_title = None
-    congratulations_line = None
     failed = False
     return_code = 0
 
@@ -132,17 +131,20 @@ def main(docker_logfile, pytest_logfile):
             try:
                 summary_reached = False
                 while container_process.poll() is None:
-                    line = container_process.stdout.readline().lstrip()
+                    line = container_process.stdout.readline()
+                    if re.search(r'(congratulations|evaluation failed)', line):
+                        continue
                     if summary_reached:
-                        if 'congratulations' in line:
-                            congratulations_line = line
-                        else:
-                            if re.search(r'(?:error|fail(?:ure|ed)?)\b', line, flags=re.I):
-                                failed = True
+                        if re.search(r'(?:error|fail(?:ure|ed)?)\b', line, flags=re.I):
+                            failed = True
+                        if not re.search(r'(: commands\[|: exit | summary )', line):
                             summary.append(line)
-                    elif re.search(r'(__ summary __|\.pkg.*_exit)', line):
-                        summary_title = '___________________________________ summary ____________________________________\n'
+                        pytest_logger.write(line)
+                    elif re.search(r'(__ summary __|: (OK|FAIL).*=setup.*\+cmd)', line):
+                        summary_title = '\n################################### summary ####################################\n'
                         summary_reached = True
+                        if '=setup' in line:
+                            summary.append(line)
                         if ' summary ' not in line:
                             pytest_logger.write(line)
                     else:
@@ -159,8 +161,7 @@ def main(docker_logfile, pytest_logfile):
         pytest_logger.write(summary_title)
     for summary_line in summary:
         pytest_logger.write(summary_line)
-    if not failed and congratulations_line:
-        pytest_logger.write(congratulations_line)
+    pytest_logger.write('evaluation failed :(\n' if failed else 'congratulations :)\n')
 
     if containers:
         subprocess.run(['docker-compose', 'down'],
