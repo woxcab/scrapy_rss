@@ -122,32 +122,38 @@ def main(docker_logfile, pytest_logfile):
         pytest_args = filtered_pytest_argv
         if pytest_ini:
             pytest_args = ['-c', pytest_ini] + pytest_args
-        with subprocess.Popen(['docker-compose', 'run', '--remove-orphans', container, 'tox',
+        with subprocess.Popen(['docker', 'compose', 'run', '--remove-orphans', container, 'tox',
                                *specialargs, *filtered_argv, '-e', ','.join(envlist),
                                '--', *pytest_args],
                               env=sysenv,
                               stdout=subprocess.PIPE,
                               text=True,
                               bufsize=1) as container_process:
-            summary_reached = False
-            while container_process.poll() is None:
-                line = container_process.stdout.readline().lstrip()
-                if summary_reached:
-                    if 'congratulations' in line:
-                        congratulations_line = line
+            try:
+                summary_reached = False
+                while container_process.poll() is None:
+                    line = container_process.stdout.readline().lstrip()
+                    if summary_reached:
+                        if 'congratulations' in line:
+                            congratulations_line = line
+                        else:
+                            if re.search(r'(?:error|fail(?:ure|ed)?)\b', line, flags=re.I):
+                                failed = True
+                            summary.append(line)
+                    elif re.search(r'(__ summary __|\.pkg.*_exit)', line):
+                        summary_title = '___________________________________ summary ____________________________________\n'
+                        summary_reached = True
+                        if ' summary ' not in line:
+                            pytest_logger.write(line)
                     else:
-                        if re.search(r'(?:error|fail(?:ure|ed)?)\b', line, flags=re.I):
-                            failed = True
-                        summary.append(line)
-                elif re.search(r'(__ summary __|\.pkg.*_exit)', line):
-                    summary_title = '___________________________________ summary ____________________________________\n'
-                    summary_reached = True
-                    if ' summary ' not in line:
                         pytest_logger.write(line)
-                else:
-                    pytest_logger.write(line)
-            if container_process.returncode:
-                return_code = container_process.returncode
+                if container_process.returncode:
+                    return_code = container_process.returncode
+            except KeyboardInterrupt as e:
+                subprocess.run(['docker', 'compose', 'kill', '-s', 'SIGKILL', container],
+                               env=sysenv,
+                               stdout=docker_logfile, text=True, bufsize=1)
+                raise e from e
 
     if summary_title:
         pytest_logger.write(summary_title)
