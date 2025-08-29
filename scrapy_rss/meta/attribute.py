@@ -6,7 +6,7 @@ from ..utils import deprecated_class
 
 
 class ElementAttribute(BaseNSComponent):
-    def __init__(self, value=None, serializer=lambda x: str(x),
+    def __init__(self, value=None, serializer=str,
                  required=False, is_content=False, **kwargs):
         """
         Construct attribute of an element
