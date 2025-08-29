@@ -86,8 +86,16 @@ class TestInheritance(RssTestCase):
     @parameterized.expand((level,) for level in range(3, 6))
     def test_inherited_children_with_attrs(self, level):
         elem = Element5()
-        self.assertEqual(3*2, len(elem.children))
-        self.assertEqual(3*2, len(elem.attrs))
+
+        children_count = 3*2
+        attrs_count = 3*2
+        self.assertEqual(children_count, len(elem.children))
+        self.assertEqual(attrs_count, len(elem.attrs))
+        private_attrs = [attr for attr in elem.__dict__.values() if isinstance(attr, ElementAttribute)]
+        private_children = [child for child in elem.__dict__.values() if isinstance(child, Element)]
+        self.assertEqual(children_count, len(private_children))
+        self.assertEqual(attrs_count, len(private_attrs))
+
         children_classes = [None, None, None, ChildElement3, ChildElement4, ChildElement5]
 
         first_child_elem = getattr(elem, 'child_elem{}0'.format(level))
