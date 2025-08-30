@@ -50,6 +50,9 @@ class TestImport:
         from scrapy_rss.items import RssItem
         from scrapy_rss.items import FeedItem
         from scrapy_rss.items import RssedItem
+        from scrapy_rss.rss.items import RssItem
+        from scrapy_rss.rss.items import FeedItem
+        from scrapy_rss.rss.items import RssedItem
 
     def test_meta(self):
         from scrapy_rss.meta import BaseNSComponent
