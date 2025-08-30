@@ -18,7 +18,7 @@ class ElementMeta(type):
     _blacklisted_comp_names = {
         '_attrs', 'attrs', '_children', 'children', '_required_attrs', 'required_attrs',
         '_required_children', 'required_children', '_content_name', 'content_name',
-        '_required', 'required', '_assigned', 'assigned'
+        '_required', 'required', '_assigned', 'assigned', 'base_element_cls'
     }
 
     def __new__(mcs, cls_name, cls_bases, cls_attrs):
