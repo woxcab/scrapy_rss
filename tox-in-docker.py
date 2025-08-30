@@ -141,8 +141,10 @@ def main(docker_logfile, pytest_logfile):
                             summary.append(line)
                         pytest_logger.write(line)
                     elif re.search(r'(__ summary __|: (OK|FAIL).*=setup.*\+cmd)', line):
-                        summary_title = '\n################################### summary ####################################\n'
+                        summary_title = '\n' + ' summary '.center(80, '#') + '\n'
                         summary_reached = True
+                        if ' FAIL ' in line:
+                            failed = True
                         if '=setup' in line:
                             summary.append(line)
                         if ' summary ' not in line:
