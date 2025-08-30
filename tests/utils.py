@@ -13,6 +13,7 @@ from twisted.python.failure import Failure
 from scrapy.pipelines import ItemPipelineManager
 from lxml import etree
 from xmlunittest import XmlTestCase
+from parameterized import parameterized
 
 from scrapy_rss.meta import Element, MultipleElements
 from scrapy_rss.items import RssItem
@@ -127,6 +128,21 @@ def _convert_flat_paths_to_dict_with_values(paths, values):
     return result
 
 
+def full_name_func(func, num, params):
+    base_name = func.__name__
+    name_suffix = "_%s" %(num, )
+
+    for p in params.args:
+        if isinstance(p, six.string_types):
+            s = p
+        elif hasattr(p, '__name__'):
+            s = p.__name__
+        elif hasattr(p, '__class__') and type(p).__module__ not in ('builtins', '__builtin__'):
+            s = p.__class__.__name__
+        else:
+            s = repr(p)
+        name_suffix += "__" + parameterized.to_safe_name(s)
+    return base_name + name_suffix
 
 
 class FrozenDict(Mapping):
