@@ -1,12 +1,15 @@
 # -*- coding: utf-8 -*-
 
-from copy import copy, deepcopy
+from copy import deepcopy
 import re
 from itertools import chain
 
 import six
 
-from scrapy.item import MutableMapping
+try:
+    from collections.abc import Mapping
+except ImportError:
+    from collections import Mapping
 
 from .attribute import ElementAttribute
 from .nscomponent import BaseNSComponent, NSComponentName
@@ -144,17 +147,20 @@ class ElementMeta(type):
                 component.value = value
             elif any('{}.{}'.format(cls.__module__,
                                     cls.__name__) == 'scrapy_rss.meta.element.MultipleElements'
-                     for cls in component.__class__.mro()):  # isinstance(value, MultipleElements)
+                     for cls in component.__class__.mro()):  # isinstance(component, MultipleElements)
                 component.clear()
                 component.add(value)
             elif isinstance(value, component.__class__):
                 setattr(self, name.priv_name, value)
+                self._children[name] = value
             elif any('{}.{}'.format(cls.__module__,
                                     cls.__name__) == 'scrapy_rss.meta.element.Element'
                      for cls in value.__class__.mro()):  # isinstance(value, Element)
                 raise InvalidElementValueError(name, component.__class__, value)
-            elif isinstance(value, dict):
-                setattr(self, name.priv_name, component.__class__(value))
+            elif isinstance(value, Mapping):
+                new_value = component.__class__(**value)
+                setattr(self, name.priv_name, new_value)
+                self._children[name] = new_value
             elif (component.content_name
                   and (not component.required_attrs
                        or len(component.required_attrs) == 1
@@ -215,8 +221,8 @@ class Element(BaseNSComponent):
                              "that is interpreted as content of element".format(self.__class__.__name__))
         self._required = kwargs.pop('required', False)
         if args:
-            if isinstance(args[0], MutableMapping):
-                new_dict = copy(args[0])
+            if isinstance(args[0], Mapping):
+                new_dict = {k: v for k, v in args[0].items()}
                 new_dict.update(kwargs)
                 kwargs = new_dict
                 args = tuple()
@@ -336,7 +342,7 @@ class MultipleElements(Element):
             if not value.ns_prefix and self.ns_prefix:
                 value.ns_prefix = self.ns_prefix
             return value
-        if isinstance(value, dict):
+        if isinstance(value, Mapping):
             kwargs = self._kwargs.copy()
             kwargs.update(value)
             elem = self.base_element_cls(**kwargs)
@@ -369,7 +375,7 @@ class MultipleElements(Element):
 
     def add(self, value):
         """
-        Add element(s) by value
+        Add one or more elements
 
         Parameters
         ----------
