@@ -136,7 +136,9 @@ class ElementMeta(type):
 
         def setter(self, value):
             component = getattr(self, name.priv_name)
-            if isinstance(component, ElementAttribute):
+            if value is None:
+                component.clear()
+            elif isinstance(component, ElementAttribute):
                 if isinstance(value, ElementAttribute):
                     raise InvalidAttributeValueError(name, value)
                 component.value = value
@@ -262,6 +264,14 @@ class Element(BaseNSComponent):
         return "{}(required={!r}, {})".format(self.__class__.__name__,
                                               self._required,
                                               ", ".join(filter(None, [comps_repr, s_repr])))
+
+    def clear(self):
+        """
+        Clear attributes and all children elements
+        """
+        for comp in chain(self.attrs.values(), self.children.values()):
+            comp.clear()
+        self._assigned = False
 
     def is_valid(self):
         """
@@ -434,6 +444,9 @@ class MultipleElements(Element):
         if (name != 'base_element_cls'
             and name in map(str, chain(self.base_element_cls._attrs,
                                        self.base_element_cls._children))):
+            if value is None:
+                self.clear()
+                return
             if len(self.elements) != 1:
                 raise AttributeError("Cannot set attribute: {} elements have been assigned. "
                                      "Choose element and set its' attribute.".format(len(self.elements)))

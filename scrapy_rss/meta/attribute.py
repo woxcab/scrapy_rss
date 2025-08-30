@@ -54,6 +54,9 @@ class ElementAttribute(BaseNSComponent):
     def assigned(self):
         return self.value is not None
 
+    def clear(self):
+        self.value = None
+
     def get_namespaces(self, assigned_only=True):
         """
         Get namespaces of the attribute

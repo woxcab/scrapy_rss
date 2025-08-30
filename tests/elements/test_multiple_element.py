@@ -173,9 +173,16 @@ class TestMultipleElements(RssTestCase):
             me.category = 'another'
 
         me.clear()
+        with six.assertRaisesRegex(self, AttributeError, 'have not been assigned'):
+            me.category
         me.add('single')
+        self.assertEqual(me.category, 'single')
         me.category = 'another'
         self.assertEqual(me.category, 'another')
+
+        me.category = None
+        with six.assertRaisesRegex(self, AttributeError, 'have not been assigned'):
+            me.category
 
         item = RssItem()
         with six.assertRaisesRegex(self, AttributeError, 'have not been assigned'):
