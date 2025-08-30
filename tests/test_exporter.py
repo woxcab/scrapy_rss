@@ -4,6 +4,7 @@ import re
 from datetime import datetime
 from itertools import chain, combinations
 
+from scrapy_rss.rss import channel_elements
 
 try:
     from tempfile import TemporaryDirectory
@@ -13,6 +14,7 @@ from parameterized import parameterized
 import six
 from lxml import etree
 from packaging.version import Version
+from frozendict import frozendict
 
 import scrapy
 from scrapy import signals
@@ -92,18 +94,41 @@ class CrawlerContext(object):
 
 class FullRssItemExporter(RssItemExporter):
     def __init__(self, file, channel_title, channel_link, channel_description,
-                 language='en-US', copyright='Data', managing_editor='m@dot.com (Manager Name)',
+                 language='en-US',
+                 copyright='Data',
+                 managing_editor='m@dot.com (Manager Name)',
                  webmaster='web@dot.com (Webmaster Name)',
-                 pubdate=datetime(2000, 2, 1, 0, 10, 30), last_build_date=datetime(2000, 2, 1, 5, 10, 30),
-                 category='some category', generator='tester',
-                 docs='http://example.com/rss_docs', ttl=60,
+                 pubdate=datetime(2000, 2, 1, 0, 10, 30),
+                 last_build_date=datetime(2000, 2, 1, 5, 10, 30),
+                 category='some category',
+                 generator='tester',
+                 docs='http://example.com/rss_docs',
+                 cloud=frozendict({'domain': 'rpc.sys.com',
+                        'port': '80',
+                        'path': '/RPC2',
+                        'registerProcedure': 'myCloud.rssPleaseNotify',
+                        'protocol': 'xml-rpc'}),
+                 ttl=60,
+                 image=channel_elements.ImageElement(url='http://example.com/img.jpg',
+                                                     title='Some image title',
+                                                     width=54),
+                 rating=4.0,
+                 text_input=channel_elements.TextInputElement(title='Input title',
+                                                              description='Description of input',
+                                                              name='Input name',
+                                                              link='http://example.com/cgi.py'),
+                 skip_hours=(0, 1, 3, 7, 23),
+                 skip_days=14,
                  *args, **kwargs):
         super(FullRssItemExporter, self) \
             .__init__(file, channel_title, channel_link, channel_description,
                       language=language, copyright=copyright, managing_editor=managing_editor,
                       webmaster=webmaster, pubdate=pubdate, last_build_date=last_build_date,
                       category=category, generator=generator,
-                      docs=docs, ttl=ttl, *args, **kwargs)
+                      docs=docs, cloud=cloud, ttl=ttl,
+                      image=image, rating=rating, text_input=text_input,
+                      skip_hours=skip_hours, skip_days=skip_days,
+                      *args, **kwargs)
 
 
 default_feed_settings = FrozenDict({'feed_file': 'feed.rss',
@@ -228,7 +253,7 @@ class TestExporting(RssTestCase):
 
             class NoGeneratorRssItemExporter(RssItemExporter):
                 def __init__(self, file, channel_title, channel_link, channel_description,
-                             generator='',
+                             generator=None,
                              *args, **kwargs):
                     super(NoGeneratorRssItemExporter, self) \
                         .__init__(file, channel_title, channel_link, channel_description,

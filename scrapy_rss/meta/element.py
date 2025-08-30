@@ -166,6 +166,9 @@ class ElementMeta(type):
                        or len(component.required_attrs) == 1
                            and component.content_name in component.required_attrs)):
                 setattr(component, component.content_name.pub_name, value)
+            elif len(component.children) == 1 and not component.required_attrs:
+                child_name = next(iter(component.children))
+                setattr(component, str(child_name), value)
             else:
                 raise InvalidElementValueError(name, component.__class__, value)
             self._assigned = value is not None

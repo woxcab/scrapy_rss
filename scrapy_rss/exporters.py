@@ -12,6 +12,7 @@ import scrapy
 from scrapy.exporters import XmlItemExporter
 
 from .items import RssItem
+from .rss.channel import ChannelElement
 from .utils import format_rfc822
 from .exceptions import *
 from . import meta
@@ -21,8 +22,10 @@ class RssItemExporter(XmlItemExporter):
     def __init__(self, file, channel_title, channel_link, channel_description,
                  namespaces=None, item_cls=None,
                  language=None, copyright=None, managing_editor=None, webmaster=None,
-                 pubdate=None, last_build_date=None, category=None, generator=None,
-                 docs=None, ttl=None,
+                 pubdate=None, last_build_date=None, category=None,
+                 generator='Scrapy {}'.format(scrapy.__version__),
+                 docs=None, cloud=None, ttl=None, image=None, rating=None, text_input=None,
+                 skip_hours=None, skip_days=None,
                  **kwargs):
         """
         RSS parameters semantics: https://validator.w3.org/feed/docs/rss2.html
@@ -36,8 +39,8 @@ class RssItemExporter(XmlItemExporter):
 
         Item fields that corresponds to RSS element with attributes or sub-elements,
         must be a dictionary-like such as
-        {"attribute-name": "attribute-value"} (with special key "content" if RSS element must have content)
-        or {"sub-element-name": "sub-element-content"}
+        {"attribute-name": "attribute-value"} or {"sub-element-name": "sub-element-content"}
+        or any value if corresponding sub-element contains single attribute marked as content
 
         For example, the dictionary for <guid> element:
             >>> {'isPermalink': 'False', 'content': '0123456789abcdef'}
@@ -48,29 +51,39 @@ class RssItemExporter(XmlItemExporter):
         kwargs['item_element'] = 'item'
         super(RssItemExporter, self).__init__(file, **kwargs)
 
-        self.channel_element = 'channel'
+        self.channel_element_name = 'channel'
+        self.channel = ChannelElement()
 
-        self.channel_title = channel_title
-        self.channel_link = channel_link
-        self.channel_description = channel_description
+        self.channel.title = channel_title
+        self.channel.link = channel_link
+        self.channel.description = channel_description
 
-        self.channel_language = language
-        self.channel_copyright = copyright
+        self.channel.language = language
+        self.channel.copyright = copyright
         if managing_editor and '@' not in managing_editor:
             raise ValueError('managing_editor field must contain at least e-mail. Passed: {}'.format(managing_editor))
-        self.channel_managing_editor = managing_editor
+        self.channel.managingEditor = managing_editor
         if webmaster and '@' not in webmaster:
             raise ValueError('webmaster field must contain at least e-mail. Passed: {}'.format(webmaster))
-        self.channel_webmaster = webmaster
-        self.channel_pubdate = pubdate
-        self.channel_last_build_date = last_build_date if last_build_date \
-            else datetime.today().replace(tzinfo=tzlocal())
-        self.channel_category = ([category] if category and isinstance(category, six.string_types)
-                                 and not isinstance(category, (list, set, tuple))
-                                 else category)
-        self.channel_generator = generator if generator is not None else 'Scrapy {}'.format(scrapy.__version__)
-        self.channel_docs = docs
-        self.channel_ttl = ttl
+        self.channel.webMaster = webmaster
+        self.channel.pubDate = pubdate
+        self.channel.lastBuildDate = (last_build_date if last_build_date
+                                              else datetime.today().replace(tzinfo=tzlocal()))
+        self.channel.category = category
+        self.channel.generator = generator
+        self.channel.docs = docs
+        self.channel.cloud = cloud
+        self.channel.ttl = ttl
+        self.channel.image = image
+        if image:
+            if not self.channel.image.title.title:
+                self.channel.image.title = self.channel.title.title
+            if not self.channel.image.link.link:
+                self.channel.image.link = self.channel.link.link
+        self.channel.rating = rating
+        self.channel.textInput = text_input
+        self.channel.skipHours = skip_hours
+        self.channel.skipDays = skip_days
 
         if not item_cls:
             item_cls = RssItem
@@ -164,37 +177,8 @@ class RssItemExporter(XmlItemExporter):
 
         root_attrs = {(None, 'version'): '2.0'}
         self.xg.startElementNS((None, self.root_element), self.root_element, root_attrs)
-        self.xg.startElement(self.channel_element, {})
-
-        self._export_xml_field('title', self.channel_title, 1)
-        self._export_xml_field('link', self.channel_link, 1)
-        self._export_xml_field('description', self.channel_description, 1)
-        if self.channel_language:
-            self._export_xml_field('language', self.channel_language, 1)
-        if self.channel_copyright:
-            self._export_xml_field('copyright', self.channel_copyright, 1)
-        if self.channel_managing_editor:
-            self._export_xml_field('managingEditor', self.channel_managing_editor, 1)
-        if self.channel_webmaster:
-            self._export_xml_field('webMaster', self.channel_webmaster, 1)
-        if self.channel_pubdate:
-            self._export_xml_field('pubdate',
-                                   format_rfc822(self.channel_pubdate)
-                                   if isinstance(self.channel_pubdate, datetime)
-                                   else self.channel_pubdate, 1)
-        self._export_xml_field('lastBuildDate',
-                               format_rfc822(self.channel_last_build_date)
-                               if isinstance(self.channel_last_build_date, datetime)
-                               else self.channel_last_build_date, 1)
-        if self.channel_category:
-            for category in self.channel_category:
-                self._export_xml_field('category', category, 1)
-        if self.channel_generator:
-            self._export_xml_field('generator', self.channel_generator, 1)
-        if self.channel_docs:
-            self._export_xml_field('docs', self.channel_docs, 1)
-        if self.channel_ttl:
-            self._export_xml_field('ttl', self.channel_ttl, 1)
+        self.xg.startElement(self.channel_element_name, {})
+        self._export_xml_element(self.channel)
 
     def export_item(self, item):
         if not isinstance(item, RssItem) and not isinstance(getattr(item, 'rss', None), RssItem):
@@ -206,7 +190,7 @@ class RssItemExporter(XmlItemExporter):
 
 
     def finish_exporting(self):
-        self.xg.endElement(self.channel_element)
+        self.xg.endElement(self.channel_element_name)
         self.xg.endElementNS((None, self.root_element), self.root_element)
         for ns_prefix, ns_uri in self._namespaces.items():
             self.xg.endPrefixMapping(ns_prefix)
