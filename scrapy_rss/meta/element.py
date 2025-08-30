@@ -322,7 +322,7 @@ class MultipleElements(Element):
         value : Element or { str : Any } or iterable of (Element or { str : Any })
             New element(s) as element instance(s) or dictionary(-ies) of attributes' values
         """
-        if isinstance(value, list):
+        if isinstance(value, (list, tuple)):
             self.extend(value)
         else:
             self.append(value)
