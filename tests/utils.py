@@ -127,7 +127,6 @@ def _convert_flat_paths_to_dict_with_values(paths, values):
     return result
 
 
-iteritems = getattr(dict, 'iteritems', dict.items) # py2-3 compatibility
 
 
 class FrozenDict(Mapping):
@@ -163,7 +162,7 @@ class FrozenDict(Mapping):
     def __hash__(self):
         if self._hash is None:
             h = 0
-            for key, value in iteritems(self._dict):
+            for key, value in self._dict.items():
                 h ^= hash((key, value))
             self._hash = h
         return self._hash
