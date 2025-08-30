@@ -171,19 +171,18 @@ class Element(BaseNSComponent):
     """
 
     def __init__(self, *args, **kwargs):
-        if not self.content_name and args:
-            raise ValueError("Element of type '{}' does not support unnamed arguments (no content)"
-                             .format(self.__class__.__name__))
         if len(args) > 1:
             raise ValueError("Constructor of class '{}' supports only single unnamed argument "
                              "that is interpreted as content of element".format(self.__class__.__name__))
-
         if args:
             if isinstance(args[0], MutableMapping):
                 new_dict = copy(args[0])
                 new_dict.update(kwargs)
                 kwargs = new_dict
                 args = tuple()
+            elif not self.content_name:
+                raise ValueError("Element of type '{}' does not support unnamed arguments (no content)"
+                                 .format(self.__class__.__name__))
             elif str(self.content_name) not in kwargs:
                 kwargs[str(self.content_name)] = args[0]
 
