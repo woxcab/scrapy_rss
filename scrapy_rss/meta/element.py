@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from copy import deepcopy
+from copy import copy, deepcopy
 import re
 from itertools import chain
 
@@ -180,8 +180,9 @@ class Element(BaseNSComponent):
 
         if args:
             if isinstance(args[0], MutableMapping):
-                args[0].update(kwargs)
-                kwargs = args[0]
+                new_dict = copy(args[0])
+                new_dict.update(kwargs)
+                kwargs = new_dict
                 args = tuple()
             elif str(self.content_name) not in kwargs:
                 kwargs[str(self.content_name)] = args[0]
