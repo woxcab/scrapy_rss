@@ -254,8 +254,8 @@ class TestExporting(RssTestCase):
             invalid_item = RssItem()
             invalid_item.enclosure.url = 'http://example.com/content'
 
-            with six.assertRaisesRegex(self, InvalidFeedItemAttributesError,
-                                       r'required attributes .*? not set'):
+            with six.assertRaisesRegex(self, InvalidFeedItemComponentsError,
+                                       r'required components .*? not set'):
                 with CrawlerContext(**feed_settings) as context:
                     context.ipm.process_item(invalid_item, context.spider)
 
@@ -271,8 +271,8 @@ class TestExporting(RssTestCase):
                 invalid_item.element = 'valid value'
             invalid_item.element.first_attribute = 'valid value'
 
-            with six.assertRaisesRegex(self, InvalidFeedItemAttributesError,
-                                       r'required attributes .*? not set'):
+            with six.assertRaisesRegex(self, InvalidFeedItemComponentsError,
+                                       r'required components .*? not set'):
                 with CrawlerContext(**feed_settings) as context:
                     context.ipm.process_item(invalid_item, context.spider)
 

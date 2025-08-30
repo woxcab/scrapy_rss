@@ -85,6 +85,12 @@ class PredefinedItems(object):
         minimal_item2 = RssItem()
         minimal_item2.description = 'Description of minimal item'
 
+        minimal_item3 = RssItem()
+        minimal_item3.title.title = 'Directly defined title of minimal item'
+
+        minimal_item4 = RssItem()
+        minimal_item4.description.description = 'Directly defined description of minimal item'
+
         simple_item = RssItem()
         simple_item.title = 'Title of simple item'
         simple_item.description = 'Description of simple item'
@@ -184,6 +190,8 @@ class PredefinedItems(object):
         self.items = {
             'minimal_item': minimal_item,
             'minimal_item2': minimal_item2,
+            'minimal_item3': minimal_item3,
+            'minimal_item4': minimal_item4,
             'simple_item': simple_item,
             'item_with_single_category': item_with_single_category,
             'item_with_multiple_categories': item_with_multiple_categories,

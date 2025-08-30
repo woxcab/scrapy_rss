@@ -135,7 +135,7 @@ class RssItemExporter(XmlItemExporter):
         element_instances = element if isinstance(element, meta.MultipleElements) else (element,)
         for instance in element_instances:
             if not instance.is_valid():
-                raise InvalidFeedItemAttributesError(instance)
+                raise InvalidFeedItemComponentsError(instance)
 
             attrs = instance.serialize_attrs()
             content = attrs.pop(instance.content_name.xml_name, None) if instance.content_name else None

@@ -18,7 +18,7 @@ class ElementMeta(type):
     _blacklisted_comp_names = {
         '_attrs', 'attrs', '_children', 'children', '_required_attrs', 'required_attrs',
         '_required_children', 'required_children', '_content_name', 'content_name',
-        '_assigned', 'assigned'
+        '_required', 'required', '_assigned', 'assigned'
     }
 
     def __new__(mcs, cls_name, cls_bases, cls_attrs):
@@ -76,6 +76,10 @@ class ElementMeta(type):
                                for attr_name, attr_descr in cls._attrs.items()
                                if attr_descr.required}
         cls.required_attrs = property(lambda self: self._required_attrs)
+        cls._required_children = {elem_name
+                                  for elem_name, elem_descr in cls._children.items()
+                                  if elem_descr.required}
+        cls.required_children = property(lambda self: self._required_children)
 
         cls._content_name = None
         for attr_name, attr_descr in cls._attrs.items():
@@ -148,7 +152,7 @@ class ElementMeta(type):
                      for cls in value.__class__.mro()):  # isinstance(value, Element)
                 raise InvalidElementValueError(name, component.__class__, value)
             elif isinstance(value, dict):
-                setattr(self, name.priv_name, component.__class__(**value))
+                setattr(self, name.priv_name, component.__class__(value))
             elif (component.content_name
                   and (not component.required_attrs
                        or len(component.required_attrs) == 1
@@ -169,15 +173,19 @@ class Element(BaseNSComponent):
     Properties
     ----------
     attrs : {NSComponentName : ElementAttribute}
-        All attributes of the element
+        All attributes of the element.
     children : {NSComponentName : Element}
-        All children elements of this element
+        All children elements of this element.
     required_attrs : set of NSComponentName
-        Required element attributes
+        Required element attributes.
+    required_children : set of NSComponentName
+        Required element children elements.
     content_name : NSComponentName or None
-        Name of an attribute that's interpreted as the element content
+        Name of an attribute that's interpreted as the element content.
+    required : bool
+        Whether this element is required.
     assigned : bool
-        Whether a non-None value is assigned to any attribute or child element of this element
+        Whether a non-None value is assigned to any attribute or child element of this element.
 
     Methods
     -------
@@ -187,9 +195,23 @@ class Element(BaseNSComponent):
     """
 
     def __init__(self, *args, **kwargs):
+        """
+        Initialize element
+
+        Parameters
+        ----------
+        *args
+            Content value if this element has a content attribute,
+            or dict of attributes and children values
+        **kwargs
+            Named attributes and children values
+        required : bool, optional
+            Whether this element is required
+        """
         if len(args) > 1:
             raise ValueError("Constructor of class '{}' supports only single unnamed argument "
                              "that is interpreted as content of element".format(self.__class__.__name__))
+        self._required = kwargs.pop('required', False)
         if args:
             if isinstance(args[0], MutableMapping):
                 new_dict = copy(args[0])
@@ -227,6 +249,9 @@ class Element(BaseNSComponent):
                            "Constructor of class '{}' supports only the next named arguments: {}"
                            .format(list(kwargs.keys()), self.__class__.__name__,
                                    [str(a) for a in chain(self.attrs, self.children)]))
+    @property
+    def required(self):
+        return self._required
 
     def __repr__(self):
         s_match = re.match(r'^[^(]+\((.*?)\)$', super(Element, self).__repr__())
@@ -234,16 +259,19 @@ class Element(BaseNSComponent):
         comps_repr = ", ".join("{}={!r}".format(comp_name, comp)
                                for comp_name, comp in chain(self.attrs.items(),
                                                             self.children.items()))
-        return "{}({})".format(self.__class__.__name__, ", ".join(filter(None, [comps_repr, s_repr])))
+        return "{}(required={!r}, {})".format(self.__class__.__name__,
+                                              self._required,
+                                              ", ".join(filter(None, [comps_repr, s_repr])))
 
     def is_valid(self):
         """
         Check if the element has valid attributes' and children values.
-        If this element is not assigned (skipped) then element is valid
+        If this element is not assigned (skipped) and is not required then element is valid
         """
         return (
-            not self.assigned
-            or all(getattr(self, attr_name.priv_name).assigned for attr_name in self.required_attrs)
+            not self.required and not self.assigned
+            or all(getattr(self, comp_name.priv_name).assigned
+                   for comp_name in chain(self.required_attrs))
                 and all(child.is_valid() for child in self._children.values())
         )
 

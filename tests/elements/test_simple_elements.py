@@ -225,16 +225,10 @@ class TestSimpleElements(RssTestCase):
                           if not isinstance(elem, MultipleElements))
     def test_element_init_with_multiple_args(self, elem, value1, value2):
         elem_cls = elem.__class__
-        if elem.content_name:
-            with six.assertRaisesRegex(self, ValueError, 'supports only single unnamed argument',
-                                         msg="Invalid attribute was passed to '{}' initializer "
-                                             "(element must not have content)".format(elem_cls.__name__)):
-                elem_cls(value1, value2)
-        else:
-            with six.assertRaisesRegex(self, ValueError, 'does not support unnamed arguments',
-                                         msg="Invalid attribute was passed to '{}' initializer "
-                                             "(element must not have content)".format(elem_cls.__name__)):
-                elem_cls(value1, value2)
+        with six.assertRaisesRegex(self, ValueError, 'supports only single unnamed argument',
+                                     msg="Invalid attribute was passed to '{}' initializer "
+                                         "(element must not have content)".format(elem_cls.__name__)):
+            elem_cls(value1, value2)
 
 
     @parameterized.expand((str(elem_name), str(attr_name), value)

@@ -39,7 +39,7 @@ class InvalidFeedItemError(ValueError):
     pass
 
 
-class InvalidFeedItemAttributesError(ValueError):
+class InvalidFeedItemComponentsError(ValueError):
     def __init__(self, element):
         """
 
@@ -50,14 +50,16 @@ class InvalidFeedItemAttributesError(ValueError):
         self.element = element
 
     def __str__(self):
-        if self.element.content_name:
-            return "The next required attributes of feed element '{!r}' ({}) "\
-                   "or required content ('{}' argument) are not set" \
-                   .format(self.element,
-                           ", ".join(map(str, self.element.required_attrs)),
-                           self.element.content_name)
-        return "The next required attributes of feed element '{}' are not set: {}" \
-            .format(self.element, ", ".join(map(str, self.element.required_attrs)))
+        attrs_list = ''
+        elems_list = ''
+        if self.element.required_attrs:
+            attrs_list = 'attributes: ' + ", ".join(map(str, self.element.required_attrs))
+        if self.element.required_children:
+            elems_list = ", ".join(map(str, self.element.required_children))
+
+        return ("One or more required components of feed element '{}' are not set: {}"
+                .format(self.element, ", ".join(filter(bool, [attrs_list, elems_list])))
+        )
 
 
 class NoNamespaceURIError(ValueError):
