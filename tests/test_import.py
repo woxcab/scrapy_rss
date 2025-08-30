@@ -82,6 +82,9 @@ class TestImport:
 
     def test_utils(self):
         from scrapy_rss.utils import format_rfc822
+        from scrapy_rss.utils import deprecated_module
+        from scrapy_rss.utils import deprecated_class
+        from scrapy_rss.utils import deprecated_func
 
 
 if __name__ == '__main__':
