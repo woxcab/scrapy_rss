@@ -6,13 +6,13 @@ from itertools import chain
 import pytest
 import six
 
-from tests.utils import RssTestCase, get_dict_attr
+from tests.utils import RssTestCase, get_dict_attr, full_name_func
 from tests.elements import NS_ATTRS, NS_ELEM_NAMES, ATTR_VALUES
 
 from scrapy_rss.items import RssItem
-from scrapy_rss.exceptions import InvalidAttributeValueError
+from scrapy_rss.exceptions import InvalidComponentNameError, InvalidAttributeValueError
 from scrapy_rss.rss.item_elements import *
-from scrapy_rss.meta import ElementAttribute, Element, MultipleElements
+from scrapy_rss.meta import ElementAttribute, Element, MultipleElements, FeedItem
 
 
 class TestSimpleElements(RssTestCase):
@@ -265,6 +265,22 @@ class TestSimpleElements(RssTestCase):
                 attr1 = ElementAttribute(is_content=True)
                 attr2 = ElementAttribute(is_content=False)
                 attr3 = ElementAttribute(is_content=True)
+
+    @parameterized.expand(((base_elem_cls, comp_name, comp_cls,
+                            (base_elem_cls in {FeedItem, RssItem}
+                             or comp_name in meta.ElementMeta._blacklisted_comp_names))
+                          for comp_name in (meta.ElementMeta._blacklisted_comp_names
+                                            | meta.ItemMeta._blacklisted_comp_names)
+                          for base_elem_cls in (Element, MultipleElements, FeedItem, RssItem)
+                          for comp_cls in (meta.ElementAttribute, meta.Element)),
+                          name_func=full_name_func)
+    def test_blacklisted_names0(self, base_elem_cls, comp_name, comp_cls, raising):
+        if raising:
+            with six.assertRaisesRegex(self, InvalidComponentNameError,
+                                       "Cannot use special property <{}> as a component name".format(comp_name)):
+                elem_cls = type('Element0', (base_elem_cls,), {comp_name: comp_cls()})
+        else:
+            elem_cls = type('Element0', (base_elem_cls,), {comp_name: comp_cls()})
 
 
 if __name__ == "__main__":

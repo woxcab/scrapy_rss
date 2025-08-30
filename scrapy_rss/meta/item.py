@@ -14,7 +14,7 @@ from .element import Element, MultipleElements, ElementMeta
 
 
 class ItemMeta(ElementMeta, BaseItemMeta):
-    pass
+    _blacklisted_comp_names = ElementMeta._blacklisted_comp_names | {'_elements', 'elements'}
 
 
 class FeedItem(six.with_metaclass(ItemMeta, Element, BaseItem)):

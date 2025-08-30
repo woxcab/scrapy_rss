@@ -1,5 +1,16 @@
 # -*- coding: utf-8 -*-
 
+class InvalidComponentNameError(ValueError):
+    def __init__(self, name):
+        self.name = name
+
+    def __str__(self):
+        return ("Cannot use special property <{0}> as a component name. "
+                "Use arbitrary number of trailing underscores sush as <{0}_> "
+                "that're ignored on XML exporting"
+                .format(self.name))
+
+
 class InvalidAttributeValueError(ValueError):
     def __init__(self, attr_name, value):
         self.attr_name = attr_name

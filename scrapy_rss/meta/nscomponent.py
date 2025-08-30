@@ -161,9 +161,9 @@ class NSComponentName(BaseNSComponent):
         Returns
         -------
         (str or None, str)
-            component name in the namespaced SAX format
+            component name in the namespaced SAX format where the second item without trailing underscores
         """
-        return self._ns_uri, self._name
+        return self._ns_uri, self._name.rstrip('_')
 
     @property
     def pub_name(self):

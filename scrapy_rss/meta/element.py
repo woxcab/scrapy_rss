@@ -10,12 +10,22 @@ from scrapy.item import MutableMapping
 
 from .attribute import ElementAttribute
 from .nscomponent import BaseNSComponent, NSComponentName
-from ..exceptions import InvalidElementValueError, InvalidAttributeValueError
+from ..exceptions import InvalidComponentNameError, InvalidElementValueError, InvalidAttributeValueError
 from ..utils import deprecated_class, deprecated_func
 
 
 class ElementMeta(type):
+    _blacklisted_comp_names = {
+        '_attrs', 'attrs', '_children', 'children', '_required_attrs', 'required_attrs',
+        '_required_children', 'required_children', '_content_name', 'content_name',
+        '_assigned', 'assigned'
+    }
+
     def __new__(mcs, cls_name, cls_bases, cls_attrs):
+        for comp_name, comp_value in cls_attrs.items():
+            if isinstance(comp_value, ElementAttribute) or isinstance(comp_value.__class__, ElementMeta):
+                mcs._check_name(comp_name)
+
         cls_attrs['_attrs'] = {}
         cls_attrs['_children'] = {}
         for cls_base in reversed(cls_bases):
@@ -87,6 +97,12 @@ class ElementMeta(type):
         }
 
         super(ElementMeta, cls).__init__(cls_name, cls_bases, cls_attrs)
+
+    @classmethod
+    def _check_name(mcs, name):
+        if name in mcs._blacklisted_comp_names:
+            raise InvalidComponentNameError(name)
+        return name
 
     @staticmethod
     def build_component_getter(name):
