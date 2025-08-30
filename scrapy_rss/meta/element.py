@@ -418,8 +418,9 @@ class MultipleElements(Element):
     def __getattr__(self, name):
         if name == 'base_element_cls':
             raise AttributeError("'{}' object has no attribute '{}'".format(self.__class__.__name__, name))
-        if name not in {attr.pub_name for attr in self.base_element_cls._attrs}:
-            raise AttributeError("Elements of type '{}' does not have '{}' attribute"
+        if name not in map(str, chain(self.base_element_cls._attrs,
+                                      self.base_element_cls._children)):
+            raise AttributeError("Elements of type '{}' does not have '{}' attribute or child"
                                  .format(self.base_element_cls, name))
         if not self.elements:
             raise AttributeError("Instances of '{}' have not been assigned"
@@ -430,13 +431,15 @@ class MultipleElements(Element):
         return getattr(self.elements[0], name)
 
     def __setattr__(self, name, value):
-        if name != 'base_element_cls' and name in {attr.pub_name for attr in self.base_element_cls._attrs}:
+        if (name != 'base_element_cls'
+            and name in map(str, chain(self.base_element_cls._attrs,
+                                       self.base_element_cls._children))):
             if len(self.elements) != 1:
                 raise AttributeError("Cannot set attribute: {} elements have been assigned. "
                                      "Choose element and set its' attribute.".format(len(self.elements)))
             setattr(self.elements[0], name, value)
         else:
-            return super(MultipleElements, self).__setattr__(name, value)
+            super(MultipleElements, self).__setattr__(name, value)
 
     def __repr__(self):
         s_match = re.match(r'^[^(]+\((.*?)\)$', super(MultipleElements, self).__repr__())
