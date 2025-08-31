@@ -1,9 +1,9 @@
 tox
 pytest
 pytest-xdist
-pytest-cov<2.11
+pytest-cov
 pytest-asyncio;python_version>="3.5"
-coverage<5
+coverage
 xmlunittest
 parameterized
 packaging
