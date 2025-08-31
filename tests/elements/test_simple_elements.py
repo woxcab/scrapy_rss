@@ -95,8 +95,9 @@ class TestSimpleElements(RssTestCase):
         item_with_guid.guid = GuidElement(**self.guids[1])
         self.items_with_guid[1].append(item_with_guid)
 
-    @parameterized.expand((elem, str(elem_name))
-                          for elem_name, elem in RssItem().elements.items())
+    @parameterized.expand(((elem, str(elem_name))
+                           for elem_name, elem in RssItem().elements.items()),
+                          name_func=full_name_func)
     def test_elements_uniqueness(self, elem, elem_name):
         elem1 = elem.__class__() if not isinstance(elem, MultipleElements) else elem.__class__(Element)
         elem2 = elem.__class__() if not isinstance(elem, MultipleElements) else elem.__class__(Element)
@@ -109,9 +110,10 @@ class TestSimpleElements(RssTestCase):
                          msg="Appropriate elements [class '{}'] of RSS item instances are identical"
                              .format(elem.__class__.__name__))
 
-    @parameterized.expand((elem, str(elem_name), attr, attr_name)
-                          for elem_name, elem in RssItem().elements.items()
-                          for attr_name, attr in elem.attrs.items())
+    @parameterized.expand(((elem, str(elem_name), attr, attr_name)
+                           for elem_name, elem in RssItem().elements.items()
+                           for attr_name, attr in elem.attrs.items()),
+                          name_func=full_name_func)
     def test_attributes_uniqueness(self, elem, elem_name, attr, attr_name):
         item1 = RssItem()
         item2 = RssItem()
@@ -127,9 +129,10 @@ class TestSimpleElements(RssTestCase):
                              "of RSS item instances are identical"
                              .format(attr.__class__.__name__, elem.__class__.__name__))
 
-    @parameterized.expand((elem, str(elem_name), value)
-                          for elem_name, elem in RssItem().elements.items()
-                          for value in ATTR_VALUES)
+    @parameterized.expand(((elem, str(elem_name), value)
+                           for elem_name, elem in RssItem().elements.items()
+                           for value in ATTR_VALUES),
+                          name_func=full_name_func)
     def test_item_properties_v1(self, elem, elem_name, value):
         item = RssItem()
         if set(elem.required_attrs) - ({elem.content_name} or set()):
@@ -178,22 +181,24 @@ class TestSimpleElements(RssTestCase):
         else:
             elem_cls()
 
-    @parameterized.expand((elem, str(attr), value)
-                          for elem in RssItem().elements.values()
-                          for attr in elem.attrs
-                          for value in ATTR_VALUES
-                          if not isinstance(elem, MultipleElements))
+    @parameterized.expand(((elem, str(attr), value)
+                           for elem in RssItem().elements.values()
+                           for attr in elem.attrs
+                           for value in ATTR_VALUES
+                           if not isinstance(elem, MultipleElements)),
+                          name_func=full_name_func)
     def test_element_init_with_single_kwarg(self, elem, attr_name, value):
         elem_cls = elem.__class__
         elem_cls(**{attr_name: value})
 
-    @parameterized.expand((elem, str(bad_attr), value)
-                          for elem in RssItem().elements.values()
-                          for bad_attr in chain(('impossible_attr',),
-                                                set(attr for elem in RssItem().elements.values() for attr in elem.attrs)
-                                                - set(elem.attrs))
-                          for value in ATTR_VALUES
-                          if not isinstance(elem, MultipleElements))
+    @parameterized.expand(((elem, str(bad_attr), value)
+                           for elem in RssItem().elements.values()
+                           for bad_attr in chain(('impossible_attr',),
+                                                 set(attr for elem in RssItem().elements.values() for attr in elem.attrs)
+                                                 - set(elem.attrs))
+                           for value in ATTR_VALUES
+                           if not isinstance(elem, MultipleElements)),
+                          name_func=full_name_func)
     def test_element_init_with_bad_kwarg(self, elem, bad_attr_name, value):
         elem_cls = elem.__class__
         with six.assertRaisesRegex(self, KeyError, 'Element does not support components:',
@@ -201,10 +206,11 @@ class TestSimpleElements(RssTestCase):
                                          .format(bad_attr_name, elem_cls.__name__)):
             elem_cls(**{bad_attr_name: value})
 
-    @parameterized.expand((elem, value)
-                          for elem in RssItem().elements.values()
-                          for value in ATTR_VALUES
-                          if not isinstance(elem, MultipleElements))
+    @parameterized.expand(((elem, value)
+                           for elem in RssItem().elements.values()
+                           for value in ATTR_VALUES
+                           if not isinstance(elem, MultipleElements)),
+                          name_func=full_name_func)
     def test_element_init_content_name(self, elem, value):
         elem_cls = elem.__class__
         if elem.content_name:
@@ -219,10 +225,11 @@ class TestSimpleElements(RssTestCase):
                                              "(element must not have content)".format(elem_cls.__name__)):
                 elem_cls(value)
 
-    @parameterized.expand((elem, value1, value2)
-                          for elem in RssItem().elements.values()
-                          for value1, value2 in zip(ATTR_VALUES, ATTR_VALUES)
-                          if not isinstance(elem, MultipleElements))
+    @parameterized.expand(((elem, value1, value2)
+                           for elem in RssItem().elements.values()
+                           for value1, value2 in zip(ATTR_VALUES, ATTR_VALUES)
+                           if not isinstance(elem, MultipleElements)),
+                          name_func=full_name_func)
     def test_element_init_with_multiple_args(self, elem, value1, value2):
         elem_cls = elem.__class__
         with six.assertRaisesRegex(self, ValueError, 'supports only single unnamed argument',
@@ -231,20 +238,22 @@ class TestSimpleElements(RssTestCase):
             elem_cls(value1, value2)
 
 
-    @parameterized.expand((str(elem_name), str(attr_name), value)
-                          for elem_name, elem_descr in RssItem().elements.items()
-                          for attr_name in elem_descr.attrs
-                          for value in ATTR_VALUES)
+    @parameterized.expand(((str(elem_name), str(attr_name), value)
+                           for elem_name, elem_descr in RssItem().elements.items()
+                           for attr_name in elem_descr.attrs
+                           for value in ATTR_VALUES),
+                          name_func=full_name_func)
     def test_element_setattr(self, elem_name, attr_name, value):
         item = RssItem()
         elem = getattr(item, elem_name)
         setattr(elem, attr_name, value)
         self.assertEqual(getattr(elem, attr_name), value)
 
-    @parameterized.expand((str(elem_name), str(attr_name), value)
-                          for elem_name, elem_descr in RssItem().elements.items()
-                          for attr_name in elem_descr.attrs
-                          for value in ATTR_VALUES)
+    @parameterized.expand(((str(elem_name), str(attr_name), value)
+                           for elem_name, elem_descr in RssItem().elements.items()
+                           for attr_name in elem_descr.attrs
+                           for value in ATTR_VALUES),
+                          name_func=full_name_func)
     def test_attribute_setattr_from_cls(self, elem_name, attr_name, value):
         item = RssItem()
         elem = getattr(item, elem_name)
