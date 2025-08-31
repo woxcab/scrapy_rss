@@ -371,13 +371,22 @@ class RssTestCase(UnorderedXmlTestCase):
     def assertRssElementEqualsToValue(self, element, value, msg=None):
         if isinstance(value, Element):
             raise NotImplemented
-        self.assertEqual(getattr(element, str(element.content_name)), value, msg)
+        if value is None:
+            self.assertFalse(element.assigned)
+        elif not element.content_name:
+            raise ValueError("Element <{}> does not have content attribute, "
+                             "so it's uncomparable with simple value <{!r}>"
+                             .format(element.__class__.__name__, value))
+        else:
+            self.assertEqual(getattr(element, str(element.content_name)), value, msg)
 
     def assertMultipleRssElementsEqualsToValues(self, multiple_element, values, msg=None):
         if isinstance(values, Element):
             raise NotImplemented
         if len(multiple_element) == 1:
             self.assertRssElementEqualsToValue(multiple_element, values, msg)
+        elif values is None:
+            self.assertEqual(0, len(multiple_element.elements))
         else:
             self.assertSequenceEqual([getattr(elem, str(elem.content_name)) for elem in multiple_element], values, msg)
 

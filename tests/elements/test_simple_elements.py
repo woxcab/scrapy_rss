@@ -135,7 +135,7 @@ class TestSimpleElements(RssTestCase):
                           name_func=full_name_func)
     def test_item_properties_v1(self, elem, elem_name, value):
         item = RssItem()
-        if set(elem.required_attrs) - ({elem.content_name} or set()):
+        if value is not None and set(elem.required_attrs) - ({elem.content_name} or set()):
             with six.assertRaisesRegex(self, ValueError, 'Could not assign value'):
                 setattr(item, elem_name, value)
         else:
