@@ -43,10 +43,10 @@ class TestImport:
         new_element = getattr(new_module, item_element_cls)
         assert old_element is new_element
 
-    def test_exporters(self):
+    def test_exporters_module(self):
         from scrapy_rss.exporters import RssItemExporter
 
-    def test_items(self):
+    def test_items_module(self):
         from scrapy_rss.items import RssItem
         from scrapy_rss.items import FeedItem
         from scrapy_rss.items import RssedItem
@@ -54,7 +54,7 @@ class TestImport:
         from scrapy_rss.rss.items import FeedItem
         from scrapy_rss.rss.items import RssedItem
 
-    def test_meta(self):
+    def test_meta_package(self):
         from scrapy_rss.meta import BaseNSComponent
         from scrapy_rss.meta import NSComponentName
         from scrapy_rss.meta import ElementAttribute
@@ -64,12 +64,17 @@ class TestImport:
         from scrapy_rss.meta import ItemMeta
         from scrapy_rss.meta import FeedItem
 
+    def test_rss_package(self):
+        from scrapy_rss.rss import ChannelElement
+        from scrapy_rss.rss import RssItem
+        from scrapy_rss.rss import RssedItem
+
     @pytest.mark.parametrize('old_cls_name,new_cls_name,args',
                              [('ItemElementAttribute', 'ElementAttribute', []),
                               ('ItemElementMeta', 'ElementMeta', ['some_name', (), {}]),
                               ('ItemElement', 'Element', []),
                               ('ExtendableItem', 'FeedItem', [])])
-    def test_old_meta(self, old_cls_name, new_cls_name, args):
+    def test_old_meta_package(self, old_cls_name, new_cls_name, args):
         module = import_module('scrapy_rss.meta')
         old_cls = getattr(module, old_cls_name)
         new_cls = getattr(module, new_cls_name)
@@ -77,10 +82,10 @@ class TestImport:
         with pytest.warns(DeprecationWarning, match='Use {} class'.format(new_cls_name)):
             old_cls(*args)
 
-    def test_pipelines(self):
+    def test_pipelines_module(self):
         from scrapy_rss.pipelines import RssExportPipeline
 
-    def test_utils(self):
+    def test_utils_module(self):
         from scrapy_rss.utils import format_rfc822
         from scrapy_rss.utils import deprecated_module
         from scrapy_rss.utils import deprecated_class
