@@ -61,8 +61,8 @@ class ElementMeta(type):
         cls_attrs.update({comp_name.priv_name: comp_descr
                           for comp_name, comp_descr in chain(elem_attrs.items(), children.items())})
         cls_attrs.update({comp_name.pub_name:
-                          property(mcs.build_component_getter(comp_name),
-                                   mcs.build_component_setter(comp_name))
+                          property(_build_component_getter(comp_name),
+                                   _build_component_setter(comp_name))
                           for comp_name in chain(elem_attrs, children)})
 
         return super(ElementMeta, mcs).__new__(mcs, cls_name, cls_bases, cls_attrs)
@@ -110,70 +110,6 @@ class ElementMeta(type):
         if name in mcs._blacklisted_comp_names:
             raise InvalidComponentNameError(name)
         return name
-
-    @staticmethod
-    def build_component_getter(name):
-        """
-        Build attribute getter
-
-        Parameters
-        ----------
-        name : NSComponentName
-            name of an attribute or child element
-        """
-        def getter(self):
-            component = getattr(self, name.priv_name)
-            return component.value if isinstance(component, ElementAttribute) else component
-        return getter
-
-    @staticmethod
-    def build_component_setter(name):
-        """
-        Build attribute or element setter
-
-        Parameters
-        ----------
-        name : NSComponentName
-            name of an attribute or child element
-        """
-
-        def setter(self, value):
-            component = getattr(self, name.priv_name)
-            if value is None:
-                component.clear()
-            elif isinstance(component, ElementAttribute):
-                if isinstance(value, ElementAttribute):
-                    raise InvalidAttributeValueError(name, value)
-                component.value = value
-            elif any('{}.{}'.format(cls.__module__,
-                                    cls.__name__) == 'scrapy_rss.meta.element.MultipleElements'
-                     for cls in component.__class__.mro()):  # isinstance(component, MultipleElements)
-                component.clear()
-                component.add(value)
-            elif isinstance(value, component.__class__):
-                setattr(self, name.priv_name, value)
-                self._children[name] = value
-            elif any('{}.{}'.format(cls.__module__,
-                                    cls.__name__) == 'scrapy_rss.meta.element.Element'
-                     for cls in value.__class__.mro()):  # isinstance(value, Element)
-                raise InvalidElementValueError(name, component.__class__, value)
-            elif isinstance(value, Mapping):
-                new_value = component.__class__(**value)
-                setattr(self, name.priv_name, new_value)
-                self._children[name] = new_value
-            elif (component.content_name
-                  and (not component.required_attrs
-                       or len(component.required_attrs) == 1
-                           and component.content_name in component.required_attrs)):
-                setattr(component, component.content_name.pub_name, value)
-            elif len(component.children) == 1 and not component.required_attrs:
-                child_name = next(iter(component.children))
-                setattr(component, str(child_name), value)
-            else:
-                raise InvalidElementValueError(name, component.__class__, value)
-            self._assigned = value is not None
-
-        return setter
 
 
 @six.add_metaclass(ElementMeta)
@@ -474,6 +410,66 @@ class MultipleElements(Element):
         for elem in self.elements:
             namespaces.update(elem.get_namespaces(assigned_only))
         return namespaces
+
+
+def _build_component_getter(name):
+    """
+    Build attribute or child element getter
+
+    Parameters
+    ----------
+    name : NSComponentName
+        name of an attribute or child element
+    """
+    def getter(self):
+        component = getattr(self, name.priv_name)
+        return component.value if isinstance(component, ElementAttribute) else component
+    return getter
+
+
+def _build_component_setter(name):
+    """
+    Build attribute or child element setter
+
+    Parameters
+    ----------
+    name : NSComponentName
+        name of an attribute or child element
+    """
+
+    def setter(self, value):
+        component = getattr(self, name.priv_name)
+        if value is None:
+            component.clear()
+        elif isinstance(component, ElementAttribute):
+            if isinstance(value, ElementAttribute):
+                raise InvalidAttributeValueError(name, value)
+            component.value = value
+        elif isinstance(component, MultipleElements):
+            component.clear()
+            component.add(value)
+        elif isinstance(value, component.__class__):
+            setattr(self, name.priv_name, value)
+            self._children[name] = value
+        elif isinstance(value, Element):
+            raise InvalidElementValueError(name, component.__class__, value)
+        elif isinstance(value, Mapping):
+            new_value = component.__class__(**value)
+            setattr(self, name.priv_name, new_value)
+            self._children[name] = new_value
+        elif (component.content_name
+              and (not component.required_attrs
+                   or len(component.required_attrs) == 1
+                       and component.content_name in component.required_attrs)):
+            setattr(component, component.content_name.pub_name, value)
+        elif len(component.children) == 1 and not component.required_attrs:
+            child_name = next(iter(component.children))
+            setattr(component, str(child_name), value)
+        else:
+            raise InvalidElementValueError(name, component.__class__, value)
+        self._assigned = value is not None
+
+    return setter
 
 
 # backward compatibility
