@@ -14,7 +14,6 @@ from parameterized import parameterized
 import six
 from lxml import etree
 from packaging.version import Version
-from frozendict import frozendict
 
 import scrapy
 from scrapy import signals
@@ -103,11 +102,13 @@ class FullRssItemExporter(RssItemExporter):
                  category='some category',
                  generator='tester',
                  docs='http://example.com/rss_docs',
-                 cloud=frozendict({'domain': 'rpc.sys.com',
-                        'port': '80',
-                        'path': '/RPC2',
-                        'registerProcedure': 'myCloud.rssPleaseNotify',
-                        'protocol': 'xml-rpc'}),
+                 cloud=FrozenDict({
+                     'domain': 'rpc.sys.com',
+                     'port': '80',
+                     'path': '/RPC2',
+                     'registerProcedure': 'myCloud.rssPleaseNotify',
+                     'protocol': 'xml-rpc'
+                 }),
                  ttl=60,
                  image=channel_elements.ImageElement(url='http://example.com/img.jpg',
                                                      title='Some image title',

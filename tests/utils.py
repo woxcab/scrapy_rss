@@ -389,5 +389,3 @@ class RssTestCase(UnorderedXmlTestCase):
             self.assertEqual(0, len(multiple_element.elements))
         else:
             self.assertSequenceEqual([getattr(elem, str(elem.content_name)) for elem in multiple_element], values, msg)
-
-
