@@ -264,7 +264,8 @@ class UnorderedXmlTestCase(XmlTestCase):
                 'Given: {given}\n'
                 'Expected: {expected}'
                 .format(excepted_elements=excepted_elements,
-                        given=etree.tostring(data), expected=etree.tostring(expected)))
+                        given=etree.tostring(data, encoding='utf-8').decode('utf-8'),
+                        expected=etree.tostring(expected, encoding='utf-8').decode('utf-8')))
 
     def assertXmlDocument(self, data):
         data = self._str_to_bytes(data)

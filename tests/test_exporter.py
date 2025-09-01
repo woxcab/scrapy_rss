@@ -400,7 +400,7 @@ class TestExporting(RssTestCase):
                             else:
                                 item_tree = etree.fromstring(item_f.read())
                                 feed_channel.extend(item_tree.xpath('//item'))
-                expected = etree.tostring(feed_tree).decode('utf-8')
+                expected = etree.tostring(feed_tree, encoding='utf-8').decode('utf-8')
                 expected = expected.replace('</channel>', raw_items_text + '\n</channel>')
                 with open(feed_settings['feed_file']) as data:
                     self.assertUnorderedXmlEquivalentOutputs(data.read(), expected)
