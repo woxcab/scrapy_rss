@@ -7,9 +7,9 @@ from itertools import chain
 import six
 
 try:
-    from collections.abc import Mapping
+    from collections.abc import Mapping, Iterable
 except ImportError:
-    from collections import Mapping
+    from collections import Mapping, Iterable
 
 from .attribute import ElementAttribute
 from .nscomponent import BaseNSComponent, NSComponentName
@@ -256,7 +256,7 @@ class Element(BaseNSComponent):
 
 class MultipleElements(Element):
     """
-    Represents elements of the same base class
+    Represents sibling elements of the same base class
     """
 
     def __init__(self, base_element_cls, **kwargs):
@@ -294,8 +294,8 @@ class MultipleElements(Element):
 
         Parameters
         ----------
-        elem : Element or { str : Any }
-            New element as element instance or dictionary of attributes' values
+        elem : Element or Mapping[str, Any]
+            New element as Element instance or mapping of components' values {name: value}
         """
         self.elements.append(self._check_value(elem))
         self._assigned = True
@@ -306,8 +306,8 @@ class MultipleElements(Element):
 
         Parameters
         ----------
-        iterable : iterable of (Element or { str : Any })
-            Iterable of elements as element instances or dictionaries of attributes' values
+        iterable : Iterable[Element or Mapping[str, Any]]
+            Iterable of elements as Element instances or mapping of components' values {name: value}
         """
         for elem in iterable:
             self.append(elem)
@@ -318,8 +318,8 @@ class MultipleElements(Element):
 
         Parameters
         ----------
-        value : Element or { str : Any } or iterable of (Element or { str : Any })
-            New element(s) as element instance(s) or dictionary(-ies) of attributes' values
+        value : Element or Mapping[str, Any] or Iterable[Element or Mapping[str, Any]]
+            New element(s) as element instance(s) or mapping(s) of components' values {name: value}
         """
         if isinstance(value, (list, tuple)):
             self.extend(value)
