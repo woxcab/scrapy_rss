@@ -141,7 +141,7 @@ def main(docker_logfile, pytest_logfile):
                             summary.append(line)
                         pytest_logger.write(line)
                     elif re.search(r'(__ summary __|: (OK|FAIL).*=setup.*\+cmd)', line):
-                        summary_title = '\n' + ' summary '.center(80, '#') + '\n'
+                        summary_title = os.linesep + ' SUMMARY '.center(80, '=') + os.linesep
                         summary_reached = True
                         if ' FAIL ' in line:
                             failed = True
@@ -158,6 +158,9 @@ def main(docker_logfile, pytest_logfile):
                                env=sysenv,
                                stdout=docker_logfile, text=True, bufsize=1)
                 raise e from e
+
+        pytest_logger.write(os.linesep + os.linesep)
+
 
     if summary_title:
         pytest_logger.write(summary_title)
