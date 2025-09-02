@@ -152,7 +152,7 @@ ARG GROUPID
 ARG WORKDIR
 RUN dnf -y update && \
     dnf -y install make automake gcc gcc-c++ kernel-devel gnupg ca-certificates libffi-devel libxml2-devel libxslt-devel python3.14 python3.14-devel && \
-    python3.13 /get-pip.py && rm -f /get-pip.py && \
+    python3.14 /get-pip.py && rm -f /get-pip.py && \
     groupadd -g $GROUPID -o $UNAME && \
     useradd -m -u $USERID -g $GROUPID -s /bin/bash $UNAME
 RUN pip install --disable-pip-version-check tox
