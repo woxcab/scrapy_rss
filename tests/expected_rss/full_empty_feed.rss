@@ -8,8 +8,8 @@
         <copyright>Data</copyright>
         <managingEditor>m@dot.com (Manager Name)</managingEditor>
         <webMaster>web@dot.com (Webmaster Name)</webMaster>
-        <pubDate>Tue, 01 Feb 2000 00:10:30 </pubDate>
-        <lastBuildDate>Tue, 01 Feb 2000 05:10:30 </lastBuildDate>
+        <pubDate>Tue, 01 Feb 2000 00:10:30 +0300</pubDate>
+        <lastBuildDate>Tue, 01 Feb 2000 05:10:30 +0300</lastBuildDate>
         <generator>tester</generator>
         <category>some category</category>
         <docs>http://example.com/rss_docs</docs>

@@ -30,6 +30,7 @@ from scrapy_rss.items import RssItem, FeedItem
 from scrapy_rss.meta import Element, ElementAttribute
 from scrapy_rss.exceptions import *
 from scrapy_rss.exporters import RssItemExporter
+from scrapy_rss.utils import get_tzlocal
 
 import pytest
 from tests.predefined_items import PredefinedItems
@@ -97,8 +98,8 @@ class FullRssItemExporter(RssItemExporter):
                  copyright='Data',
                  managing_editor='m@dot.com (Manager Name)',
                  webmaster='web@dot.com (Webmaster Name)',
-                 pubdate=datetime(2000, 2, 1, 0, 10, 30),
-                 last_build_date=datetime(2000, 2, 1, 5, 10, 30),
+                 pubdate=datetime(2000, 2, 1, 0, 10, 30, tzinfo=get_tzlocal()),
+                 last_build_date=datetime(2000, 2, 1, 5, 10, 30, tzinfo=get_tzlocal()),
                  category='some category',
                  generator='tester',
                  docs='http://example.com/rss_docs',

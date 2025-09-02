@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import locale
+from datetime import datetime
 import functools
 import warnings
 
@@ -25,6 +26,14 @@ def format_rfc822(date):
     date = date.strftime('%a, %d %b %Y %H:%M:%S %z')
     locale.setlocale(locale.LC_TIME, orig_locale)
     return date
+
+def get_tzlocal():
+    try:
+        tzlocal = datetime.now().astimezone().tzinfo
+    except (ValueError, TypeError):
+        from dateutil.tz import tzlocal
+        tzlocal = tzlocal()
+    return tzlocal
 
 
 def deprecated_class(reason):

@@ -6,15 +6,13 @@ from operator import itemgetter
 
 from packaging import version
 from datetime import datetime
-from dateutil.tz import tzlocal
-import six
 import scrapy
 from scrapy.exporters import XmlItemExporter
 
 from .items import RssItem
 from .rss.channel import ChannelElement
-from .utils import format_rfc822
 from .exceptions import *
+from .utils import get_tzlocal
 from . import meta
 
 
@@ -67,8 +65,7 @@ class RssItemExporter(XmlItemExporter):
             raise ValueError('webmaster field must contain at least e-mail. Passed: {}'.format(webmaster))
         self.channel.webMaster = webmaster
         self.channel.pubDate = pubdate
-        self.channel.lastBuildDate = (last_build_date if last_build_date
-                                              else datetime.today().replace(tzinfo=tzlocal()))
+        self.channel.lastBuildDate = last_build_date if last_build_date else datetime.now(get_tzlocal())
         self.channel.category = category
         self.channel.generator = generator
         self.channel.docs = docs
