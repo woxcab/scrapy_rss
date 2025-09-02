@@ -73,6 +73,22 @@ class PredefinedItems(object):
             el_prefix2__elem2 = NSItem2(ns_uri="el_id2")
             elem3 = NSItem3(ns_uri="el_id2")
 
+        UnicodeElement0 = type("UnicodeElement0", (Element,), {
+            'název_atributu1': ElementAttribute(ns_prefix='předpona1', ns_uri='id01', required=True),
+            'předpona2__název_atributu2': ElementAttribute(ns_uri='id02', required=True),
+            'název_prvek3': ElementAttribute(required=True, is_content=True),
+        })
+        UnicodeElement1 = type("UnicodeElement1", (Element,), {
+            'ё_имя_атр1': ElementAttribute(ns_prefix='префикс1', ns_uri='id11', required=True),
+            'имя_атр2': ElementAttribute(required=True, is_content=True),
+            'имя_атр3': ElementAttribute(required=True),
+        })
+        UnicodeItem = type("UnicodeItem", (RssItem,), {
+            'název_elementu1': UnicodeElement0(required=True, ns_prefix='префиксё', ns_uri='id1'),
+            'имя_элем2': UnicodeElement1(required=True, ns_prefix='předpona', ns_uri='id2'),
+        })
+
+
         PredefinedItems.NSItem0 = NSItem0
         PredefinedItems.NSItem1 = NSItem1
         PredefinedItems.NSItem2 = NSItem2
@@ -116,6 +132,19 @@ class PredefinedItems(object):
         item_with_enclosure.enclosure.url = 'http://example.com/content'
         item_with_enclosure.enclosure.length = 0
         item_with_enclosure.enclosure.type = 'text/plain'
+
+        unicode_item = UnicodeItem()
+        unicode_item.title = 'Заголовок. Název položky'
+        setattr(unicode_item, 'název_elementu1', {
+            'název_atributu1': 'význam 1',
+            'předpona2__název_atributu2': 'význam 2',
+            'název_prvek3': 157
+        })
+        setattr(unicode_item, 'имя_элем2', {
+            'ё_имя_атр1': 'Ёжик',
+            'имя_атр2': 'Лиса и ёжик',
+            'имя_атр3': 0
+        })
 
         nested_item0 = NSItemNested0()
         nested_item1 = NSItemNested1()
@@ -203,6 +232,7 @@ class PredefinedItems(object):
             'item_with_same_ns_prefixes': item_with_same_ns_prefixes,
             'item_with_default_nses': item_with_default_nses,
             'item_with_non_unique_ns_attrs': item_with_non_unique_ns_attrs,
+            'unicode_item': unicode_item,
             'nested_item0': nested_item0,
             'nested_item1': nested_item1,
             'nested_item2': nested_item2,

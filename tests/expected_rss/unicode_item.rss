@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0">
+    <channel>
+        <title>Title</title>
+        <link>http://example.com/feed</link>
+        <description>Description</description>
+        <item xmlns:префиксё="id1"
+              xmlns:předpona1="id01"
+              xmlns:předpona2="id02"
+              xmlns:předpona="id2"
+              xmlns:префикс1="id11">
+            <title>Заголовок. Název položky</title>
+            <префиксё:název_elementu1 předpona1:název_atributu1="význam 1" předpona2:název_atributu2="význam 2">157</префиксё:název_elementu1>
+            <předpona:имя_элем2 префикс1:ё_имя_атр1="Ёжик" имя_атр3="0">Лиса и ёжик</předpona:имя_элем2>
+        </item>
+    </channel>
+</rss>
