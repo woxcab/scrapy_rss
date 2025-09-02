@@ -196,9 +196,16 @@ class Element(BaseNSComponent):
                            "Constructor of class '{}' supports only the next named arguments: {}"
                            .format(list(kwargs.keys()), self.__class__.__name__,
                                    [str(a) for a in chain(self.attrs, self.children)]))
+
     @property
     def required(self):
         return self._required
+
+    @property
+    def settings(self):
+        settings = super(Element, self).settings
+        settings['required'] = self._required
+        return settings
 
     def __repr__(self):
         s_match = re.match(r'^[^(]+\((.*?)\)$', super(Element, self).__repr__())
@@ -271,6 +278,10 @@ class MultipleElements(Element):
         def serializer():
             raise NotImplementedError('Class MultipleElements does not support serialization')
         self.serialize = serializer
+
+    def settings(self):
+        settings = super(MultipleElements, self).settings
+        settings['base_element_cls'] = self.base_element_cls
 
     def _check_value(self, value):
         if not self._kwargs.get("ns_prefix") and self.ns_prefix:
@@ -449,12 +460,17 @@ def _build_component_setter(name):
             component.clear()
             component.add(value)
         elif isinstance(value, component.__class__):
+            if not component.is_compatible_with(value):
+                raise InvalidElementValueError(name, component.__class__, value,
+                                               msg="Value class or its attributes are incompatible.")
             setattr(self, name.priv_name, value)
             self._children[name] = value
         elif isinstance(value, Element):
             raise InvalidElementValueError(name, component.__class__, value)
         elif isinstance(value, Mapping):
-            new_value = component.__class__(**value)
+            args = component.settings
+            args.update(value)
+            new_value = component.__class__(**args)
             setattr(self, name.priv_name, new_value)
             self._children[name] = new_value
         elif (component.content_name

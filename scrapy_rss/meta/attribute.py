@@ -54,6 +54,14 @@ class ElementAttribute(BaseNSComponent):
     def assigned(self):
         return self.value is not None
 
+    @property
+    def settings(self):
+        settings = super(ElementAttribute, self).settings
+        settings['required'] = self.__required
+        settings['is_content'] = self.__is_content
+        settings['serializer'] = self.serializer
+        return settings
+
     def clear(self):
         self.value = None
 

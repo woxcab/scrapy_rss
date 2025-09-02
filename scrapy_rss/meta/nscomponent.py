@@ -95,6 +95,37 @@ class BaseNSComponent(object):
             raise ValueError("Namespace URI is already non-empty")
         self._ns_uri = ns_uri
 
+    @property
+    def settings(self):
+        """
+        Component settings that're defined on initialization.
+
+        Returns
+        -------
+        dict[str, any]
+        Dictionary of settings where keys match the constructor arguments
+
+        """
+        return {'ns_prefix': self._ns_prefix, 'ns_uri': self._ns_uri}
+
+    def is_compatible_with(self, other):
+        """
+        Check other component compatibility for assignment to this instance
+
+        Parameters
+        ----------
+        other : any
+
+        Returns
+        -------
+        bool
+        Whether other value is compatible with this instance for assignment
+
+        """
+        return (isinstance(other, self.__class__)
+                and all(getattr(other, s) == getattr(self, s)
+                        for s, v in self.settings.items()))
+
     def __repr__(self):
         return "{}(ns_prefix={!r}, ns_uri={!r})"\
             .format(self.__class__.__name__, self._ns_prefix, self._ns_uri)

@@ -23,16 +23,18 @@ class InvalidAttributeValueError(ValueError):
 
 
 class InvalidElementValueError(ValueError):
-    def __init__(self, elem_name, elem_cls, value):
+    def __init__(self, elem_name, elem_cls, value, msg=None):
         self.elem_name = elem_name
         self.elem_cls = elem_cls
         self.value = value
+        self.msg = msg
 
     def __str__(self):
-        return ("Could not assign value <{value}> to element <{elem_name}> of class <{elem_cls}>. "
+        msg = ": {}.".format(self.msg) if self.msg else "."
+        return ("Could not assign value <{value}> to element <{elem_name}> of class {elem_cls}{msg} "
                 "For attributes modification use properties: element.attribute_name = attribute_value. "
                 "For multiple allowed elements use list: category_element = ['cat1', 'cat2', 'cat3']"
-                .format(value=self.value, elem_name=self.elem_name, elem_cls=self.elem_cls))
+                .format(value=self.value, msg=msg, elem_name=self.elem_name, elem_cls=self.elem_cls))
 
 
 class InvalidFeedItemError(ValueError):
