@@ -18,11 +18,11 @@ from ..utils import deprecated_class, deprecated_func
 
 
 class ElementMeta(type):
-    _blacklisted_comp_names = {
+    _blacklisted_comp_names = frozenset((
         '_attrs', 'attrs', '_children', 'children', '_required_attrs', 'required_attrs',
         '_required_children', 'required_children', '_content_name', 'content_name',
         '_required', 'required', '_assigned', 'assigned', 'base_element_cls'
-    }
+    ))
 
     def __new__(mcs, cls_name, cls_bases, cls_attrs):
         for comp_name, comp_value in cls_attrs.items():
