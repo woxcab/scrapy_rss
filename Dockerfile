@@ -34,7 +34,7 @@ ARG GROUPID
 ARG WORKDIR
 RUN apt-get update && \
     locale-gen en_US.UTF-8 && \
-    apt-get install -y libffi-dev libssl-dev python3 python3-dev python3-lxml python3-dateutil && \
+    apt-get install -y libffi-dev libssl-dev python3 python3-dev python3-lxml && \
     groupadd -g $GROUPID -o $UNAME && \
     useradd -m -u $USERID -g $GROUPID -o -s /bin/bash $UNAME
 ENV LANG=en_US.UTF-8
@@ -42,7 +42,7 @@ ENV LANGUAGE=en_US:en
 ENV LC_ALL=en_US.UTF-8
 RUN python3 get-pip.py --no-setuptools --no-wheel "pip < 19.2" && rm -f get-pip.py && \
     pip3 install --disable-pip-version-check incremental==17.5.0 setuptools==39.2.0 && \
-    pip3 install --disable-pip-version-check tox==3.8.3 virtualenv==16.0.0 filelock==3.0.12 py==1.8.0 pluggy==0.12.0 pyparsing==2.4.1.1 packaging==19.0 importlib-resources==1.0.2 importlib-metadata==0.18 pathlib2==2.3.4 Automat==0.7.0 apipkg==1.5 PyDispatcher==2.0.5 PyHamcrest==1.9.0 Twisted==19.2.0 asn1crypto==0.24.0 atomicwrites==1.3.0 attrs==19.1.0 cffi==1.12.3 constantly==15.1.0 coverage==4.5.3 cryptography==2.7 cssselect==1.0.3 frozendict==1.2 hyperlink==19.0.0 idna==2.8 more-itertools==7.2.0 parsel==1.5.1 pyOpenSSL==19.0.0 pyasn1==0.4.5 pyasn1-modules==0.2.5 pytest==4.6.4 pytest-cov==2.7.1 queuelib==1.5.0 scandir==1.10.0 service-identity==18.1.0 six==1.12.0 w3lib==1.20.0 wcwidth==0.1.7 xmlunittest==0.5.0 zipp==0.5.2 zope.interface==4.6.0
+    pip3 install --disable-pip-version-check tox==3.8.3 virtualenv==16.0.0 filelock==3.0.12 py==1.8.0 pluggy==0.12.0 pyparsing==2.4.1.1 packaging==19.0 importlib-resources==1.0.2 importlib-metadata==0.18 pathlib2==2.3.4 Automat==0.7.0 apipkg==1.5 PyDispatcher==2.0.5 PyHamcrest==1.9.0 Twisted==19.2.0 asn1crypto==0.24.0 atomicwrites==1.3.0 attrs==19.1.0 cffi==1.12.3 constantly==15.1.0 coverage==4.5.3 cryptography==2.7 cssselect==1.0.3 frozendict==1.2 hyperlink==19.0.0 idna==2.8 more-itertools==7.2.0 parsel==1.5.1 pyOpenSSL==19.0.0 pyasn1==0.4.5 pyasn1-modules==0.2.5 pytest==4.6.4 pytest-cov==2.7.1 python-dateutil==2.8.2 queuelib==1.5.0 scandir==1.10.0 service-identity==18.1.0 six==1.12.0 w3lib==1.20.0 wcwidth==0.1.7 xmlunittest==0.5.0 zipp==0.5.2 zope.interface==4.6.0
 USER $UNAME
 WORKDIR $WORKDIR
 
@@ -54,12 +54,12 @@ ARG USERID
 ARG GROUPID
 ARG WORKDIR
 RUN apk update && \
-    apk add build-base python3 python3-dev openssl-dev py3-lxml py3-cryptography py3-cffi py3-dateutil py3-pytest && \
+    apk add build-base python3 python3-dev openssl-dev py3-lxml py3-cryptography py3-cffi py3-pytest && \
     addgroup -g $GROUPID $UNAME && \
     adduser -u $USERID -S -s /bin/sh $UNAME $UNAME 
 RUN python3 get-pip.py --no-setuptools --no-wheel "pip < 21" && rm -f get-pip.py && \
     pip3 install --disable-pip-version-check setuptools==28.8.0 && \
-    pip3 install --disable-pip-version-check distlib==0.3.7 filelock==3.2.1 idna==2.2 importlib-metadata==2.1.3 importlib-resources==3.2.1 lxml==3.6.4 packaging==20.9 platformdirs==2.0.2 pluggy==0.13.1 py==1.4.31 pyasn1==0.1.9 pycparser==2.14 pyparsing==2.4.7 pytest==3.0.3 six==1.16.0 toml==0.10.2 tox==3.28.0 virtualenv==20.15.1 zipp==1.2.0 wheel==0.37.1
+    pip3 install --disable-pip-version-check distlib==0.3.7 filelock==3.2.1 idna==2.2 importlib-metadata==2.1.3 importlib-resources==3.2.1 lxml==3.6.4 packaging==20.9 platformdirs==2.0.2 pluggy==0.13.1 py==1.4.31 pyasn1==0.1.9 pycparser==2.14 pyparsing==2.4.7 pytest==3.0.3 python-dateutil==2.8.2 six==1.16.0 toml==0.10.2 tox==3.28.0 virtualenv==20.15.1 zipp==1.2.0 wheel==0.37.1
 USER $UNAME
 WORKDIR $WORKDIR
 

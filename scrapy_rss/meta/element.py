@@ -91,10 +91,10 @@ class ElementMeta(type):
                 break
         cls.content_name = property(lambda self: self._content_name)
         # backward compatibility
-        cls.content_arg = property(deprecated_func(
-            lambda self: self._content_name,
-            'Property <content_arg> is deprecated, use property <content_name> instead.'
-        ))
+        cls.content_arg = property(
+            deprecated_func('Property <content_arg> is deprecated, use property <content_name> instead.')
+                (lambda self: self._content_name)
+        )
 
         cls.serialize_attrs = lambda self: {
             attr_name.xml_name: attr.serializer(attr.value)

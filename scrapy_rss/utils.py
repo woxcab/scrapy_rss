@@ -35,14 +35,14 @@ def deprecated_class(reason):
     """
 
     if not isinstance(reason, six.string_types):
-        raise TypeError('Unsupported type: ' + repr(type(reason)))
+        raise TypeError('Unsupported reason type: ' + repr(type(reason)))
 
     def decorator(wrapped):
         old_new1 = wrapped.__new__
         wrapped_name = wrapped.__name__
 
         def wrapped_cls(cls, *args, **kwargs):
-            msg = "Class {name} is deprecated. {reason}".format(name=wrapped_name, reason=reason)
+            msg = "Class <{name}> is deprecated. {reason}".format(name=wrapped_name, reason=reason)
             warnings.simplefilter('always', DeprecationWarning)  # turn off filter
             warnings.warn(msg, category=DeprecationWarning, stacklevel=2)
             warnings.simplefilter('default', DeprecationWarning)  # reset filter
@@ -57,17 +57,19 @@ def deprecated_class(reason):
 
     return decorator
 
-def deprecated_func(func, reason):
+def deprecated_func(reason):
     if not isinstance(reason, six.string_types):
-        raise TypeError('Unsupported type: ' + repr(type(reason)))
+        raise TypeError('Unsupported reason type: ' + repr(type(reason)))
 
-    @functools.wraps(func)
-    def new_func(*args, **kwargs):
-        warnings.simplefilter('always', DeprecationWarning)  # turn off filter
-        warnings.warn(reason, category=DeprecationWarning, stacklevel=2)
-        warnings.simplefilter('default', DeprecationWarning)  # reset filter
-        return func(*args, **kwargs)
-    return new_func
+    def decorator(func):
+        @functools.wraps(func)
+        def new_func(*args, **kwargs):
+            warnings.simplefilter('always', DeprecationWarning)  # turn off filter
+            warnings.warn(reason, category=DeprecationWarning, stacklevel=2)
+            warnings.simplefilter('default', DeprecationWarning)  # reset filter
+            return func(*args, **kwargs)
+        return new_func
+    return decorator
 
 
 def deprecated_module(reason):
