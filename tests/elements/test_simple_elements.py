@@ -220,7 +220,7 @@ class TestSimpleElements(RssTestCase):
                 self.assertEqual(el, getattr(el, str(el.content_arg)))
             self.assertEqual(el, value)
         else:
-            with six.assertRaisesRegex(self, ValueError, 'does not support unnamed arguments',
+            with six.assertRaisesRegex(self, ValueError, 'does not support unnamed non-mapping arguments',
                                          msg="Invalid attribute was passed to '{}' initializer "
                                              "(element must not have content)".format(elem_cls.__name__)):
                 elem_cls(value)

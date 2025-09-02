@@ -157,19 +157,27 @@ class Element(BaseNSComponent):
         """
         if len(args) > 1:
             raise ValueError("Constructor of class '{}' supports only single unnamed argument "
-                             "that is interpreted as content of element".format(self.__class__.__name__))
+                             "that is interpreted as content of this element or its child"
+                             .format(self.__class__.__name__))
         self._required = kwargs.pop('required', False)
         if args:
-            if isinstance(args[0], Mapping):
-                new_dict = {k: v for k, v in args[0].items()}
+            arg = args[0]
+            if isinstance(arg, Element):
+                raise NotImplementedError("Initialization from another <Element> instance is not supported")
+            if isinstance(arg, Mapping):
+                new_dict = {k: v for k, v in arg.items()}
                 new_dict.update(kwargs)
                 kwargs = new_dict
-                args = tuple()
-            elif not self.content_name:
-                raise ValueError("Element of type '{}' does not support unnamed arguments (no content)"
+            elif self.content_name:
+                if str(self.content_name) not in kwargs:
+                    kwargs[str(self.content_name)] = arg
+            elif not self._attrs and len(self._children) == 1:
+                kwargs[str(next(iter(self._children)))] = arg
+            else:
+                raise ValueError("Element of type '{}' does not support unnamed non-mapping arguments "
+                                 "(no content attribute, another attribute exists or no single child)"
                                  .format(self.__class__.__name__))
-            elif str(self.content_name) not in kwargs:
-                kwargs[str(self.content_name)] = args[0]
+            args = tuple()
 
         new_attrs = {}
         new_children = {}
