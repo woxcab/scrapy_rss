@@ -136,9 +136,9 @@ RUN git clone https://github.com/pyenv/pyenv.git ~/.pyenv && \
     echo 'eval "$(pyenv init --path)"' >> ~/.profile && \
     echo 'eval "$(pyenv init -)"' >> ~/.profile && \
     source ~/.profile && \
-    for v in 3.6 3.7 3.8 3.9 3.10 3.11 3.12 3.13; do pyenv install "$v:latest"; done && \
+    for v in 3.9 3.10 3.11 3.12 3.13; do pyenv install "$v:latest"; done && \
     pyenv versions --bare | tee ~/.pyenv/version .python-version && \
-    for v in 3.6 3.7 3.8 3.9 3.10 3.11 3.12 3.13; do pip$v install -U pip; done && \
+    for v in 3.9 3.10 3.11 3.12 3.13; do pip$v install -U pip; done && \
     pip3.9 install tox
 ENTRYPOINT ["/bin/runcmd"]
 CMD ["echo", "py3 is built"]
