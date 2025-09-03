@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 
 import unittest
-from itertools import product, combinations
+from itertools import product, combinations, combinations_with_replacement
 from parameterized import parameterized
 
 from scrapy_rss.meta import Element, ElementAttribute
 from tests.elements import ATTR_VALUES
 
-from tests.utils import RssTestCase
+from tests.utils import RssTestCase, full_name_func
 
 
 
@@ -165,6 +165,21 @@ class TestInheritance(RssTestCase):
             child = getattr(elem, elem_name)
             actual_value = getattr(child, str(child.content_name))
             self.assertEqual(expected_value, actual_value)
+
+    @parameterized.expand((
+        (base_cls, derived_cls, base_args, derived_args)
+        for base_cls, derived_cls in combinations([Element, Element3, Element4, Element5], 2)
+        for base_args, derived_args in combinations_with_replacement(
+            [{'required': r, 'ns_prefix': ns[0], 'ns_uri': ns[1]}
+             for r, ns in product([True, False], [('', ''), ('prefix', 'id')])],
+        2)
+    ), name_func=full_name_func)
+    def test_compatibility_with_derived(self, base_cls, derived_cls, base_args, derived_args):
+        self.assertTrue(issubclass(derived_cls, base_cls))
+        base_elem = base_cls(**base_args)
+        derived_elem = derived_cls(**derived_args)
+        self.assertFalse(base_elem.compatible_with(derived_elem))
+        self.assertFalse(derived_elem.compatible_with(base_elem))
 
 
 if __name__ == "__main__":

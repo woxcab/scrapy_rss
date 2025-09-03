@@ -2,17 +2,19 @@
 
 import unittest
 from parameterized import parameterized
-from itertools import chain
+from itertools import chain, product, combinations_with_replacement
+from functools import partial
 import pytest
 import six
 
+from tests import predefined_items
 from tests.utils import RssTestCase, get_dict_attr, full_name_func
 from tests.elements import NS_ATTRS, NS_ELEM_NAMES, ATTR_VALUES
 
 from scrapy_rss.items import RssItem
 from scrapy_rss.exceptions import InvalidComponentNameError, InvalidAttributeValueError
 from scrapy_rss.rss.item_elements import *
-from scrapy_rss.meta import ElementAttribute, Element, MultipleElements, FeedItem
+from scrapy_rss.meta import BaseNSComponent, NSComponentName, ElementAttribute, Element, MultipleElements, FeedItem
 
 
 class TestSimpleElements(RssTestCase):
@@ -284,6 +286,71 @@ class TestSimpleElements(RssTestCase):
                 elem_cls = type('Element0', (base_elem_cls,), {comp_name: comp_cls()})
         else:
             elem_cls = type('Element0', (base_elem_cls,), {comp_name: comp_cls()})
+
+    @parameterized.expand(((cls,) for cls in [
+        BaseNSComponent,
+        partial(NSComponentName, name='name'),
+        ElementAttribute,
+        Element,
+        FeedItem,
+        RssItem,
+        predefined_items.NSItem4,
+        predefined_items.NSItemFullNested,
+        type('DerivedElement', (Element,), {}),
+        partial(MultipleElements, base_element_cls=Element),
+    ]), name_func=full_name_func)
+    def test_settings_immutability(self, comp_cls):
+        comp = comp_cls()
+        settings1 = comp.settings
+        settings2 = comp.settings
+        self.assertEqual(settings1, settings2)
+        self.assertIsNot(settings1, settings2)
+        settings2['bla'] = True
+        self.assertNotEqual(settings1, settings2)
+
+        new_comp = comp_cls(**settings1)
+        settings3 = new_comp.settings
+        self.assertEqual(settings1, settings3)
+        self.assertIsNot(settings1, settings3)
+
+
+    @parameterized.expand((
+        (comp_cls, first_args, second_args)
+        for comp_cls, args in [
+            (BaseNSComponent, [{'ns_prefix': '', 'ns_uri': ''}, {'ns_prefix': 'prefix', 'ns_uri': 'id'}]),
+            (NSComponentName, [{'name': name, 'ns_prefix': ns[0], 'ns_uri': ns[1]}
+                               for name, ns in product(['name 1', 'name 2'],
+                                                       [('', ''), ('prefix', 'id')])]),
+            (ElementAttribute, [{'required': r, 'is_content': c, 'serializer': s,
+                                 'ns_prefix': ns[0], 'ns_uri': ns[1]}
+                                for r, c, s, ns in product([True, False], [True, False], [str, format_rfc822],
+                                                           [('', ''), ('prefix', 'id')])
+                                if not (c and ns[1])]),
+            (Element, [{'required': r, 'ns_prefix': ns[0], 'ns_uri': ns[1]}
+                       for r, ns in product([True, False], [('', ''), ('prefix', 'id')])]),
+            (FeedItem, [{'required': r, 'ns_prefix': ns[0], 'ns_uri': ns[1]}
+                        for r, ns in product([True, False], [('', ''), ('prefix', 'id')])]),
+            (RssItem, [{'required': r, 'ns_prefix': ns[0], 'ns_uri': ns[1]}
+                       for r, ns in product([True, False], [('', ''), ('prefix', 'id')])]),
+            (predefined_items.NSItem4, [{'required': r, 'ns_prefix': ns[0], 'ns_uri': ns[1]}
+                                        for r, ns in product([True, False], [('', ''), ('prefix', 'id')])]),
+            (predefined_items.NSItemFullNested, [{'required': r, 'ns_prefix': ns[0], 'ns_uri': ns[1]}
+                                                 for r, ns in product([True, False], [('', ''), ('prefix', 'id')])]),
+            (type('DerivedElement', (Element,), {}), [{'required': r, 'ns_prefix': ns[0], 'ns_uri': ns[1]}
+                                                      for r, ns in product([True, False], [('', ''), ('prefix', 'id')])]),
+            (MultipleElements, [{'required': r, 'base_element_cls': b, 'ns_prefix': ns[0], 'ns_uri': ns[1]}
+                                for r, b, ns in product([True, False],
+                                                        [Element, predefined_items.NSElement4],
+                                                        [('', ''), ('prefix', 'id')])]),
+        ]
+        for first_args, second_args in combinations_with_replacement(args, 2)
+    ), name_func=full_name_func)
+    def test_components_compatibility(self, comp_cls, first_args, second_args):
+        first_comp = comp_cls(**first_args)
+        second_comp = comp_cls(**second_args)
+        assert_bool = getattr(self, 'assertTrue' if first_args == second_args else 'assertFalse')
+        assert_bool(first_comp.compatible_with(second_comp))
+        assert_bool(second_comp.compatible_with(first_comp))
 
 
 if __name__ == "__main__":

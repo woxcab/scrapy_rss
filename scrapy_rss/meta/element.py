@@ -287,9 +287,11 @@ class MultipleElements(Element):
             raise NotImplementedError('Class MultipleElements does not support serialization')
         self.serialize = serializer
 
+    @property
     def settings(self):
         settings = super(MultipleElements, self).settings
         settings['base_element_cls'] = self.base_element_cls
+        return settings
 
     def _check_value(self, value):
         if not self._kwargs.get("ns_prefix") and self.ns_prefix:
@@ -468,7 +470,7 @@ def _build_component_setter(name):
             component.clear()
             component.add(value)
         elif isinstance(value, component.__class__):
-            if not component.is_compatible_with(value):
+            if not component.compatible_with(value):
                 raise InvalidElementValueError(name, component.__class__, value,
                                                msg="Value class or its attributes are incompatible.")
             setattr(self, name.priv_name, value)

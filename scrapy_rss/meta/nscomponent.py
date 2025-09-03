@@ -103,12 +103,12 @@ class BaseNSComponent(object):
         Returns
         -------
         dict[str, any]
-        Dictionary of settings where keys match the constructor arguments
+            Dictionary of settings where keys match the constructor arguments
 
         """
         return {'ns_prefix': self._ns_prefix, 'ns_uri': self._ns_uri}
 
-    def is_compatible_with(self, other):
+    def compatible_with(self, other):
         """
         Check other component compatibility for assignment to this instance
 
@@ -122,7 +122,7 @@ class BaseNSComponent(object):
         Whether other value is compatible with this instance for assignment
 
         """
-        return (isinstance(other, self.__class__)
+        return (self.__class__ == getattr(other, '__class__', None)
                 and all(getattr(other, s) == getattr(self, s)
                         for s, v in self.settings.items()))
 
@@ -171,6 +171,12 @@ class NSComponentName(BaseNSComponent):
         else:
             self._public_fullname = name
         self._private_fullname = '__{}'.format(self._public_fullname) 
+
+    @property
+    def settings(self):
+        settings = super(NSComponentName, self).settings
+        settings['name'] = self._name
+        return settings
 
     @property
     def name(self):
