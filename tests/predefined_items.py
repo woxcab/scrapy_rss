@@ -3,98 +3,107 @@ from scrapy_rss.meta import Element, ElementAttribute
 from scrapy_rss import RssItem
 
 
+class NSElement0(Element):
+    attr01 = ElementAttribute(ns_prefix="prefix01", ns_uri="id01")
+
+
+class NSElement1(Element):
+    prefix11__attr11 = ElementAttribute(ns_uri="id11")
+    prefix12__attr12 = ElementAttribute(ns_prefix="prefix12", ns_uri="id12")
+
+
+class NSElement2(Element):
+    attr21 = ElementAttribute(is_content=True)
+    pseudo_prefix22__attr22 = ElementAttribute(ns_prefix="prefix22", ns_uri="id22")
+
+
+class NSElement3(Element):
+    attr31 = ElementAttribute(is_content=True)
+    attr32 = ElementAttribute(ns_prefix="prefixa", ns_uri="id32")
+
+
+class NSElement4(Element):
+    attr41 = ElementAttribute()
+    prefix42__attr41 = ElementAttribute(ns_uri="id42")
+
+
+class NSItem0(RssItem):
+    elem0 = Element()
+    elem1 = NSElement0(ns_prefix="el_prefix1", ns_uri="el_id1")
+    el_prefix2__elem2 = NSElement1(ns_uri="el_id2")
+    el_prefix3__elem3 = NSElement2(ns_prefix="el_prefix3", ns_uri="el_id3")
+    el_pseudo_prefix4__elem4 = NSElement0(ns_prefix="el_prefix4", ns_uri="el_id4")
+
+
+class NSItem1(RssItem):
+    elem1 = NSElement0(ns_prefix="el_prefix1", ns_uri="el_id1")
+    el_prefix__elem2 = NSElement1(ns_uri="el_id2")
+    elem3 = NSElement2(ns_prefix="el_prefix", ns_uri="el_id3")
+    el_pseudo_prefix4__elem4 = NSElement0(ns_prefix="el_prefix4", ns_uri="el_id4")
+
+
+class NSItem2(RssItem):
+    elem1 = NSElement3(ns_prefix="prefix", ns_uri="el_id1")
+    prefix__elem2 = NSElement3(ns_uri="el_id2")
+    elem3 = NSElement3(ns_prefix="prefix", ns_uri="el_id3")
+    el_pseudo_prefix4__elem4 = NSElement3(ns_prefix="prefix", ns_uri="el_id4")
+
+
+class NSItem3(RssItem):
+    elem1 = NSElement3(ns_uri="el_id1")
+    elem2 = NSElement3(ns_uri="el_id2")
+    elem3 = NSElement3(ns_prefix="prefix", ns_uri="el_id3")
+    el_pseudo_prefix4__elem3 = NSElement3(ns_prefix="prefix2", ns_uri="el_id4")
+    elem4 = NSElement4()
+    elem5 = NSElement4()
+
+
+class NSItem4(NSItem1):
+    attr1 = ElementAttribute(ns_prefix="attr_prefix", ns_uri="attr_id1", required=True)
+    attr2 = ElementAttribute(ns_prefix="el_prefix", ns_uri="attr_id2", required=True)
+
+
+class NSItemNested0(RssItem):
+    elem = NSItem0()
+
+
+class NSItemNested1(RssItem):
+    elem = NSItem1(ns_prefix="el_prefix", ns_uri="el_id")
+
+
+class NSItemNested2(RssItem):
+    el_prefix__elem = NSItem2(ns_uri="el_id")
+
+
+class NSItemNested3(RssItem):
+    el_pseudo_prefix__elem = NSItem3(ns_prefix="el_prefix", ns_uri="el_id")
+
+
+class NSItemFullNested(RssItem):
+    elem0 = NSItem0()
+    elem1 = NSItem1(ns_prefix="el_prefix1", ns_uri="el_id1")
+    el_prefix2__elem2 = NSItem2(ns_uri="el_id2")
+    elem3 = NSItem3(ns_uri="el_id2")
+
+
+UnicodeElement0 = type("UnicodeElement0", (Element,), {
+    'název_atributu1': ElementAttribute(ns_prefix='předpona1', ns_uri='id01', required=True),
+    'předpona2__název_atributu2': ElementAttribute(ns_uri='id02', required=True),
+    'název_prvek3': ElementAttribute(required=True, is_content=True),
+})
+UnicodeElement1 = type("UnicodeElement1", (Element,), {
+    'ё_имя_атр1': ElementAttribute(ns_prefix='префикс1', ns_uri='id11', required=True),
+    'имя_атр2': ElementAttribute(required=True, is_content=True),
+    'имя_атр3': ElementAttribute(required=True),
+})
+UnicodeItem = type("UnicodeItem", (RssItem,), {
+    'název_elementu1': UnicodeElement0(required=True, ns_prefix='префиксё', ns_uri='id1'),
+    'имя_элем2': UnicodeElement1(required=True, ns_prefix='předpona', ns_uri='id2'),
+})
+
+
 class PredefinedItems(object):
     def __init__(self, *args, **kwargs):
-        class NSElement0(Element):
-            attr01 = ElementAttribute(ns_prefix="prefix01", ns_uri="id01")
-
-        class NSElement1(Element):
-            prefix11__attr11 = ElementAttribute(ns_uri="id11")
-            prefix12__attr12 = ElementAttribute(ns_prefix="prefix12", ns_uri="id12")
-
-        class NSElement2(Element):
-            attr21 = ElementAttribute(is_content=True)
-            pseudo_prefix22__attr22 = ElementAttribute(ns_prefix="prefix22", ns_uri="id22")
-
-        class NSElement3(Element):
-            attr31 = ElementAttribute(is_content=True)
-            attr32 = ElementAttribute(ns_prefix="prefixa", ns_uri="id32")
-
-        class NSElement4(Element):
-            attr41 = ElementAttribute()
-            prefix42__attr41 = ElementAttribute(ns_uri="id42")
-
-        class NSItem0(RssItem):
-            elem0 = Element()
-            elem1 = NSElement0(ns_prefix="el_prefix1", ns_uri="el_id1")
-            el_prefix2__elem2 = NSElement1(ns_uri="el_id2")
-            el_prefix3__elem3 = NSElement2(ns_prefix="el_prefix3", ns_uri="el_id3")
-            el_pseudo_prefix4__elem4 = NSElement0(ns_prefix="el_prefix4", ns_uri="el_id4")
-
-        class NSItem1(RssItem):
-            elem1 = NSElement0(ns_prefix="el_prefix1", ns_uri="el_id1")
-            el_prefix__elem2 = NSElement1(ns_uri="el_id2")
-            elem3 = NSElement2(ns_prefix="el_prefix", ns_uri="el_id3")
-            el_pseudo_prefix4__elem4 = NSElement0(ns_prefix="el_prefix4", ns_uri="el_id4")
-
-        class NSItem2(RssItem):
-            elem1 = NSElement3(ns_prefix="prefix", ns_uri="el_id1")
-            prefix__elem2 = NSElement3(ns_uri="el_id2")
-            elem3 = NSElement3(ns_prefix="prefix", ns_uri="el_id3")
-            el_pseudo_prefix4__elem4 = NSElement3(ns_prefix="prefix", ns_uri="el_id4")
-
-        class NSItem3(RssItem):
-            elem1 = NSElement3(ns_uri="el_id1")
-            elem2 = NSElement3(ns_uri="el_id2")
-            elem3 = NSElement3(ns_prefix="prefix", ns_uri="el_id3")
-            el_pseudo_prefix4__elem3 = NSElement3(ns_prefix="prefix2", ns_uri="el_id4")
-            elem4 = NSElement4()
-            elem5 = NSElement4()
-
-        class NSItem4(NSItem1):
-            attr1 = ElementAttribute(ns_prefix="attr_prefix", ns_uri="attr_id1", required=True)
-            attr2 = ElementAttribute(ns_prefix="el_prefix", ns_uri="attr_id2", required=True)
-
-        class NSItemNested0(RssItem):
-            elem = NSItem0()
-
-        class NSItemNested1(RssItem):
-            elem = NSItem1(ns_prefix="el_prefix", ns_uri="el_id")
-
-        class NSItemNested2(RssItem):
-            el_prefix__elem = NSItem2(ns_uri="el_id")
-
-        class NSItemNested3(RssItem):
-            el_pseudo_prefix__elem = NSItem3(ns_prefix="el_prefix", ns_uri="el_id")
-
-        class NSItemFullNested(RssItem):
-            elem0 = NSItem0()
-            elem1 = NSItem1(ns_prefix="el_prefix1", ns_uri="el_id1")
-            el_prefix2__elem2 = NSItem2(ns_uri="el_id2")
-            elem3 = NSItem3(ns_uri="el_id2")
-
-        UnicodeElement0 = type("UnicodeElement0", (Element,), {
-            'název_atributu1': ElementAttribute(ns_prefix='předpona1', ns_uri='id01', required=True),
-            'předpona2__název_atributu2': ElementAttribute(ns_uri='id02', required=True),
-            'název_prvek3': ElementAttribute(required=True, is_content=True),
-        })
-        UnicodeElement1 = type("UnicodeElement1", (Element,), {
-            'ё_имя_атр1': ElementAttribute(ns_prefix='префикс1', ns_uri='id11', required=True),
-            'имя_атр2': ElementAttribute(required=True, is_content=True),
-            'имя_атр3': ElementAttribute(required=True),
-        })
-        UnicodeItem = type("UnicodeItem", (RssItem,), {
-            'název_elementu1': UnicodeElement0(required=True, ns_prefix='префиксё', ns_uri='id1'),
-            'имя_элем2': UnicodeElement1(required=True, ns_prefix='předpona', ns_uri='id2'),
-        })
-
-
-        PredefinedItems.NSItem0 = NSItem0
-        PredefinedItems.NSItem1 = NSItem1
-        PredefinedItems.NSItem2 = NSItem2
-        PredefinedItems.NSItem3 = NSItem3
-        PredefinedItems.NSItem4 = NSItem4
-
         minimal_item = RssItem()
         minimal_item.title = 'Title of minimal item'
 

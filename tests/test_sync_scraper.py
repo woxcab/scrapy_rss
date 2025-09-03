@@ -5,7 +5,7 @@ from scrapy.crawler import Crawler
 from scrapy.core.scraper import Scraper
 
 from scrapy_rss.items import RssItem, FeedItem, RssedItem
-from tests.predefined_items import PredefinedItems
+from tests import predefined_items
 
 if Version(scrapy.__version__) < Version('2.13'):
     class TestSyncScraper:
@@ -23,9 +23,9 @@ if Version(scrapy.__version__) < Version('2.13'):
             scraper.open_spider(spider)
             scraper.crawler.spider = spider
 
-            NSItem0 = PredefinedItems.NSItem0
-            NSItem1 = PredefinedItems.NSItem1
-            NSItem2 = PredefinedItems.NSItem2
+            NSItem0 = predefined_items.NSItem0
+            NSItem1 = predefined_items.NSItem1
+            NSItem2 = predefined_items.NSItem2
 
             dummy_params = (None,) * 3
             scraper._process_spidermw_output(RssItem(), *dummy_params)

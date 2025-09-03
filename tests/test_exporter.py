@@ -33,7 +33,7 @@ from scrapy_rss.exporters import RssItemExporter
 from scrapy_rss.utils import get_tzlocal
 
 import pytest
-from tests.predefined_items import PredefinedItems
+from tests import predefined_items
 from tests.utils import RssTestCase, FrozenDict
 
 if Version(scrapy.__version__) >= Version('2.13'):
@@ -148,11 +148,11 @@ class FeedSettings(TemporaryDirectory):
         return feed_settings
 
 
-predefined_items = PredefinedItems()
-NSItem0 = PredefinedItems.NSItem0
-NSItem1 = PredefinedItems.NSItem1
-NSItem2 = PredefinedItems.NSItem2
-NSItem3 = PredefinedItems.NSItem3
+initialized_items = predefined_items.PredefinedItems()
+NSItem0 = predefined_items.NSItem0
+NSItem1 = predefined_items.NSItem1
+NSItem2 = predefined_items.NSItem2
+NSItem3 = predefined_items.NSItem3
 
 
 class TestExporting(RssTestCase):
@@ -327,7 +327,7 @@ class TestExporting(RssTestCase):
                 with CrawlerContext(crawler_settings=crawler_settings, **feed_settings):
                     pass
 
-    @parameterized.expand(predefined_items.items.items())
+    @parameterized.expand(initialized_items.items.items())
     def test_single_item_in_the_feed(self, item_name, item):
         with FeedSettings() as feed_settings:
             class SuperItem(FeedItem):
@@ -348,7 +348,7 @@ class TestExporting(RssTestCase):
                                        'expected_rss', '{}.rss'.format(item_name))) as expected:
                     self.assertUnorderedXmlEquivalentOutputs(data=data.read(), expected=expected.read())
 
-    @parameterized.expand(predefined_items.ns_items)
+    @parameterized.expand(initialized_items.ns_items)
     def test_single_ns_item_in_the_feed(self, item_name, namespaces, item_cls, item):
         with FeedSettings() as feed_settings:
             class SuperItem(FeedItem):
@@ -389,7 +389,7 @@ class TestExporting(RssTestCase):
                 feed_tree = etree.fromstring(feed_f.read())
                 feed_channel = feed_tree.xpath('//channel')[0]
                 with CrawlerContext(**feed_settings) as context:
-                    for item_name, item in predefined_items.items.items():
+                    for item_name, item in initialized_items.items.items():
                         context.ipm.process_item(item, context.spider)
                         with open(os.path.join(os.path.dirname(__file__),
                                                'expected_rss', '{}.rss'.format(item_name)), 'rb') as item_f:
@@ -408,7 +408,7 @@ class TestExporting(RssTestCase):
 
     def test_ns_items_in_the_single_feed(self):
         with FeedSettings() as feed_settings:
-            base_filename, item_cls, _ = predefined_items.ns_items_of_same_cls[0]
+            base_filename, item_cls, _ = initialized_items.ns_items_of_same_cls[0]
             with open(os.path.join(os.path.dirname(__file__),
                                    'expected_rss', '{}.rss'.format(base_filename)), 'rb') as feed_f:
                 feed_tree = etree.fromstring(feed_f.read())
@@ -418,7 +418,7 @@ class TestExporting(RssTestCase):
                 crawler_settings = dict(CrawlerContext.default_settings)
                 crawler_settings['FEED_ITEM_CLS'] = item_cls
                 with CrawlerContext(crawler_settings=crawler_settings, **feed_settings) as context:
-                    for item_name, item_cls, item in predefined_items.ns_items_of_same_cls:
+                    for item_name, item_cls, item in initialized_items.ns_items_of_same_cls:
                         context.ipm.process_item(item, context.spider)
                         with open(os.path.join(os.path.dirname(__file__),
                                                'expected_rss', '{}.rss'.format(item_name)), 'rb') as item_f:
