@@ -31,7 +31,7 @@ class InvalidElementValueError(ValueError):
 
     def __str__(self):
         msg = ": {}.".format(self.msg) if self.msg else "."
-        return ("Could not assign value <{value}> to element <{elem_name}> of class {elem_cls}{msg} "
+        return ("Could not assign value {value!r} to element <{elem_name}> of class {elem_cls}{msg} "
                 "For attributes modification use properties: element.attribute_name = attribute_value. "
                 "For multiple allowed elements use list: category_element = ['cat1', 'cat2', 'cat3']"
                 .format(value=self.value, msg=msg, elem_name=self.elem_name, elem_cls=self.elem_cls))
@@ -52,15 +52,15 @@ class InvalidFeedItemComponentsError(ValueError):
         self.element = element
 
     def __str__(self):
-        attrs_list = ''
-        elems_list = ''
+        req_attrs = ''
+        req_elems = ''
         if self.element.required_attrs:
-            attrs_list = 'attributes: ' + ", ".join(map(str, self.element.required_attrs))
+            req_attrs = 'required attributes: ' + ", ".join(map(str, self.element.required_attrs))
         if self.element.required_children:
-            elems_list = ", ".join(map(str, self.element.required_children))
+            req_elems = 'required children: ' + ", ".join(map(str, self.element.required_children))
 
-        return ("One or more required components of feed element '{}' are not set: {}"
-                .format(self.element, ", ".join(filter(bool, [attrs_list, elems_list])))
+        return ("Missing one or more required components of feed element '{}': {}"
+                .format(self.element, "; ".join(filter(bool, [req_attrs, req_elems])))
         )
 
 
