@@ -3,6 +3,7 @@ import os
 import re
 from datetime import datetime
 from itertools import chain, combinations
+from functools import partial
 
 from scrapy_rss.rss import channel_elements
 
@@ -276,46 +277,177 @@ class TestExporting(RssTestCase):
                 with CrawlerContext(crawler_settings=crawler_settings, **feed_settings):
                     pass
 
-    def test_item_validation(self):
+    def test_item_validation1(self):
+        item = RssItem()
         with FeedSettings() as feed_settings:
-            invalid_item = RssItem()
-            invalid_item.enclosure.url = 'http://example.com/content'
-
             with six.assertRaisesRegex(self, InvalidFeedItemComponentsError,
-                                       r'required components .*? not set'):
+                                       r'Missing one or more required components'):
                 with CrawlerContext(**feed_settings) as context:
-                    context.ipm.process_item(invalid_item, context.spider)
+                    context.ipm.process_item(item, context.spider)
 
-            class NonStandardElement(Element):
-                first_attribute = ElementAttribute(required=True, is_content=True)
-                second_attribute = ElementAttribute(required=True)
+            item.title = 'Title'
+            self.assertTrue(item.is_valid())
+            with CrawlerContext(**feed_settings) as context:
+                context.ipm.process_item(item, context.spider)
 
-            class NonStandardItem(RssItem):
-                element = NonStandardElement()
+            item.enclosure.url = 'http://example.com/content'
+            with six.assertRaisesRegex(self, InvalidFeedItemComponentsError,
+                                       r'Missing one or more required components'):
+                with CrawlerContext(**feed_settings) as context:
+                    context.ipm.process_item(item, context.spider)
 
-            invalid_item = NonStandardItem()
+
+
+    def test_item_validation2(self):
+        class NonStandardElement(Element):
+            first_attribute = ElementAttribute(required=True, is_content=True)
+            second_attribute = ElementAttribute(required=True)
+
+        class NonStandardItem(RssItem):
+            element = NonStandardElement()
+
+        with FeedSettings() as feed_settings:
+            item = NonStandardItem(title='Title')
+            self.assertTrue(item.is_valid())
+            with CrawlerContext(**feed_settings) as context:
+                context.ipm.process_item(item, context.spider)
+
             with six.assertRaisesRegex(self, InvalidElementValueError, 'Could not assign'):
-                invalid_item.element = 'valid value'
-            invalid_item.element.first_attribute = 'valid value'
+                item.element = 'valid value'
 
+            item.element.first_attribute = 'valid value'
             with six.assertRaisesRegex(self, InvalidFeedItemComponentsError,
-                                       r'required components .*? not set'):
+                                       r'Missing one or more required components'):
                 with CrawlerContext(**feed_settings) as context:
-                    context.ipm.process_item(invalid_item, context.spider)
+                    context.ipm.process_item(item, context.spider)
 
-            class InvalidSuperItem1(FeedItem):
-                pass
+    def test_item_validation3(self):
+        class InvalidSuperItem1(FeedItem):
+            pass
 
-            class InvalidSuperItem2(FeedItem):
-                field = scrapy.Field()
+        class InvalidSuperItem2(FeedItem):
+            field = scrapy.Field()
 
-            class InvalidSuperItem3(FeedItem):
-                rss = scrapy.Field()
+        class InvalidSuperItem3(FeedItem):
+            rss = scrapy.Field()
 
+        with FeedSettings() as feed_settings:
             for invalid_item_cls in (InvalidSuperItem1, InvalidSuperItem2, InvalidSuperItem3):
-                with six.assertRaisesRegex(self, InvalidFeedItemError, "Item must have 'rss'"):
+                with six.assertRaisesRegex(self, InvalidFeedItemError, "Item must have 'rss'",
+                                           msg=str(invalid_item_cls)):
                     with CrawlerContext(**feed_settings) as context:
                         context.ipm.process_item(invalid_item_cls(), context.spider)
+
+
+    def test_item_validation4(self):
+        class Element0(Element):
+            attr = ElementAttribute()
+
+        class Item10(RssItem):
+            req_attr = ElementAttribute(required=True)
+
+        ValidItem10 = partial(Item10, {'req_attr': 0})
+
+
+        class Element10(Element):
+            attr = ElementAttribute()
+            req_attr = ElementAttribute(required=True)
+
+        class Item11(RssItem):
+            elem = Element10()
+
+        InvalidItem11 = partial(Item11, {'elem': {'attr': 1}})
+        ValidItem11 = partial(Item11, {'elem': {'req_attr': True}})
+
+
+        class Item20(RssItem):
+            req_elem = Element(required=True)
+
+
+        class Element20(Element):
+            attr = ElementAttribute()
+            req_elem = Element0(required=True)
+
+        class Item21(RssItem):
+            elem = Element20()
+
+        InvalidItem21 = partial(Item21, {'elem': {'attr': 1}})
+        ValidItem21 = partial(Item21, {'elem': {'attr': 1, 'req_elem': {'attr': 'value'}}})
+
+
+        class Item3(RssItem):
+            req_attr = ElementAttribute(required=True)
+            req_elem = Element(required=True)
+
+
+        with FeedSettings() as feed_settings:
+            for item_cls in (Item10, InvalidItem11, Item20, InvalidItem21, Item3):
+                with six.assertRaisesRegex(self, InvalidFeedItemComponentsError,
+                                           "Missing one or more required components",
+                                           msg=str(item_cls)):
+                    with CrawlerContext(**feed_settings) as context:
+                        context.ipm.process_item(item_cls(title='Title'), context.spider)
+            for item_cls in (ValidItem10, Item11, ValidItem11, Item21, ValidItem21):
+                item = item_cls(title='Title')
+                self.assertTrue(item.is_valid())
+                with CrawlerContext(**feed_settings) as context:
+                    context.ipm.process_item(item, context.spider)
+
+    def test_item_validation5(self):
+        class Element0(Element):
+            attr = ElementAttribute()
+
+        class Element1(Element):
+            attr0 = ElementAttribute()
+            elem0 = Element0(required=True)
+
+        class Element2(Element):
+            elem1 = Element1()
+
+        class Item0(RssItem):
+            elem2 = Element2()
+
+        item1 = Item0()
+        self.assertFalse(item1.is_valid())
+
+        item1.description = 'Description'
+        self.assertTrue(item1.is_valid())
+        item1.elem2.elem1.attr0 = 'value'
+        self.assertFalse(item1.is_valid())
+        item1.elem2.elem1.elem0.attr = 5
+        self.assertTrue(item1.is_valid())
+
+        item2 = Item0({'title': 'Title', 'elem2': {'elem1': {'attr0': -5}}})
+        self.assertFalse(item2.is_valid())
+
+        item3 = Item0({'title': 'Title', 'elem2': {'elem1': {'elem0': {'attr': 0}}}})
+        self.assertTrue(item3.is_valid())
+
+    def test_item_validation6(self):
+        class Element1(Element):
+            attr1 = ElementAttribute()
+            attr2 = ElementAttribute(required=True)
+
+        class Element2(Element):
+            elem1 = Element1()
+
+        class Item1(RssItem):
+            elem2 = Element2()
+
+        item4 = Item1()
+        self.assertFalse(item4.is_valid())
+        item4.description = 'Description'
+        self.assertTrue(item4.is_valid())
+        item4.elem2.elem1.attr1 = 'value'
+        self.assertFalse(item4.is_valid())
+        item4.elem2.elem1.attr2 = False
+        self.assertTrue(item4.is_valid())
+
+        item5 = Item1({'description': 'Description', 'elem2': {'elem1': {'attr1': -5}}})
+        self.assertFalse(item5.is_valid())
+
+        item6 = Item1({'description': 'Description', 'elem2': {'elem1': {'attr2': -5}}})
+        self.assertTrue(item6.is_valid())
 
     @parameterized.expand(zip([scrapy.Item, BaseItem, dict]))
     def test_bad_item_cls(self, item_cls):

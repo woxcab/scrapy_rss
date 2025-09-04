@@ -241,7 +241,7 @@ class Element(BaseNSComponent):
         return (
             not self.required and not self.assigned
             or all(getattr(self, comp_name.priv_name).assigned
-                   for comp_name in chain(self.required_attrs))
+                   for comp_name in chain(self.required_attrs, self.required_children))
                 and all(child.is_valid() for child in self._children.values())
         )
 
