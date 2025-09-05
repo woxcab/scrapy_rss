@@ -86,6 +86,30 @@ class ImageDescriptionElement(meta.Element):
     description = meta.ElementAttribute(is_content=True)
 
 class ImageElement(meta.Element):
+    """
+    Specifies a GIF, JPEG or PNG image that can be displayed with the channel.
+
+    Attributes
+    ----------
+    url
+        The URL of a GIF, JPEG or PNG image that represents the channel.
+    title
+        Describes the image, it's used in the ALT attribute of the HTML <img> tag
+        when the channel is rendered in HTML.
+
+        By default, it equals to channel title.
+    link
+        The URL of the site, when the channel is rendered, the image is a link to the site.
+
+        By default, it equals to channel link.
+    width
+        The width of the image in pixels. Maximum value for width is 144, default value is 88.
+    height
+        The height of the image in pixels. Maximum value for height is 400, default value is 31.
+    description
+        Contains text that is included in the TITLE attribute of the link
+        formed around the image in the HTML rendering.
+    """
     url = ImageUrlElement(required=True)
     title = ImageTitleElement(required=True)
     link = ImageLinkElement(required=True)
@@ -111,6 +135,20 @@ class TextInputLinkElement(meta.Element):
     link = meta.ElementAttribute(required=True, is_content=True)
 
 class TextInputElement(meta.Element):
+    """
+    Specifies a text input box that can be displayed with the channel.
+
+    Attributes
+    ----------
+    title
+        The label of the Submit button in the text input area.
+    description
+        Explains the text input area.
+    name
+        The name of the text object in the text input area.
+    link
+        The URL of the CGI script that processes text input requests.
+    """
     title = TextInputTitleElement(required=True)
     description = TextInputDescriptionElement(required=True)
     name = TextInputNameElement(required=True)

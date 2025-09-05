@@ -29,12 +29,37 @@ class CommentsElement(meta.Element):
 
 
 class EnclosureElement(meta.Element):
+    """
+    Describes a media object that is attached to the item.
+
+    Attributes
+    ----------
+    url
+        HTTP URL where the enclosure is located.
+    length
+        How big it is in bytes.
+    type
+        A standard MIME type.
+    """
     url = meta.ElementAttribute(required=True)
     length = meta.ElementAttribute(required=True)
     type = meta.ElementAttribute(required=True)
 
 
 class GuidElement(meta.Element):
+    """
+    Indicates when the item was published.
+
+    Attributes
+    ----------
+    guid
+        A string that uniquely identifies the item
+    isPermaLink
+        A boolean. If its value is `false`, the guid may not be assumed to be a url,
+        or a url to anything in particular.
+
+        By default, it equals to `true`.
+    """
     isPermaLink = meta.ElementAttribute(required=False, serializer=lambda v: str(v).lower(), value=False)
     guid = meta.ElementAttribute(required=True, is_content=True)
 
