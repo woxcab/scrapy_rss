@@ -371,7 +371,7 @@ class RssTestCase(UnorderedXmlTestCase):
 
     def assertRssElementEqualsToValue(self, element, value, msg=None):
         if isinstance(value, Element):
-            raise NotImplemented
+            raise NotImplementedError
         if value is None:
             self.assertFalse(element.assigned)
         elif not element.content_name:
@@ -383,7 +383,7 @@ class RssTestCase(UnorderedXmlTestCase):
 
     def assertMultipleRssElementsEqualsToValues(self, multiple_element, values, msg=None):
         if isinstance(values, Element):
-            raise NotImplemented
+            raise NotImplementedError
         if len(multiple_element) == 1:
             self.assertRssElementEqualsToValue(multiple_element, values, msg)
         elif values is None:
