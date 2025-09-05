@@ -276,6 +276,17 @@ class TestExporting(RssTestCase):
                 with CrawlerContext(crawler_settings=crawler_settings, **feed_settings):
                     pass
 
+            class BadRssItemExporter(RssItemExporter):
+                def __init__(self, *args, **kwargs):
+                    super(BadRssItemExporter, self).__init__(*args, **kwargs)
+                    self.channel = scrapy.Item()
+
+            crawler_settings['FEED_EXPORTER'] = BadRssItemExporter
+            with six.assertRaisesRegex(self, ValueError, 'Argument element must be instance of <Element>'):
+                with CrawlerContext(crawler_settings=crawler_settings, **feed_settings):
+                    pass
+
+
     def test_item_validation1(self):
         item = RssItem()
         with FeedSettings() as feed_settings:
