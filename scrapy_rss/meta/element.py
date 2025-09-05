@@ -478,8 +478,8 @@ def _build_component_setter(name):
         elif isinstance(value, Element):
             raise InvalidElementValueError(name, component.__class__, value)
         elif isinstance(value, Mapping):
-            args = component.settings
-            args.update(value)
+            args = dict(**value)
+            args.update(component.settings)
             new_value = component.__class__(**args)
             setattr(self, name.priv_name, new_value)
             self._children[name] = new_value

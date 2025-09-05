@@ -201,6 +201,25 @@ class TestNestedElements(RssTestCase):
                 current_element = getattr(current_element, component)
             self.assertEqual(values[path_idx], getattr(current_element, path[-1]))
 
+    @parameterized.expand(
+        (required1, ns1[0], ns1[1], required2, ns2[0], ns2[1])
+        for (required1, required2), (ns1, ns2) in product(product([True, False], repeat=2),
+                                                          product([('', ''), ('prefix', 'id')], repeat=2))
+    )
+    def test_init_from_dict_settings_immutability(self, required1, ns_prefix1, ns_uri1, required2, ns_prefix2, ns_uri2):
+        class Element0(meta.Element):
+            attr = meta.ElementAttribute(is_content=True)
+
+        class Element1(meta.Element):
+            elem1 = Element0(ns_prefix=ns_prefix1, ns_uri=ns_uri1, required=required1)
+
+        elem = Element1()
+        elem.elem1 = {'ns_prefix': ns_prefix2, 'ns_uri': ns_uri2, 'required': required2, 'attr': 5}
+        self.assertEqual(ns_prefix1, elem.elem1.ns_prefix)
+        self.assertEqual(ns_uri1, elem.elem1.ns_uri)
+        self.assertEqual(required1, elem.elem1.required)
+        self.assertEqual(5, elem.elem1.attr)
+
     @parameterized.expand((attr_path, value)
                           for attr_path in ATTRIBUTES_PATHS
                           for value in ATTR_VALUES)
