@@ -15,7 +15,7 @@ from lxml import etree
 from xmlunittest import XmlTestCase
 from parameterized import parameterized
 
-from scrapy_rss.meta import Element, MultipleElements
+from scrapy_rss.meta import Element, MultipleElements, NSComponentName
 from scrapy_rss.items import RssItem
 
 try:
@@ -135,6 +135,8 @@ def full_name_func(func, num, params):
     for p in params.args:
         if isinstance(p, six.string_types):
             s = p
+        elif isinstance(p, NSComponentName):
+            s = str(p)
         elif hasattr(p, '__name__'):
             s = p.__name__
         elif hasattr(p, '__class__') and type(p).__module__ not in ('builtins', '__builtin__'):
