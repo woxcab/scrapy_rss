@@ -113,7 +113,6 @@ class FullRssItemExporter(RssItemExporter):
                  }),
                  ttl=60,
                  image=channel_elements.ImageElement(url='http://example.com/img.jpg',
-                                                     title='Some image title',
                                                      width=54),
                  rating=4.0,
                  text_input=channel_elements.TextInputElement(title='Input title',

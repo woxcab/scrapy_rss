@@ -17,7 +17,7 @@
         <ttl>60</ttl>
         <image>
             <url>http://example.com/img.jpg</url>
-            <title>Some image title</title>
+            <title>Title</title>
             <link>http://example.com/feed</link>
             <width>54</width>
         </image>
