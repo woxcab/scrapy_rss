@@ -44,14 +44,24 @@ class ElementSecondLevel0(meta.Element):
     attr201 = meta.ElementAttribute(is_content=True)
     attr202 = meta.ElementAttribute(required=True)
 
-class ElementFirstLevel(meta.Element):
+class ElementSecondLevel1(meta.Element):
+    elem210 = ElementThirdLevel0()
+    attr211 = meta.ElementAttribute(is_content=True)
+
+class ElementFirstLevel0(meta.Element):
     elem100 = ElementSecondLevel0()
+
+class ElementFirstLevel1(meta.Element):
+    elem110 = ElementSecondLevel1()
 
 class ItemFirstLevel(FeedItem):
     elem100 = ElementSecondLevel0()
 
+class ElementZeroLevel0(meta.Element):
+    elem000 = ElementFirstLevel1()
 
-ATTRIBUTES_PATHS = _get_all_attributes_paths(ElementFirstLevel())
+
+ATTRIBUTES_PATHS = _get_all_attributes_paths(ElementFirstLevel0())
 REQUITED_ATTRIBUTES_PATHS = { # each set is minimal required attributes for valid root
     (
         ('elem100', 'attr202'),
@@ -92,12 +102,23 @@ class TestNestedElements(RssTestCase):
                 self.assertTrue(component,
                                 msg='Empty component #{} in the path #{}'.format(component_idx, path_idx))
 
+    @parameterized.expand((elem_cls, leaf_path, value)
+                          for value in ATTR_VALUES
+                          for elem_cls, leaf_path in ((ElementFirstLevel1, ['elem110', 'attr211']),
+                                                      (ElementZeroLevel0, ['elem000', 'elem110', 'attr211'])))
+    def test_element_init_child(self, elem_cls, leaf_path, value):
+        elem = elem_cls(value)
+        comp = elem
+        for c in leaf_path:
+            comp = getattr(comp, c)
+        self.assertEqual(value, comp)
+
     @parameterized.expand((attr_path, first_value, second_value)
                           for attr_path in ATTRIBUTES_PATHS
                           for first_value in ATTR_VALUES
                           for second_value in ATTR_VALUES)
     def test_parent_elements_is_assigned(self,  attr_path, first_value, second_value):
-        root_element = ElementFirstLevel()
+        root_element = ElementFirstLevel0()
         self.assertFalse(root_element.assigned)
         target_component = root_element
         for component_name in attr_path[:-1]:
@@ -139,7 +160,7 @@ class TestNestedElements(RssTestCase):
                           for part_paths in combinations(paths, length)
                           if part_paths not in REQUITED_ATTRIBUTES_PATHS)
     def test_is_valid_false(self, part_required_attrs, value):
-        root = ElementFirstLevel()
+        root = ElementFirstLevel0()
         self.assertTrue(root.is_valid())
         for path in part_required_attrs:
             element = root
@@ -152,7 +173,7 @@ class TestNestedElements(RssTestCase):
                           for value in NO_NONE_ATTR_VALUES
                           for paths in REQUITED_ATTRIBUTES_PATHS)
     def test_is_valid_true(self, paths, value):
-        root = ElementFirstLevel()
+        root = ElementFirstLevel0()
         self.assertTrue(root.is_valid())
         for path in paths:
             element = root
@@ -172,7 +193,7 @@ class TestNestedElements(RssTestCase):
     def test_init_from_dict(self, paths, values):
         self.assertEqual(len(paths), len(values))
         data = _convert_flat_paths_to_dict_with_values([path[1:] for path in paths], values)
-        root = ElementFirstLevel()
+        root = ElementFirstLevel0()
         root.elem100 = data
         for path_idx, path in enumerate(paths):
             current_element = root
@@ -184,7 +205,7 @@ class TestNestedElements(RssTestCase):
                           for attr_path in ATTRIBUTES_PATHS
                           for value in ATTR_VALUES)
     def test_init_from_attr_value(self, attr_path, value):
-        root = ElementFirstLevel()
+        root = ElementFirstLevel0()
         attr_name = attr_path[-1]
         element = root
         for component_name in attr_path[:-1]:
@@ -200,7 +221,7 @@ class TestNestedElements(RssTestCase):
                           for attr_path in ATTRIBUTES_PATHS
                           for value in ATTR_VALUES)
     def test_init_from_attr_cls(self, attr_path, value):
-        root = ElementFirstLevel()
+        root = ElementFirstLevel0()
         attr_name = attr_path[-1]
         element = root
         for component_name in attr_path[:-1]:
@@ -217,7 +238,7 @@ class TestNestedElements(RssTestCase):
                           for n in range(1, len(full_attr_path))
                           for value in ATTR_VALUES)
     def test_init_from_elem_cls(self, elem_path, attr_path, value):
-        root = ElementFirstLevel()
+        root = ElementFirstLevel0()
         elem_name = elem_path[-1]
         element = root
         for component_name in elem_path[:-1]:

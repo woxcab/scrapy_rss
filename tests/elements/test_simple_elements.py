@@ -2,17 +2,17 @@
 
 import unittest
 from parameterized import parameterized
-from itertools import chain, product, combinations_with_replacement
+from itertools import chain, product, combinations, combinations_with_replacement
 from functools import partial
 import pytest
 import six
 
 from tests import predefined_items
 from tests.utils import RssTestCase, get_dict_attr, full_name_func
-from tests.elements import NS_ATTRS, NS_ELEM_NAMES, ATTR_VALUES
+from tests.elements import NS_ATTRS, NS_ELEM_NAMES, ATTR_VALUES, NO_NONE_ATTR_VALUES
 
 from scrapy_rss.items import RssItem
-from scrapy_rss.exceptions import InvalidComponentNameError, InvalidAttributeValueError
+from scrapy_rss.exceptions import InvalidComponentNameError, InvalidAttributeValueError, InvalidElementValueError
 from scrapy_rss.rss.item_elements import *
 from scrapy_rss.meta import BaseNSComponent, NSComponentName, ElementAttribute, Element, MultipleElements, FeedItem
 
@@ -193,6 +193,11 @@ class TestSimpleElements(RssTestCase):
         elem_cls = elem.__class__
         elem_cls(**{attr_name: value})
 
+    def test_element_init_from_element(self):
+        elem = Element()
+        with self.assertRaises(NotImplementedError):
+            new_elem = Element(elem)
+
     @parameterized.expand(((elem, str(bad_attr), value)
                            for elem in RssItem().elements.values()
                            for bad_attr in chain(('impossible_attr',),
@@ -227,18 +232,25 @@ class TestSimpleElements(RssTestCase):
                                              "(element must not have content)".format(elem_cls.__name__)):
                 elem_cls(value)
 
-    @parameterized.expand(((elem, value1, value2)
+    @parameterized.expand(((elem.__class__, str(elem.content_name), value1, value2)
+                           for elem in RssItem().elements.values()
+                           for value1, value2 in combinations(NO_NONE_ATTR_VALUES, 2)
+                           if elem.content_name and not isinstance(elem, MultipleElements)),
+                          name_func=full_name_func)
+    def test_element_init_content_name_and_kwargs(self, elem_cls, content_name, value1, value2):
+        elem = elem_cls(value1, **{content_name: value2})
+        self.assertEqual(value2, getattr(elem, content_name))
+
+    @parameterized.expand(((elem.__class__, value1, value2)
                            for elem in RssItem().elements.values()
                            for value1, value2 in zip(ATTR_VALUES, ATTR_VALUES)
                            if not isinstance(elem, MultipleElements)),
                           name_func=full_name_func)
-    def test_element_init_with_multiple_args(self, elem, value1, value2):
-        elem_cls = elem.__class__
+    def test_element_init_with_multiple_args(self, elem_cls, value1, value2):
         with six.assertRaisesRegex(self, ValueError, 'supports only single unnamed argument',
                                      msg="Invalid attribute was passed to '{}' initializer "
                                          "(element must not have content)".format(elem_cls.__name__)):
             elem_cls(value1, value2)
-
 
     @parameterized.expand(((str(elem_name), str(attr_name), value)
                            for elem_name, elem_descr in RssItem().elements.items()
@@ -351,6 +363,34 @@ class TestSimpleElements(RssTestCase):
         assert_bool = getattr(self, 'assertTrue' if first_args == second_args else 'assertFalse')
         assert_bool(first_comp.compatible_with(second_comp))
         assert_bool(second_comp.compatible_with(first_comp))
+
+    @parameterized.expand(chain(
+        ((elem1_name,
+          elem2.__class__,
+          elem1_name == elem2_name,
+          'Could not assign value')
+         for (elem1_name, elem1), (elem2_name, elem2) in product(RssItem().elements.items(),
+                                                                 RssItem().elements.items())
+         if not isinstance(elem1, MultipleElements) and not isinstance(elem2, MultipleElements)),
+        ((elem_name,
+          partial(elem.__class__, **{'required': required, 'ns_prefix': ns[0], 'ns_uri': ns[1]}),
+          elem.required == required and elem.ns_prefix == ns[0] and elem.ns_uri == ns[1],
+          'incompatible')
+         for (elem_name, elem) in RssItem().elements.items()
+         if not isinstance(elem, MultipleElements)
+         for required, ns in product([True, False], [('', ''), ('prefix', 'id')]))
+    ), name_func=full_name_func)
+    def test_element_assignment_compatibility(self, elem_name, new_elem_cls, compatible, msg):
+        item = RssItem()
+        elem2 = new_elem_cls()
+        if compatible:
+            setattr(item, str(elem_name), elem2)
+            self.assertIs(elem2, getattr(item, str(elem_name)))
+            self.assertIs(elem2, item.elements[elem_name])
+            self.assertIs(elem2, item.children[elem_name])
+        else:
+            with six.assertRaisesRegex(self, InvalidElementValueError, msg):
+                setattr(item, str(elem_name), elem2)
 
 
 if __name__ == "__main__":
