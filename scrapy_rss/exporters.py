@@ -107,10 +107,6 @@ class RssItemExporter(XmlItemExporter):
         self._started_ns_counter = Counter()
 
 
-    if version.parse(scrapy.__version__) < version.parse('1.4.0'):
-        def _export_xml_field(self, name, serialized_value, depth):
-            return super(RssItemExporter, self)._export_xml_field(name, serialized_value)
-
     def _export_xml_element(self, element, xml_name=None, attrs_only_namespaces=True):
         """
         Export the element as an XML element
