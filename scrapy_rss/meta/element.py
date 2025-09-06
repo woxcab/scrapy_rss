@@ -141,6 +141,21 @@ class Element(BaseNSComponent):
         The dictionary key is a tuple (namespace_uri, attribute_name) for SAX handlers
     """
 
+    def __new__(cls, *args, **kwargs):
+        instance = super(Element, cls).__new__(cls)
+        new_attrs = {}
+        new_children = {}
+        for component_name in chain(instance._attrs, instance._children):
+            new_component = deepcopy(getattr(instance, component_name.priv_name))
+            setattr(instance, component_name.priv_name, new_component)
+            if isinstance(new_component, ElementAttribute):
+                new_attrs[component_name] = new_component
+            else:
+                new_children[component_name] = new_component
+        Element.__setattr__(instance, '_attrs', new_attrs)
+        Element.__setattr__(instance, '_children', new_children)
+        return instance
+
     def __init__(self, *args, **kwargs):
         """
         Initialize element
@@ -178,18 +193,6 @@ class Element(BaseNSComponent):
                                  "(no content attribute, another attribute exists or no single child)"
                                  .format(self.__class__.__name__))
             args = tuple()
-
-        new_attrs = {}
-        new_children = {}
-        for component_name in chain(self._attrs, self._children):
-            new_component = deepcopy(getattr(self, component_name.priv_name))
-            setattr(self, component_name.priv_name, new_component)
-            if isinstance(new_component, ElementAttribute):
-                new_attrs[component_name] = new_component
-            else:
-                new_children[component_name] = new_component
-        self._attrs = new_attrs
-        self._children = new_children
 
         for component_name in chain(self._attrs, self._children):
             component_name = str(component_name)
