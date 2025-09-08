@@ -114,9 +114,25 @@ or to the :code:`custom_settings` attribute of the spider:
 Feed (Channel) Elements Customization [optionally]
 --------------------------------------------------
 
-If you want to change other channel parameters (such as language, copyright, managing_editor,
-webmaster, pubdate, last_build_date, category, generator, docs, ttl)
-then define your own exporter that's inherited from :code:`RssItemExporter` class, for example:
+If you want to change other channel parameters (such as language, copyright, managingEditor, webMaster,
+pubDate, lastBuildDate, category, generator, docs, cloud, ttl, image, rating, textInput, skipHours, skipDays)
+then define your own exporter that's inherited from :code:`RssItemExporter` class and, for example,
+modify :code:`self.channel` `Element <https://github.com/woxcab/scrapy_rss/blob/develop/scrapy_rss/rss/channel.py>`__ (camelCase attributes naming):
+
+.. code:: python
+
+   from scrapy_rss.exporters import RssItemExporter
+
+   class MyRssItemExporter(RssItemExporter):
+      def __init__(self, *args, **kwargs):
+         super(MyRssItemExporter, self).__init__(*args, **kwargs)
+         self.channel.generator = 'Special generator'
+         self.channel.language = 'en-us'
+         self.channel.managingEditor = 'editor@example.com'
+         self.channel.category = ['category 1', 'category 2']
+         self.image.url = 'https://example.com/img.jpg'
+
+or modify :code:`kwargs` arguments (snake_case arguments naming):
 
 .. code:: python
 
@@ -126,6 +142,9 @@ then define your own exporter that's inherited from :code:`RssItemExporter` clas
       def __init__(self, *args, **kwargs):
          kwargs['generator'] = kwargs.get('generator', 'Special generator')
          kwargs['language'] = kwargs.get('language', 'en-us')
+         kwargs['managing_editor'] = kwargs.get('managing_editor', 'editor@example.com')
+         kwargs['managing_editor'] = kwargs.get('managing_editor', ('category 1', 'category 2'))
+         kwargs['image'] = kwargs.get('image', {'url': 'https://example.com/img.jpg'})
          super(MyRssItemExporter, self).__init__(*args, **kwargs)
 
 And add :code:`FEED_EXPORTER` parameter to the Scrapy project settings
