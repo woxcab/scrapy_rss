@@ -51,9 +51,9 @@ jobs:
     - name: Test with tox
       if: ${{ matrix.env.python-version != '2.7' }}
       run: tox
-    - name: Test with tox for Python 2.7
+    - name: Test with tox for sync only Pythons
       if: ${{ matrix.env.python-version == '2.7' }}
-      run: tox -- -c pytest2.7.ini
+      run: tox -- -c pytest-sync-only.ini
     - uses: actions/upload-artifact@v4
       with:
         name: coverage-${{ strategy.job-index }}
