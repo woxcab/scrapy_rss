@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
-
 from .. import meta
 from ..utils import format_rfc822
+from ..exceptions import InvalidComponentError
 
 
 class TitleElement(meta.Element):
@@ -22,8 +22,26 @@ class CopyrightElement(meta.Element):
 class ManagingEditorElement(meta.Element):
     managingEditor = meta.ElementAttribute(required=True, is_content=True)
 
+    def validate(self, name=None):
+        if self.assigned and '@' not in self.managingEditor:
+            raise InvalidComponentError(
+                self,
+                name,
+                'field must contain at least e-mail, but assigned: {}'.format(self.managingEditor)
+            )
+        super(ManagingEditorElement, self).validate()
+
 class WebMasterElement(meta.Element):
     webMaster = meta.ElementAttribute(required=True, is_content=True)
+
+    def validate(self, name=None):
+        if self.assigned and '@' not in self.webMaster:
+            raise InvalidComponentError(
+                self,
+                name,
+                'field must contain at least e-mail, but assigned: {}'.format(self.webMaster)
+            )
+        super(WebMasterElement, self).validate()
 
 class PubDateElement(meta.Element):
     pubDate = meta.ElementAttribute(required=True, is_content=True, serializer=format_rfc822)

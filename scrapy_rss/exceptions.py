@@ -1,4 +1,9 @@
 # -*- coding: utf-8 -*-
+import six
+try:
+    from collections.abc import Iterable
+except ImportError:
+    from collections import Iterable
 
 class InvalidComponentNameError(ValueError):
     def __init__(self, name):
@@ -41,8 +46,29 @@ class InvalidFeedItemError(ValueError):
     pass
 
 
+class InvalidComponentError(ValueError):
+    def __init__(self, component, name=None, msg=None):
+        """
+
+        Parameters
+        ----------
+        component : BaseNSComponent
+        name : str or NSComponentName or Iterable[str or NSComponentName] or None
+        msg : str or None
+        """
+        self.component = component
+        if name:
+            if isinstance(name, six.string_types) or not isinstance(name, Iterable):
+                name = (name,)
+        self.name = ' ' + ', '.join(repr(str(n)) for n in name) if name else ''
+        self.msg =  ': ' + msg if msg else ''
+
+    def __str__(self):
+        return "Invalid{} component value: {!r}{}".format(self.name, self.component, self.msg)
+
+
 class InvalidFeedItemComponentsError(ValueError):
-    def __init__(self, element):
+    def __init__(self, element, msg=None):
         """
 
         Parameters
@@ -50,6 +76,7 @@ class InvalidFeedItemComponentsError(ValueError):
         element : Element
         """
         self.element = element
+        self.msg = ': ' + msg if msg else ''
 
     def __str__(self):
         req_attrs = ''
@@ -59,8 +86,8 @@ class InvalidFeedItemComponentsError(ValueError):
         if self.element.required_children:
             req_elems = 'required children: ' + ", ".join(map(str, self.element.required_children))
 
-        return ("Missing one or more required components of feed element '{}': {}"
-                .format(self.element, "; ".join(filter(bool, [req_attrs, req_elems])))
+        return ("Missing one or more required components of feed element '{}': {}{}"
+                .format(self.element, "; ".join(filter(bool, [req_attrs, req_elems])), self.msg)
         )
 
 

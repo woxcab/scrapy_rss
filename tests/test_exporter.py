@@ -282,7 +282,7 @@ class TestExporting(RssTestCase):
                     self.channel = scrapy.Item()
 
             crawler_settings['FEED_EXPORTER'] = BadRssItemExporter
-            with six.assertRaisesRegex(self, ValueError, 'channel attribute must be instance of <ChannelElement>'):
+            with six.assertRaisesRegex(self, ValueError, 'Argument element must be instance of <Element>'):
                 with CrawlerContext(crawler_settings=crawler_settings, **feed_settings):
                     pass
 
@@ -296,6 +296,7 @@ class TestExporting(RssTestCase):
                     context.ipm.process_item(item, context.spider)
 
             item.title = 'Title'
+            item.validate()
             self.assertTrue(item.is_valid())
             with CrawlerContext(**feed_settings) as context:
                 context.ipm.process_item(item, context.spider)
@@ -318,6 +319,7 @@ class TestExporting(RssTestCase):
 
         with FeedSettings() as feed_settings:
             item = NonStandardItem(title='Title')
+            item.validate()
             self.assertTrue(item.is_valid())
             with CrawlerContext(**feed_settings) as context:
                 context.ipm.process_item(item, context.spider)
@@ -399,6 +401,7 @@ class TestExporting(RssTestCase):
                         context.ipm.process_item(item_cls(title='Title'), context.spider)
             for item_cls in (ValidItem10, Item11, ValidItem11, Item21, ValidItem21):
                 item = item_cls(title='Title')
+                item.validate()
                 self.assertTrue(item.is_valid())
                 with CrawlerContext(**feed_settings) as context:
                     context.ipm.process_item(item, context.spider)
@@ -418,19 +421,31 @@ class TestExporting(RssTestCase):
             elem2 = Element2()
 
         item1 = Item0()
+        with six.assertRaisesRegex(self, InvalidComponentError,
+                                   "Invalid 'title', 'description' component value:.*? title or description must be present"):
+            item1.validate()
         self.assertFalse(item1.is_valid())
 
         item1.description = 'Description'
+        item1.validate()
         self.assertTrue(item1.is_valid())
         item1.elem2.elem1.attr0 = 'value'
+        with six.assertRaisesRegex(self, InvalidComponentError,
+                                   "Invalid 'elem0' component value"):
+            item1.validate()
         self.assertFalse(item1.is_valid())
         item1.elem2.elem1.elem0.attr = 5
+        item1.validate()
         self.assertTrue(item1.is_valid())
 
         item2 = Item0({'title': 'Title', 'elem2': {'elem1': {'attr0': -5}}})
+        with six.assertRaisesRegex(self, InvalidComponentError,
+                                   "Invalid 'elem0' component value"):
+            item2.validate()
         self.assertFalse(item2.is_valid())
 
         item3 = Item0({'title': 'Title', 'elem2': {'elem1': {'elem0': {'attr': 0}}}})
+        item3.validate()
         self.assertTrue(item3.is_valid())
 
     def test_item_validation6(self):
@@ -445,18 +460,30 @@ class TestExporting(RssTestCase):
             elem2 = Element2()
 
         item4 = Item1()
+        with six.assertRaisesRegex(self, InvalidComponentError,
+                                   "Invalid 'title', 'description' component value:.*? title or description must be present"):
+            item4.validate()
         self.assertFalse(item4.is_valid())
         item4.description = 'Description'
+        item4.validate()
         self.assertTrue(item4.is_valid())
         item4.elem2.elem1.attr1 = 'value'
+        with six.assertRaisesRegex(self, InvalidComponentError,
+                                   "Invalid 'attr2' component value"):
+            item4.validate()
         self.assertFalse(item4.is_valid())
         item4.elem2.elem1.attr2 = False
+        item4.validate()
         self.assertTrue(item4.is_valid())
 
         item5 = Item1({'description': 'Description', 'elem2': {'elem1': {'attr1': -5}}})
+        with six.assertRaisesRegex(self, InvalidComponentError,
+                                   "Invalid 'attr2' component value"):
+            item5.validate()
         self.assertFalse(item5.is_valid())
 
         item6 = Item1({'description': 'Description', 'elem2': {'elem1': {'attr2': -5}}})
+        item6.validate()
         self.assertTrue(item6.is_valid())
 
     @parameterized.expand(zip([scrapy.Item, BaseItem, dict]))

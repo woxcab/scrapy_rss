@@ -2,7 +2,7 @@
 
 import re
 
-from ..exceptions import NoNamespaceURIError
+from ..exceptions import NoNamespaceURIError, InvalidComponentError
 
 
 class BaseNSComponent(object):
@@ -142,6 +142,38 @@ class BaseNSComponent(object):
         if self._ns_uri:
             return {(self._ns_prefix, self._ns_uri)}
         return set()
+
+    def validate(self, name=None):
+        """
+        Validate component.
+        Component can be modified during validation.
+
+        Parameters
+        ----------
+        name: str or NSComponentName or None
+            Name of component
+
+        Raises
+        ------
+        InvalidComponentError
+            If this component is invalid
+        """
+        return
+
+    def is_valid(self, name=None):
+        """
+        Validate component.
+
+        Returns
+        -------
+        bool
+            Whether this component is valid
+        """
+        try:
+            self.validate(name)
+        except InvalidComponentError:
+            return False
+        return True
 
 
 class NSComponentName(BaseNSComponent):

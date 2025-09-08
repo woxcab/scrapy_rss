@@ -1,5 +1,8 @@
+# -*- coding: utf-8 -*-
+
 from .item_elements import *
 from ..meta.item import FeedItem
+from ..exceptions import InvalidComponentError
 
 
 class RssItem(FeedItem):
@@ -36,8 +39,12 @@ class RssItem(FeedItem):
     pubDate = PubDateElement()
     source = SourceElement()
 
-    def is_valid(self):
-        return (self.title.assigned or self.description.assigned) and super(RssItem, self).is_valid()
+    def validate(self, name=None):
+        if not self.title.assigned and not self.description.assigned:
+            raise InvalidComponentError(self,
+                                        ['title', 'description'],
+                                        "at least one of title or description must be present")
+        super(RssItem, self).validate()
 
 
 class RssedItem(FeedItem):

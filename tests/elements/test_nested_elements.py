@@ -7,7 +7,7 @@ import six
 from parameterized import parameterized
 
 from scrapy_rss import meta
-from scrapy_rss.exceptions import InvalidAttributeValueError, InvalidElementValueError
+from scrapy_rss.exceptions import InvalidAttributeValueError, InvalidElementValueError, InvalidComponentError
 from scrapy_rss.items import FeedItem
 
 from tests.elements import ATTR_URL_VALUES, ATTR_VALUES, NO_NONE_ATTR_VALUES
@@ -161,12 +161,15 @@ class TestNestedElements(RssTestCase):
                           if part_paths not in REQUITED_ATTRIBUTES_PATHS)
     def test_is_valid_false(self, part_required_attrs, value):
         root = ElementFirstLevel0()
+        root.validate()
         self.assertTrue(root.is_valid())
         for path in part_required_attrs:
             element = root
             for component in path[:-1]:
                 element = getattr(element, component)
             setattr(element, path[-1], value)
+            with self.assertRaises(InvalidComponentError):
+                root.validate()
             self.assertFalse(root.is_valid(), msg='Bad root valid value on attribute {} of {}'.format(path, part_required_attrs))
 
     @parameterized.expand((paths, value)
@@ -174,12 +177,14 @@ class TestNestedElements(RssTestCase):
                           for paths in REQUITED_ATTRIBUTES_PATHS)
     def test_is_valid_true(self, paths, value):
         root = ElementFirstLevel0()
+        root.validate()
         self.assertTrue(root.is_valid())
         for path in paths:
             element = root
             for component in path[:-1]:
                 element = getattr(element, component)
             setattr(element, path[-1], value)
+        root.validate()
         self.assertTrue(root.is_valid(), msg='Bad root valid value when attributes {} is set'.format(paths))
 
     @parameterized.expand((paths, values)

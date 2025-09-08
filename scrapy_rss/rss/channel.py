@@ -79,21 +79,10 @@ class ChannelElement(meta.Element):
     skipDays = SkipDaysElement()
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    def validate(self, name=None):
+        if self.image.assigned:
+            if not self.image.title.title:
+                self.image.title = self.title.title
+            if not self.image.link.link:
+                self.image.link = self.link.link
+        super(ChannelElement, self).validate()

@@ -97,22 +97,6 @@ class RssItemExporter(XmlItemExporter):
                 self._namespaces[ns_prefix] = ns_uri
         self._started_ns_counter = Counter()
 
-    def validate_channel(self):
-        if not isinstance(self.channel, ChannelElement):
-            raise ValueError("channel attribute must be instance of <ChannelElement>")
-        if self.channel.managingEditor.assigned and '@' not in self.channel.managingEditor.managingEditor:
-            raise ValueError('managingEditor field must contain at least e-mail. Assigned: {}'
-                             .format(self.channel.managingEditor.managingEditor))
-        if self.channel.webMaster.assigned and '@' not in self.channel.webMaster.webMaster:
-            raise ValueError('webMaster field must contain at least e-mail. Assigned: {}'
-                             .format(self.channel.webMaster.webMaster))
-
-        if self.channel.image.assigned:
-            if not self.channel.image.title.title:
-                self.channel.image.title = self.channel.title.title
-            if not self.channel.image.link.link:
-                self.channel.image.link = self.channel.link.link
-
 
     def _export_xml_element(self, element, xml_name=None, attrs_only_namespaces=True):
         """
@@ -128,7 +112,9 @@ class RssItemExporter(XmlItemExporter):
             Whether extract namespaces from attributes and itself only
         """
         if not isinstance(element, meta.Element):
-            raise ValueError('Argument element must be instance of <Element>, not <{!r}>'.format(element))
+            raise ValueError('Argument element must be instance of <Element>, not <{}>'
+                             .format(element.__class__.__name__ if hasattr(element, '__class__')
+                                     else repr(element)))
 
         if xml_name:
             namespaces = element.get_namespaces(attrs_only=attrs_only_namespaces)
@@ -147,8 +133,10 @@ class RssItemExporter(XmlItemExporter):
 
         element_instances = element if isinstance(element, meta.MultipleElements) else (element,)
         for instance in element_instances:
-            if not instance.is_valid():
-                raise InvalidFeedItemComponentsError(instance)
+            try:
+                instance.validate(xml_name[1] if xml_name else None)
+            except InvalidComponentError as e:
+                raise InvalidFeedItemComponentsError(instance, msg=str(e))
 
             attrs = instance.serialize_attrs()
             content = attrs.pop(instance.content_name.xml_name, None) if instance.content_name else None
@@ -169,7 +157,6 @@ class RssItemExporter(XmlItemExporter):
 
 
     def start_exporting(self):
-        self.validate_channel()
         self.xg.startDocument()
 
         for ns_prefix, ns_uri in self._namespaces.items():

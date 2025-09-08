@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 
 import re
+
 from .nscomponent import BaseNSComponent
+from ..exceptions import InvalidComponentError
 from ..utils import deprecated_class
 
 
@@ -89,6 +91,10 @@ class ElementAttribute(BaseNSComponent):
         return "{}(value={!r}, serializer={!r}, required={!r}, is_content={!r}{})"\
             .format(self.__class__.__name__, self.value, self.serializer,
                     self.__required, self.__is_content, s_repr)
+
+    def validate(self, name=None):
+        if self.required and not self.assigned:
+            raise InvalidComponentError(self, name, "required value is not assigned")
 
 
 # backward compatibility

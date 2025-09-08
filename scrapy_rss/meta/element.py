@@ -13,7 +13,7 @@ except ImportError:
 
 from .attribute import ElementAttribute
 from .nscomponent import BaseNSComponent, NSComponentName
-from ..exceptions import InvalidComponentNameError, InvalidElementValueError, InvalidAttributeValueError
+from ..exceptions import InvalidComponentNameError, InvalidComponentError, InvalidElementValueError, InvalidAttributeValueError
 from ..utils import deprecated_class, deprecated_func
 
 
@@ -236,17 +236,30 @@ class Element(BaseNSComponent):
             comp.clear()
         self._assigned = False
 
-    def is_valid(self):
+    def validate(self, name=None):
         """
         Check if the element has valid attributes' and children values.
         If this element is not assigned (skipped) and is not required then element is valid
+
+        Parameters
+        ----------
+        name: str or NSComponentName or None
+            Name of component
+
+        Raises
+        ------
+        InvalidComponentError
+            If this component is invalid
         """
-        return (
-            not self.required and not self.assigned
-            or all(getattr(self, comp_name.priv_name).assigned
-                   for comp_name in chain(self.required_attrs, self.required_children))
-                and all(child.is_valid() for child in self._children.values())
-        )
+        if not self.required and not self.assigned:
+            return
+        for comp_name in chain(self.required_attrs, self.required_children):
+            comp = getattr(self, comp_name.priv_name)
+            if not comp.assigned:
+                raise InvalidComponentError(comp, comp_name, "missing required component")
+        for child_name, child in self._children.items():
+            child.validate(child_name)
+        super(Element, self).validate()
 
     def get_namespaces(self, assigned_only=True, attrs_only=False):
         """
@@ -371,8 +384,10 @@ class MultipleElements(Element):
             self._assigned = False
         return elem
 
-    def is_valid(self):
-        return all(element.is_valid() for element in self.elements)
+    def validate(self, name=None):
+        for element in self.elements:
+            element.validate(name)
+        super(Element, self).validate()
 
     def __delitem__(self, index):
         self.elements.__delitem__(index)
