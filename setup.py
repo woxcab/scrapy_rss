@@ -31,6 +31,10 @@ with open('README.rst') as readme:
         name='scrapy-rss',
         version=version,
         url='https://github.com/woxcab/scrapy_rss',
+        project_urls={
+            'Source': 'https://github.com/woxcab/scrapy_rss',
+            'Tracker': 'https://github.com/woxcab/scrapy_rss/issues',
+        },
         description='RSS Tools for Scrapy Framework',
         long_description=readme.read(),
         license='BSD',
