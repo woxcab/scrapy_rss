@@ -58,11 +58,7 @@ class RssItemExporter(XmlItemExporter):
 
         self.channel.language = language
         self.channel.copyright = copyright
-        if managing_editor and '@' not in managing_editor:
-            raise ValueError('managing_editor field must contain at least e-mail. Passed: {}'.format(managing_editor))
         self.channel.managingEditor = managing_editor
-        if webmaster and '@' not in webmaster:
-            raise ValueError('webmaster field must contain at least e-mail. Passed: {}'.format(webmaster))
         self.channel.webMaster = webmaster
         self.channel.pubDate = pubdate
         self.channel.lastBuildDate = last_build_date if last_build_date else datetime.now(get_tzlocal())
@@ -72,11 +68,6 @@ class RssItemExporter(XmlItemExporter):
         self.channel.cloud = cloud
         self.channel.ttl = ttl
         self.channel.image = image
-        if image:
-            if not self.channel.image.title.title:
-                self.channel.image.title = self.channel.title.title
-            if not self.channel.image.link.link:
-                self.channel.image.link = self.channel.link.link
         self.channel.rating = rating
         self.channel.textInput = text_input
         self.channel.skipHours = skip_hours
@@ -105,6 +96,22 @@ class RssItemExporter(XmlItemExporter):
             else:
                 self._namespaces[ns_prefix] = ns_uri
         self._started_ns_counter = Counter()
+
+    def validate_channel(self):
+        if not isinstance(self.channel, ChannelElement):
+            raise ValueError("channel attribute must be instance of <ChannelElement>")
+        if self.channel.managingEditor.assigned and '@' not in self.channel.managingEditor.managingEditor:
+            raise ValueError('managingEditor field must contain at least e-mail. Assigned: {}'
+                             .format(self.channel.managingEditor.managingEditor))
+        if self.channel.webMaster.assigned and '@' not in self.channel.webMaster.webMaster:
+            raise ValueError('webMaster field must contain at least e-mail. Assigned: {}'
+                             .format(self.channel.webMaster.webMaster))
+
+        if self.channel.image.assigned:
+            if not self.channel.image.title.title:
+                self.channel.image.title = self.channel.title.title
+            if not self.channel.image.link.link:
+                self.channel.image.link = self.channel.link.link
 
 
     def _export_xml_element(self, element, xml_name=None, attrs_only_namespaces=True):
@@ -162,6 +169,7 @@ class RssItemExporter(XmlItemExporter):
 
 
     def start_exporting(self):
+        self.validate_channel()
         self.xg.startDocument()
 
         for ns_prefix, ns_uri in self._namespaces.items():

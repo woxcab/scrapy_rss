@@ -220,7 +220,7 @@ class TestExporting(RssTestCase):
                                   managing_editor=managing_editor, *args, **kwargs)
 
             crawler_settings['FEED_EXPORTER'] = InvalidRssItemExporter1
-            with six.assertRaisesRegex(self, ValueError, 'managing_editor'):
+            with six.assertRaisesRegex(self, ValueError, 'managingEditor'):
                 with CrawlerContext(crawler_settings=crawler_settings, **feed_settings):
                     pass
 
@@ -233,7 +233,7 @@ class TestExporting(RssTestCase):
                                   webmaster=webmaster, *args, **kwargs)
 
             crawler_settings['FEED_EXPORTER'] = InvalidRssItemExporter2
-            with six.assertRaisesRegex(self, ValueError, 'webmaster'):
+            with six.assertRaisesRegex(self, ValueError, 'webMaster'):
                 with CrawlerContext(crawler_settings=crawler_settings, **feed_settings):
                     pass
 
@@ -282,7 +282,7 @@ class TestExporting(RssTestCase):
                     self.channel = scrapy.Item()
 
             crawler_settings['FEED_EXPORTER'] = BadRssItemExporter
-            with six.assertRaisesRegex(self, ValueError, 'Argument element must be instance of <Element>'):
+            with six.assertRaisesRegex(self, ValueError, 'channel attribute must be instance of <ChannelElement>'):
                 with CrawlerContext(crawler_settings=crawler_settings, **feed_settings):
                     pass
 
