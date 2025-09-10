@@ -8,7 +8,7 @@ from copy import deepcopy
 import six
 import sys
 
-from tests.utils import RssTestCase, get_dict_attr
+from tests.utils import RssTestCase, get_dict_attr, full_name_func
 from tests.elements import NS_ATTRS, NS_ELEM_NAMES, ATTR_VALUES
 
 from scrapy_rss.items import RssItem
@@ -16,16 +16,17 @@ from scrapy_rss.meta import ElementAttribute, Element
 
 
 class TestRepr(RssTestCase):
-    @parameterized.expand((value, required, is_content, ns_prefix, ns_uri)
-                          for value in ATTR_VALUES
-                          for required in (True, False)
-                          for is_content in (True, False)
-                          for ns_prefix in (None, '', 'prefix')
-                          for ns_uri in (('id',) if ns_prefix else (None, '', 'id'))
-                          if not is_content or not ns_uri)
+    @parameterized.expand(((value, required, is_content, ns_prefix, ns_uri)
+                           for value in ATTR_VALUES
+                           for required in (True, False)
+                           for is_content in (True, False)
+                           for ns_prefix in (None, '', 'prefix')
+                           for ns_uri in (('id',) if ns_prefix else (None, '', 'id'))
+                           if not is_content or not ns_uri),
+                          name_func=full_name_func)
     def test_attribute(self, value, required, is_content, ns_prefix, ns_uri):
         attr = ElementAttribute(value=value, required=required, is_content=is_content,
-                                    ns_prefix=ns_prefix, ns_uri=ns_uri)
+                                ns_prefix=ns_prefix, ns_uri=ns_uri)
         six.assertRegex(
             self,
             repr(attr),
@@ -33,10 +34,11 @@ class TestRepr(RssTestCase):
             .format(re.escape(repr(value)), re.escape(repr(required)), re.escape(repr(is_content)),
                     re.escape(repr(ns_prefix or '')), re.escape(repr(ns_uri or ''))))
 
-    @parameterized.expand((required, attr_name, attr, elem_kwargs)
-                          for attr_name, attr in chain([("attr0", ElementAttribute())], NS_ATTRS.items())
-                          for elem_kwargs in chain([{}], NS_ELEM_NAMES.values())
-                          for required in (False, True))
+    @parameterized.expand(((required, attr_name, attr, elem_kwargs)
+                           for attr_name, attr in chain([("attr0", ElementAttribute())], NS_ATTRS.items())
+                           for elem_kwargs in chain([{}], NS_ELEM_NAMES.values())
+                           for required in (False, True)),
+                          name_func=full_name_func)
     def test_element_with_single_attr(self, required, attr_name, attr, elem_kwargs):
         elem_cls_name = "Element0"
         elem_cls = type(elem_cls_name, (Element,), {attr_name: attr})
@@ -54,11 +56,14 @@ class TestRepr(RssTestCase):
             "{!r}\nis not equal to one of:\n{}".format(elem, "\n".join(elem_reprs))
 
 
-    @parameterized.expand(product(
-        (False, True),
-        combinations(chain([("attr0", ElementAttribute())], NS_ATTRS.items()),
-                     3),
-        chain([{}], NS_ELEM_NAMES.values())))
+    @parameterized.expand(
+        product(
+            (False, True),
+            combinations(chain([("attr0", ElementAttribute())], NS_ATTRS.items()),
+                         3),
+            chain([{}], NS_ELEM_NAMES.values())
+        ),
+        name_func=full_name_func)
     def test_element_with_multiple_attrs(self, required, attrs, elem_kwargs):
         attrs = dict(attrs)
         elem_cls_name = "Element0"
@@ -80,9 +85,10 @@ class TestRepr(RssTestCase):
         assert any(repr(elem) == elem_repr for elem_repr in elem_reprs),\
             "{!r}\nis not equal to one of:\n{}".format(elem, "\n".join(elem_reprs))
 
-    @parameterized.expand((attr_name, attr, elem_name, elem_kwargs)
-                          for attr_name, attr in chain([("attr0", ElementAttribute())], NS_ATTRS.items())
-                          for elem_name, elem_kwargs in chain([('elem0', {})], NS_ELEM_NAMES.items()))
+    @parameterized.expand(((attr_name, attr, elem_name, elem_kwargs)
+                           for attr_name, attr in chain([("attr0", ElementAttribute())], NS_ATTRS.items())
+                           for elem_name, elem_kwargs in chain([('elem0', {})], NS_ELEM_NAMES.items())),
+                          name_func=full_name_func)
     def test_item_with_single_elem(self, attr_name, attr, elem_name, elem_kwargs):
         elem_cls_name = "Element0"
         item_cls_name = "Item0"
@@ -99,10 +105,13 @@ class TestRepr(RssTestCase):
                 item_cls_name, ", ".join(default_elems_repr)
             )
 
-    @parameterized.expand(product(
-        (False, True),
-        combinations(chain([("attr0", ElementAttribute())], NS_ATTRS.items()), 3),
-        combinations(chain([("elem0", {})], NS_ELEM_NAMES.items()), 3)))
+    @parameterized.expand(
+        product(
+            (False, True),
+            combinations(chain([("attr0", ElementAttribute())], NS_ATTRS.items()), 3),
+            combinations(chain([("elem0", {})], NS_ELEM_NAMES.items()), 3)
+        ),
+        name_func=full_name_func)
     def test_item_with_multiple_elems(self, required, attrs, elems_descr):
         elems_names, elems_kwargs = zip(*elems_descr)
         item_cls_name = "Item0"
@@ -122,12 +131,16 @@ class TestRepr(RssTestCase):
             )
             assert repr(item) == item_repr
 
-    @parameterized.expand(product((False, True),
-                                  product(ATTR_VALUES, repeat=2),
-                                  product(*([{'prefix': '', 'uri': ''},
-                                             {'prefix': 'pre_fix{}'.format(n),
-                                              'uri': 'http://example{}.com'.format(n)}]
-                                            for n in range(4)))))
+    @parameterized.expand(
+        product(
+            (False, True),
+            product(ATTR_VALUES, repeat=2),
+            product(*([{'prefix': '', 'uri': ''},
+                       {'prefix': 'pre_fix{}'.format(n),
+                        'uri': 'http://example{}.com'.format(n)}]
+                      for n in range(4)))
+        ),
+        name_func=full_name_func)
     def test_nested_element(self, required_elem01, attr_values, ns):
         class Element1(Element):
             attr10 = ElementAttribute(ns_prefix=ns[3]['prefix'], ns_uri=ns[3]['uri'])
