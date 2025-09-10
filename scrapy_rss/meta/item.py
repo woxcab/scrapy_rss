@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 
 import six
-from scrapy.item import ItemMeta as BaseItemMeta, Item as BaseItem, MutableMapping
+from scrapy.item import ItemMeta as BaseItemMeta, Item as BaseItem
 
-from ..utils import deprecated_class
+from ..utils import MutableMapping, deprecated_class
 
 try:
     from scrapy.item import _BaseItemMeta

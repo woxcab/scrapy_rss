@@ -1,9 +1,6 @@
 # -*- coding: utf-8 -*-
 import six
-try:
-    from collections.abc import Iterable
-except ImportError:
-    from collections import Iterable
+from .utils import Iterable
 
 class InvalidComponentNameError(ValueError):
     def __init__(self, name):

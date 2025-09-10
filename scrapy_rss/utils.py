@@ -4,6 +4,10 @@ import locale
 from datetime import datetime
 import functools
 import warnings
+try:
+    from collections.abc import Mapping, MutableMapping, Iterable
+except ImportError:
+    from collections import Mapping, MutableMapping, Iterable
 
 import six
 
@@ -26,6 +30,7 @@ def format_rfc822(date):
     date = date.strftime('%a, %d %b %Y %H:%M:%S %z')
     locale.setlocale(locale.LC_TIME, orig_locale)
     return date
+
 
 def get_tzlocal():
     try:
@@ -65,6 +70,7 @@ def deprecated_class(reason):
         return wrapped
 
     return decorator
+
 
 def deprecated_func(reason):
     if not isinstance(reason, six.string_types):

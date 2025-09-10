@@ -6,15 +6,10 @@ from itertools import chain
 
 import six
 
-try:
-    from collections.abc import Mapping, Iterable
-except ImportError:
-    from collections import Mapping, Iterable
-
 from .attribute import ElementAttribute
 from .nscomponent import BaseNSComponent, NSComponentName
 from ..exceptions import InvalidComponentNameError, InvalidComponentError, InvalidElementValueError, InvalidAttributeValueError
-from ..utils import deprecated_class, deprecated_func
+from ..utils import Mapping, Iterable, object_to_list, deprecated_class, deprecated_func
 
 
 class ElementMeta(type):
