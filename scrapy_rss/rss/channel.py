@@ -85,4 +85,4 @@ class ChannelElement(meta.Element):
                 self.image.title = self.title.title
             if not self.image.link.link:
                 self.image.link = self.link.link
-        super(ChannelElement, self).validate()
+        super(ChannelElement, self).validate(name)

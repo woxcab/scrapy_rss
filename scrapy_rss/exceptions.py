@@ -51,13 +51,17 @@ class InvalidComponentError(ValueError):
         ----------
         component : BaseNSComponent
         name : str or NSComponentName or Iterable[str or NSComponentName] or None
+            Component name or path of components names to this component
         msg : str or None
         """
         self.component = component
+        name_path = []
         if name:
-            if isinstance(name, six.string_types) or not isinstance(name, Iterable):
-                name = (name,)
-        self.name = ' ' + ', '.join(repr(str(n)) for n in name) if name else ''
+            if not isinstance(name, six.string_types) and isinstance(name, Iterable):
+                name_path.extend(name)
+            else:
+                name_path.append(name)
+        self.name = ' ' + repr('.'.join(str(n) for n in name_path)) if name_path else ''
         self.msg =  ': ' + msg if msg else ''
 
     def __str__(self):

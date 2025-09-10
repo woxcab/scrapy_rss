@@ -255,7 +255,9 @@ class Element(BaseNSComponent):
                 raise InvalidComponentError(self, name, "missing required element")
             return
         for comp_name, comp in chain(self._attrs.items(), self._children.items()):
-            comp.validate(comp_name)
+            name_path = object_to_list(name)
+            name_path.append(comp_name)
+            comp.validate(name_path)
 
     def get_namespaces(self, assigned_only=True, attrs_only=False):
         """
@@ -381,9 +383,11 @@ class MultipleElements(Element):
         return elem
 
     def validate(self, name=None):
-        for element in self.elements:
-            element.validate(name)
-        super(Element, self).validate()
+        for idx, element in enumerate(self.elements):
+            name_path = object_to_list(name)
+            name_path.append('[{}]'.format(idx))
+            element.validate(name_path)
+        super(Element, self).validate(name)
 
     def __delitem__(self, index):
         self.elements.__delitem__(index)

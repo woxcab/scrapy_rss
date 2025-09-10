@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from .. import meta
-from ..utils import format_rfc822
+from ..utils import format_rfc822, object_to_list
 from ..exceptions import InvalidComponentError
 
 
@@ -24,24 +24,28 @@ class ManagingEditorElement(meta.Element):
 
     def validate(self, name=None):
         if self.assigned and '@' not in self.managingEditor:
+            name_path = object_to_list(name)
+            name_path.append('managingEditor')
             raise InvalidComponentError(
                 self,
-                name,
+                name_path,
                 'field must contain at least e-mail, but assigned: {}'.format(self.managingEditor)
             )
-        super(ManagingEditorElement, self).validate()
+        super(ManagingEditorElement, self).validate(name)
 
 class WebMasterElement(meta.Element):
     webMaster = meta.ElementAttribute(required=True, is_content=True)
 
     def validate(self, name=None):
         if self.assigned and '@' not in self.webMaster:
+            name_path = object_to_list(name)
+            name_path.append('webMaster')
             raise InvalidComponentError(
                 self,
-                name,
+                name_path,
                 'field must contain at least e-mail, but assigned: {}'.format(self.webMaster)
             )
-        super(WebMasterElement, self).validate()
+        super(WebMasterElement, self).validate(name)
 
 class PubDateElement(meta.Element):
     pubDate = meta.ElementAttribute(required=True, is_content=True, serializer=format_rfc822)

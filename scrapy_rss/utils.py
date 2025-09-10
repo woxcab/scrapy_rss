@@ -41,6 +41,29 @@ def get_tzlocal():
     return tzlocal
 
 
+def object_to_list(obj):
+    """
+    Wrap object to list.
+
+    Parameters
+    ----------
+    obj
+        Any object
+
+    Returns
+    -------
+    list
+        Falsy object is converted to empty list.
+        Iterable object (excluding string) is wrapped to a list with multiple items.
+        Otherwise, object is wrapped to a list with the single item.
+    """
+    if not obj:
+        return []
+    if not isinstance(obj, six.string_types) and isinstance(obj, Iterable):
+        return list(obj)
+    return [obj]
+
+
 def deprecated_class(reason):
     """
     Decorator which can be used to mark classes

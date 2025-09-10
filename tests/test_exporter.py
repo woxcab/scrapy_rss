@@ -422,8 +422,11 @@ class TestExporting(RssTestCase):
 
         item1 = Item0()
         with six.assertRaisesRegex(self, InvalidComponentError,
-                                   "Invalid 'title', 'description' component value:.*? title or description must be present"):
+                                   "Invalid 'title' component value:.*? title or description must be present"):
             item1.validate()
+        with six.assertRaisesRegex(self, InvalidComponentError,
+                                   "Invalid 'item.title' component value:.*? title or description must be present"):
+            item1.validate('item')
         self.assertFalse(item1.is_valid())
 
         item1.description = 'Description'
@@ -431,8 +434,11 @@ class TestExporting(RssTestCase):
         self.assertTrue(item1.is_valid())
         item1.elem2.elem1.attr0 = 'value'
         with six.assertRaisesRegex(self, InvalidComponentError,
-                                   "Invalid 'elem0' component value"):
+                                   "Invalid 'elem2.elem1.elem0' component value"):
             item1.validate()
+        with six.assertRaisesRegex(self, InvalidComponentError,
+                                   "Invalid 'item.elem2.elem1.elem0' component value"):
+            item1.validate('item')
         self.assertFalse(item1.is_valid())
         item1.elem2.elem1.elem0.attr = 5
         item1.validate()
@@ -440,13 +446,29 @@ class TestExporting(RssTestCase):
 
         item2 = Item0({'title': 'Title', 'elem2': {'elem1': {'attr0': -5}}})
         with six.assertRaisesRegex(self, InvalidComponentError,
-                                   "Invalid 'elem0' component value"):
+                                   "Invalid 'elem2.elem1.elem0' component value"):
             item2.validate()
+        with six.assertRaisesRegex(self, InvalidComponentError,
+                                   "Invalid 'item.elem2.elem1.elem0' component value"):
+            item2.validate('item')
         self.assertFalse(item2.is_valid())
 
         item3 = Item0({'title': 'Title', 'elem2': {'elem1': {'elem0': {'attr': 0}}}})
         item3.validate()
         self.assertTrue(item3.is_valid())
+
+        item3.elem2.elem1._ns_prefix = 'prefix'
+        with six.assertRaisesRegex(self, InvalidComponentError,
+                                   "Invalid 'elem2.elem1' component value.*? no namespace URI"):
+            item3.validate()
+        with six.assertRaisesRegex(self, InvalidComponentError,
+                                   "Invalid 'item.elem2.elem1' component value.*? no namespace URI"):
+            item3.validate('item')
+        item3.elem2.elem1.ns_uri = 'id'
+        item3.validate()
+        item3.validate('item')
+        self.assertTrue(item3.is_valid())
+
 
     def test_item_validation6(self):
         class Element1(Element):
@@ -461,16 +483,22 @@ class TestExporting(RssTestCase):
 
         item4 = Item1()
         with six.assertRaisesRegex(self, InvalidComponentError,
-                                   "Invalid 'title', 'description' component value:.*? title or description must be present"):
+                                   "Invalid 'title' component value:.*? title or description must be present"):
             item4.validate()
+        with six.assertRaisesRegex(self, InvalidComponentError,
+                                   "Invalid 'item.title' component value:.*? title or description must be present"):
+            item4.validate('item')
         self.assertFalse(item4.is_valid())
         item4.description = 'Description'
         item4.validate()
         self.assertTrue(item4.is_valid())
         item4.elem2.elem1.attr1 = 'value'
         with six.assertRaisesRegex(self, InvalidComponentError,
-                                   "Invalid 'attr2' component value"):
+                                   "Invalid 'elem2.elem1.attr2' component value"):
             item4.validate()
+        with six.assertRaisesRegex(self, InvalidComponentError,
+                                   "Invalid 'item.elem2.elem1.attr2' component value"):
+            item4.validate('item')
         self.assertFalse(item4.is_valid())
         item4.elem2.elem1.attr2 = False
         item4.validate()
@@ -478,13 +506,30 @@ class TestExporting(RssTestCase):
 
         item5 = Item1({'description': 'Description', 'elem2': {'elem1': {'attr1': -5}}})
         with six.assertRaisesRegex(self, InvalidComponentError,
-                                   "Invalid 'attr2' component value"):
+                                   "Invalid 'elem2.elem1.attr2' component value"):
             item5.validate()
+        with six.assertRaisesRegex(self, InvalidComponentError,
+                                   "Invalid 'item.elem2.elem1.attr2' component value"):
+            item5.validate('item')
         self.assertFalse(item5.is_valid())
 
         item6 = Item1({'description': 'Description', 'elem2': {'elem1': {'attr2': -5}}})
         item6.validate()
         self.assertTrue(item6.is_valid())
+
+        item6.elem2._ns_prefix = 'prefix'
+        with six.assertRaisesRegex(self, InvalidComponentError,
+                                   "Invalid 'elem2' component value.*? no namespace URI"):
+            item6.validate()
+        with six.assertRaisesRegex(self, InvalidComponentError,
+                                   "Invalid 'item.elem2' component value.*? no namespace URI"):
+            item6.validate('item')
+        self.assertFalse(item6.is_valid())
+        item6.elem2.ns_uri = 'id'
+        item6.validate()
+        item6.validate('item')
+        self.assertTrue(item6.is_valid())
+
 
     @parameterized.expand(zip([scrapy.Item, BaseItem, dict]))
     def test_bad_item_cls(self, item_cls):

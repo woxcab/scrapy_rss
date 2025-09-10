@@ -3,6 +3,7 @@
 from .item_elements import *
 from ..meta.item import FeedItem
 from ..exceptions import InvalidComponentError
+from ..utils import object_to_list
 
 
 class RssItem(FeedItem):
@@ -41,10 +42,12 @@ class RssItem(FeedItem):
 
     def validate(self, name=None):
         if not self.title.assigned and not self.description.assigned:
+            name_path = object_to_list(name)
+            name_path.append('title')
             raise InvalidComponentError(self,
-                                        ['title', 'description'],
+                                        name_path,
                                         "at least one of title or description must be present")
-        super(RssItem, self).validate()
+        super(RssItem, self).validate(name)
 
 
 class RssedItem(FeedItem):
