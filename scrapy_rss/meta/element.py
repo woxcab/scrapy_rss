@@ -254,15 +254,13 @@ class Element(BaseNSComponent):
         InvalidComponentError
             If this component is invalid
         """
-        if not self.required and not self.assigned:
+        super(Element, self).validate(name)
+        if not self.assigned:
+            if self.required:
+                raise InvalidComponentError(self, name, "missing required element")
             return
-        for comp_name in chain(self.required_attrs, self.required_children):
-            comp = getattr(self, comp_name.priv_name)
-            if not comp.assigned:
-                raise InvalidComponentError(comp, comp_name, "missing required component")
-        for child_name, child in self._children.items():
-            child.validate(child_name)
-        super(Element, self).validate()
+        for comp_name, comp in chain(self._attrs.items(), self._children.items()):
+            comp.validate(comp_name)
 
     def get_namespaces(self, assigned_only=True, attrs_only=False):
         """

@@ -160,7 +160,8 @@ class BaseNSComponent(object):
         InvalidComponentError
             If this component is invalid
         """
-        return
+        if self.ns_prefix and not self.ns_uri:
+            raise NoNamespaceURIError("No namespace URI for prefix '{}'".format(self.ns_prefix))
 
     def is_valid(self, name=None):
         """
