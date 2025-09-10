@@ -127,6 +127,8 @@ class BaseNSComponent(object):
                         for s, v in self.settings.items()))
 
     def __repr__(self):
+        if not hasattr(self, '_ns_prefix') or not hasattr(self, '_ns_uri'):
+            return super(BaseNSComponent, self).__repr__()
         return "{}(ns_prefix={!r}, ns_uri={!r})"\
             .format(self.__class__.__name__, self._ns_prefix, self._ns_uri)
 
@@ -275,6 +277,9 @@ class NSComponentName(BaseNSComponent):
         raise NotImplementedError("Cannot compare instances of {} and {}".format(self.__class__, other.__class__))
 
     def __repr__(self):
-        s_match = re.match(r'^[^(]+\((.*?)\)$', super(NSComponentName, self).__repr__())
+        super_repr = super(NSComponentName, self).__repr__()
+        if not hasattr(self, '_name'):
+            return super_repr
+        s_match = re.match(r'^[^(]+\((.*?)\)$', super_repr)
         s_repr = ", " + s_match.group(1) if s_match else ''
         return "{}(name={!r}{})".format(self.__class__.__name__, self._name, s_repr)

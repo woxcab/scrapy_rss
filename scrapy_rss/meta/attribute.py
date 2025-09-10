@@ -27,8 +27,8 @@ class ElementAttribute(BaseNSComponent):
         super(ElementAttribute, self).__init__(**kwargs)
         if is_content and self.ns_uri:
             raise ValueError("Content cannot have namespace")
-        self.__required = required
-        self.__is_content = is_content
+        self._required = required
+        self._is_content = is_content
         self.serializer = serializer
         self.value = value
 
@@ -40,7 +40,7 @@ class ElementAttribute(BaseNSComponent):
         bool
             Whether the attribute is required
         """
-        return self.__required
+        return self._required
 
     @property
     def is_content(self):
@@ -50,7 +50,7 @@ class ElementAttribute(BaseNSComponent):
         bool
             Whether the attribute is an element content
         """
-        return self.__is_content
+        return self._is_content
 
     @property
     def assigned(self):
@@ -59,8 +59,8 @@ class ElementAttribute(BaseNSComponent):
     @property
     def settings(self):
         settings = super(ElementAttribute, self).settings
-        settings['required'] = self.__required
-        settings['is_content'] = self.__is_content
+        settings['required'] = self._required
+        settings['is_content'] = self._is_content
         settings['serializer'] = self.serializer
         return settings
 
@@ -86,13 +86,18 @@ class ElementAttribute(BaseNSComponent):
         return set()
 
     def __repr__(self):
-        s_match = re.match(r'^[^(]+\((.*?)\)$', super(ElementAttribute, self).__repr__())
+        super_repr = super(ElementAttribute, self).__repr__()
+        if (not hasattr(self, 'value') or not hasattr(self, 'serializer')
+                or not hasattr(self, '_required') or not hasattr(self, '_is_content')):
+            return super_repr
+        s_match = re.match(r'^[^(]+\((.*?)\)$', super_repr)
         s_repr = ", " + s_match.group(1) if s_match else ''
         return "{}(value={!r}, serializer={!r}, required={!r}, is_content={!r}{})"\
             .format(self.__class__.__name__, self.value, self.serializer,
-                    self.__required, self.__is_content, s_repr)
+                    self._required, self._is_content, s_repr)
 
     def validate(self, name=None):
+        super(ElementAttribute, self).validate(name)
         if self.required and not self.assigned:
             raise InvalidComponentError(self, name, "required value is not assigned")
 

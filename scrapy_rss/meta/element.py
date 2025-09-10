@@ -219,7 +219,10 @@ class Element(BaseNSComponent):
         return settings
 
     def __repr__(self):
-        s_match = re.match(r'^[^(]+\((.*?)\)$', super(Element, self).__repr__())
+        super_repr = super(Element, self).__repr__()
+        if not hasattr(self, 'attrs') or not hasattr(self, 'children') or not hasattr(self, '_required'):
+            return super_repr
+        s_match = re.match(r'^[^(]+\((.*?)\)$', super_repr)
         s_repr = s_match.group(1) if s_match else ''
         comps_repr = ", ".join("{}={!r}".format(comp_name, comp)
                                for comp_name, comp in chain(self.attrs.items(),
@@ -439,7 +442,10 @@ class MultipleElements(Element):
             super(MultipleElements, self).__setattr__(name, value)
 
     def __repr__(self):
-        s_match = re.match(r'^[^(]+\((.*?)\)$', super(MultipleElements, self).__repr__())
+        super_repr = super(MultipleElements, self).__repr__()
+        if not hasattr(self, 'base_element_cls'):
+            return super_repr
+        s_match = re.match(r'^[^(]+\((.*?)\)$', super_repr)
         s_repr = s_match.group(1) if s_match else ''
         base_cls_repr = "base_element_cls={!r}".format(self.base_element_cls)
         return "{}({})".format(self.__class__.__name__, ", ".join(filter(None, [base_cls_repr, s_repr])))
