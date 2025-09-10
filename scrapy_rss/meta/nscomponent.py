@@ -23,7 +23,7 @@ class BaseNSComponent(object):
         self._ns_prefix = ns_prefix or ''
         self._ns_uri = ns_uri or ''
         if ns_prefix and not ns_uri:
-            raise NoNamespaceURIError("No URI for prefix '{}'".format(ns_prefix))
+            raise NoNamespaceURIError(self, None, "No URI for prefix '{}'".format(ns_prefix))
 
     @property
     def ns_prefix(self):
@@ -57,7 +57,7 @@ class BaseNSComponent(object):
         if self._ns_prefix == ns_prefix:
             return
         if not self._ns_uri:
-            raise NoNamespaceURIError("Namespace prefix cannot be set when no namespace URI")
+            raise NoNamespaceURIError(self, None, "namespace prefix cannot be set when no namespace URI")
         if self._ns_prefix:
             raise ValueError("Namespace prefix is already non-empty")
         self._ns_prefix = ns_prefix
@@ -161,7 +161,7 @@ class BaseNSComponent(object):
             If this component is invalid
         """
         if self.ns_prefix and not self.ns_uri:
-            raise NoNamespaceURIError("No namespace URI for prefix '{}'".format(self.ns_prefix))
+            raise NoNamespaceURIError(self, name, "no namespace URI for prefix '{}'".format(self.ns_prefix))
 
     def is_valid(self, name=None):
         """

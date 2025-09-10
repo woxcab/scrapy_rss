@@ -67,7 +67,7 @@ class InvalidComponentError(ValueError):
         return "Invalid{} component value: {!r}{}".format(self.name, self.component, self.msg)
 
 
-class InvalidFeedItemComponentsError(ValueError):
+class InvalidFeedItemComponentsError(InvalidComponentError):
     def __init__(self, element, msg=None):
         """
 
@@ -75,21 +75,20 @@ class InvalidFeedItemComponentsError(ValueError):
         ----------
         element : Element
         """
-        self.element = element
-        self.msg = ': ' + msg if msg else ''
+        super(InvalidFeedItemComponentsError, self).__init__(element, 'item', msg)
 
     def __str__(self):
         req_attrs = ''
         req_elems = ''
-        if self.element.required_attrs:
-            req_attrs = 'required attributes: ' + ", ".join(map(str, self.element.required_attrs))
-        if self.element.required_children:
-            req_elems = 'required children: ' + ", ".join(map(str, self.element.required_children))
+        if self.component.required_attrs:
+            req_attrs = 'required attributes: ' + ", ".join(map(str, self.component.required_attrs))
+        if self.component.required_children:
+            req_elems = 'required children: ' + ", ".join(map(str, self.component.required_children))
 
         return ("Missing one or more required components of feed element '{}': {}{}"
-                .format(self.element, "; ".join(filter(bool, [req_attrs, req_elems])), self.msg)
+                .format(self.component, "; ".join(filter(bool, [req_attrs, req_elems])), self.msg)
         )
 
 
-class NoNamespaceURIError(ValueError):
+class NoNamespaceURIError(InvalidComponentError):
     pass
