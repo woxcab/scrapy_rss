@@ -4,16 +4,42 @@ import unittest
 from parameterized import parameterized
 from itertools import chain, combinations
 from copy import deepcopy
+
 import six
 
 from tests.utils import RssTestCase
 from tests.elements import NS_ATTRS, NS_ELEM_NAMES, ATTR_VALUES
 
 from scrapy_rss.items import RssItem
-from scrapy_rss.meta import ElementAttribute, Element, MultipleElements
+from scrapy_rss.meta import BaseNSComponent, ElementAttribute, Element, MultipleElements
 
 
 class TestNamespacedElements(RssTestCase):
+    if six.PY3:
+        def tearDown(self):
+            if self.id().endswith('test_partial_init_basenscomponent'):
+                BaseNSComponent._ns_prefix = ''
+
+
+        def test_partial_init_basenscomponent(self):
+            class BS(BaseNSComponent):
+                def __init__(self, *args, **kwargs):
+                    raise TypeError
+
+            del BaseNSComponent._ns_prefix
+
+            try:
+                BS()
+            except TypeError as e:
+                comp = e.__traceback__.tb_next.tb_frame.f_locals['self']
+                self.assertIsInstance(comp, BaseNSComponent)
+                self.assertIn("BS object at 0x", repr(comp))
+
+
+        def test_partial_init_basenscomponent_after(self):
+            self.assertTrue(hasattr(BaseNSComponent, '_ns_prefix'))
+
+
     @parameterized.expand((elem_name, ns_kwargs, attr_name, attr)
                           for elem_name, ns_kwargs in NS_ELEM_NAMES.items()
                           for attr_name, attr in NS_ATTRS.items())

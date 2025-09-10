@@ -12,7 +12,7 @@ from tests.utils import RssTestCase, get_dict_attr, full_name_func
 from tests.elements import NS_ATTRS, NS_ELEM_NAMES, ATTR_VALUES
 
 from scrapy_rss.items import RssItem
-from scrapy_rss.meta import ElementAttribute, Element
+from scrapy_rss.meta import ElementAttribute, Element, MultipleElements
 
 
 class TestRepr(RssTestCase):
@@ -33,6 +33,16 @@ class TestRepr(RssTestCase):
             r'^ElementAttribute\(value={}, serializer=[^,]+, required={}, is_content={}, ns_prefix={}, ns_uri={}\)$'
             .format(re.escape(repr(value)), re.escape(repr(required)), re.escape(repr(is_content)),
                     re.escape(repr(ns_prefix or '')), re.escape(repr(ns_uri or ''))))
+
+    if six.PY3:
+        def test_partial_init_attribute(self):
+            try:
+                ElementAttribute(is_content=True, ns_uri='id')
+            except ValueError as e:
+                attr = e.__traceback__.tb_next.tb_frame.f_locals['self']
+                self.assertIsInstance(attr, ElementAttribute)
+                self.assertEqual("ElementAttribute(ns_prefix='', ns_uri='id')", repr(attr))
+
 
     @parameterized.expand(((required, attr_name, attr, elem_kwargs)
                            for attr_name, attr in chain([("attr0", ElementAttribute())], NS_ATTRS.items())
@@ -85,6 +95,16 @@ class TestRepr(RssTestCase):
         assert any(repr(elem) == elem_repr for elem_repr in elem_reprs),\
             "{!r}\nis not equal to one of:\n{}".format(elem, "\n".join(elem_reprs))
 
+    if six.PY3:
+        def test_partial_init_element(self):
+            try:
+                Element(1, 2)
+            except ValueError as e:
+                attr = e.__traceback__.tb_next.tb_frame.f_locals['self']
+                self.assertIsInstance(attr, Element)
+                self.assertEqual("Element(ns_prefix='', ns_uri='')", repr(attr))
+
+
     @parameterized.expand(((attr_name, attr, elem_name, elem_kwargs)
                            for attr_name, attr in chain([("attr0", ElementAttribute())], NS_ATTRS.items())
                            for elem_name, elem_kwargs in chain([('elem0', {})], NS_ELEM_NAMES.items())),
@@ -104,6 +124,7 @@ class TestRepr(RssTestCase):
             assert repr(item) == "{}(required=False, {}, ns_prefix='', ns_uri='')".format(
                 item_cls_name, ", ".join(default_elems_repr)
             )
+
 
     @parameterized.expand(
         product(
@@ -130,6 +151,16 @@ class TestRepr(RssTestCase):
                 item_cls_name, required, ", ".join(elems_reprs)
             )
             assert repr(item) == item_repr
+
+    if six.PY3:
+        def test_partial_init_multiple_elems(self):
+            try:
+                MultipleElements(str)
+            except TypeError as e:
+                attr = e.__traceback__.tb_next.tb_frame.f_locals['self']
+                self.assertIsInstance(attr, Element)
+                self.assertEqual("MultipleElements(ns_prefix='', ns_uri='')", repr(attr))
+
 
     @parameterized.expand(
         product(
