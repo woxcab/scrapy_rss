@@ -57,7 +57,7 @@ class BaseNSComponent(object):
         if self._ns_prefix == ns_prefix:
             return
         if not self._ns_uri:
-            raise NoNamespaceURIError(self, None, "namespace prefix cannot be set when no namespace URI")
+            raise NoNamespaceURIError(self, None, "namespace prefix cannot be set when no namespace URI, assign URI at first")
         if self._ns_prefix:
             raise ValueError("Namespace prefix is already non-empty")
         self._ns_prefix = ns_prefix
