@@ -194,7 +194,7 @@ class NSComponentName(BaseNSComponent):
         ns_uri : str or None
             a namespace URI
         """
-        if '__' in name:
+        if '__' in name.rstrip('_'):
             secondary_ns_prefix, name = name.split('__', 1)
         else: 
             secondary_ns_prefix = None

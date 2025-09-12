@@ -291,9 +291,28 @@ class TestSimpleElements(RssTestCase):
         if raising:
             with six.assertRaisesRegex(self, InvalidComponentNameError,
                                        "Cannot use special property <{}> as a component name".format(comp_name)):
-                elem_cls = type('Element0', (base_elem_cls,), {comp_name: comp_cls()})
+                elem_cls0 = type('Element0', (base_elem_cls,), {comp_name: comp_cls()})
+
+            for idx in range(1, 5):
+                exp_comp_name = comp_name + '_' * idx
+                elem_cls1 = type('Element{}'.format(idx), (base_elem_cls,), {exp_comp_name: comp_cls()})
+                elem1 = (elem_cls1(base_element_cls=Element)
+                         if issubclass(base_elem_cls, MultipleElements)
+                         else elem_cls1())
+                actual_comp_name = next(c for c in chain(elem1.attrs, elem1.children)
+                                        if str(c) == exp_comp_name)
+                self.assertTrue(hasattr(elem1, '__{}'.format(exp_comp_name)),
+                                msg='No component with name {!r}'.format(exp_comp_name))
+                self.assertIsInstance(getattr(elem1, '__{}'.format(exp_comp_name)), comp_cls,
+                                      msg='Bad component type for name {!r}'.format(exp_comp_name))
+                self.assertTrue(hasattr(elem1, actual_comp_name.priv_name),
+                                msg='No component with name {!r}'.format(exp_comp_name))
+                self.assertIsInstance(getattr(elem1, actual_comp_name.priv_name), comp_cls,
+                                      msg='Bad component type for name {!r}'.format(exp_comp_name))
+                self.assertEqual(comp_name, actual_comp_name.xml_name[1],
+                                      msg='Bad component XML name for name {!r}'.format(exp_comp_name))
         else:
-            elem_cls = type('Element0', (base_elem_cls,), {comp_name: comp_cls()})
+            elem_cls0 = type('Element0', (base_elem_cls,), {comp_name: comp_cls()})
 
     @parameterized.expand(((cls,) for cls in [
         BaseNSComponent,
