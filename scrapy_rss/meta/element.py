@@ -142,7 +142,7 @@ class Element(BaseNSComponent):
         new_children = {}
         for component_name in chain(instance._attrs, instance._children):
             new_component = deepcopy(getattr(instance, component_name.priv_name))
-            setattr(instance, component_name.priv_name, new_component)
+            Element.__setattr__(instance, component_name.priv_name, new_component)
             if isinstance(new_component, ElementAttribute):
                 new_attrs[component_name] = new_component
             else:

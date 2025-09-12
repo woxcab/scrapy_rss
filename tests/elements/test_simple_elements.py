@@ -186,8 +186,7 @@ class TestSimpleElements(RssTestCase):
     @parameterized.expand(((elem, str(attr), value)
                            for elem in RssItem().elements.values()
                            for attr in elem.attrs
-                           for value in ATTR_VALUES
-                           if not isinstance(elem, MultipleElements)),
+                           for value in ATTR_VALUES),
                           name_func=full_name_func)
     def test_element_init_with_single_kwarg(self, elem, attr_name, value):
         elem_cls = elem.__class__
