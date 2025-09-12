@@ -97,39 +97,39 @@ class TestSimpleElements(RssTestCase):
         item_with_guid.guid = GuidElement(**self.guids[1])
         self.items_with_guid[1].append(item_with_guid)
 
-    @parameterized.expand(((elem, str(elem_name))
+    @parameterized.expand(((elem.__class__, str(elem_name))
                            for elem_name, elem in RssItem().elements.items()),
                           name_func=full_name_func)
-    def test_elements_uniqueness(self, elem, elem_name):
-        elem1 = elem.__class__() if not isinstance(elem, MultipleElements) else elem.__class__(Element)
-        elem2 = elem.__class__() if not isinstance(elem, MultipleElements) else elem.__class__(Element)
+    def test_elements_uniqueness(self, elem_cls, elem_name):
+        elem1 = elem_cls() if not issubclass(elem_cls, MultipleElements) else elem_cls(Element)
+        elem2 = elem_cls() if not issubclass(elem_cls, MultipleElements) else elem_cls(Element)
         self.assertIsNot(elem1, elem2,
-                         msg="Instances of element class '{}' are identical".format(elem.__class__.__name__))
+                         msg="Instances of element class '{}' are identical".format(elem_cls.__name__))
 
         item1 = RssItem()
         item2 = RssItem()
         self.assertIsNot(getattr(item1, elem_name), getattr(item2, elem_name),
                          msg="Appropriate elements [class '{}'] of RSS item instances are identical"
-                             .format(elem.__class__.__name__))
+                             .format(elem_cls.__name__))
 
-    @parameterized.expand(((elem, str(elem_name), attr, attr_name)
+    @parameterized.expand(((elem.__class__, str(elem_name), attr.__class__, attr_name)
                            for elem_name, elem in RssItem().elements.items()
                            for attr_name, attr in elem.attrs.items()),
                           name_func=full_name_func)
-    def test_attributes_uniqueness(self, elem, elem_name, attr, attr_name):
+    def test_attributes_uniqueness(self, elem_cls, elem_name, attr_cls, attr_name):
         item1 = RssItem()
         item2 = RssItem()
-        attr1 = attr.__class__()
-        attr2 = attr.__class__()
+        attr1 = attr_cls()
+        attr2 = attr_cls()
         self.assertIsNot(attr1, attr2,
                          msg="Instances of attribute [class '{}'] are identical"
-                             .format(attr.__class__.__name__))
+                             .format(attr_cls.__name__))
 
         self.assertIsNot(getattr(getattr(item1, elem_name), attr_name.priv_name),
                          getattr(getattr(item2, elem_name), attr_name.priv_name),
                          msg="Appropriate attributes [class '{}'] of appropriate elements [class '{}'] "
                              "of RSS item instances are identical"
-                             .format(attr.__class__.__name__, elem.__class__.__name__))
+                             .format(attr_cls.__name__, elem_cls.__name__))
 
     @parameterized.expand(((elem, str(elem_name), value)
                            for elem_name, elem in RssItem().elements.items()
@@ -175,21 +175,19 @@ class TestSimpleElements(RssTestCase):
                 self.assertEqual(item.guid.guid, self.guids[idx]['guid'])
                 self.assertEqual(item.guid.isPermaLink, self.guids[idx]['isPermaLink'])
 
-    @parameterized.expand((elem,) for elem in RssItem().elements.values())
-    def test_element_init_without_args(self, elem):
-        elem_cls = elem.__class__
+    @parameterized.expand((elem.__class__,) for elem in RssItem().elements.values())
+    def test_element_init_without_args(self, elem_cls):
         if elem_cls is MultipleElements:
             elem_cls(Element)
         else:
             elem_cls()
 
-    @parameterized.expand(((elem, str(attr), value)
+    @parameterized.expand(((elem.__class__, str(attr), value)
                            for elem in RssItem().elements.values()
                            for attr in elem.attrs
                            for value in ATTR_VALUES),
                           name_func=full_name_func)
-    def test_element_init_with_single_kwarg(self, elem, attr_name, value):
-        elem_cls = elem.__class__
+    def test_element_init_with_single_kwarg(self, elem_cls, attr_name, value):
         elem_cls(**{attr_name: value})
 
     def test_element_init_from_element(self):
@@ -197,7 +195,7 @@ class TestSimpleElements(RssTestCase):
         with self.assertRaises(NotImplementedError):
             new_elem = Element(elem)
 
-    @parameterized.expand(((elem, str(bad_attr), value)
+    @parameterized.expand(((elem.__class__, str(bad_attr), value)
                            for elem in RssItem().elements.values()
                            for bad_attr in chain(('impossible_attr',),
                                                  set(attr for elem in RssItem().elements.values() for attr in elem.attrs)
@@ -205,8 +203,7 @@ class TestSimpleElements(RssTestCase):
                            for value in ATTR_VALUES
                            if not isinstance(elem, MultipleElements)),
                           name_func=full_name_func)
-    def test_element_init_with_bad_kwarg(self, elem, bad_attr_name, value):
-        elem_cls = elem.__class__
+    def test_element_init_with_bad_kwarg(self, elem_cls, bad_attr_name, value):
         with six.assertRaisesRegex(self, KeyError, 'Element does not support components:',
                                      msg="Invalid attribute '{}' was passed to '{}' initializer"
                                          .format(bad_attr_name, elem_cls.__name__)):
