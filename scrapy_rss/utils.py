@@ -12,12 +12,21 @@ except ImportError:
 import six
 
 
+def get_tzlocal():
+    try:
+        tzlocal = datetime.now().astimezone().tzinfo
+    except (ValueError, TypeError):
+        from dateutil.tz import tzlocal
+        tzlocal = tzlocal()
+    return tzlocal
+
+
 def format_rfc822(date):
     """
 
     Parameters
     ----------
-    date : datetime.datetime
+    date : datetime
         Datetime object
 
     Returns
@@ -27,18 +36,11 @@ def format_rfc822(date):
     """
     orig_locale = locale.getlocale(locale.LC_TIME)
     locale.setlocale(locale.LC_TIME, 'C')
+    if not date.tzinfo:
+        date = date.replace(tzinfo=get_tzlocal())
     date = date.strftime('%a, %d %b %Y %H:%M:%S %z')
     locale.setlocale(locale.LC_TIME, orig_locale)
     return date
-
-
-def get_tzlocal():
-    try:
-        tzlocal = datetime.now().astimezone().tzinfo
-    except (ValueError, TypeError):
-        from dateutil.tz import tzlocal
-        tzlocal = tzlocal()
-    return tzlocal
 
 
 def object_to_list(obj):
