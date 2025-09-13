@@ -111,10 +111,10 @@ class PredefinedItems(object):
         minimal_item2.description = 'Description of minimal item'
 
         minimal_item3 = RssItem()
-        minimal_item3.title.title = 'Directly defined title of minimal item'
+        minimal_item3.title.value = 'Directly defined title of minimal item'
 
         minimal_item4 = RssItem()
-        minimal_item4.description.description = 'Directly defined description of minimal item'
+        minimal_item4.description.value = 'Directly defined description of minimal item'
 
         simple_item = RssItem()
         simple_item.title = 'Title of simple item'

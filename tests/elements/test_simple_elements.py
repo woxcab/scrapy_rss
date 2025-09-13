@@ -61,14 +61,14 @@ class TestSimpleElements(RssTestCase):
         self.item_with_unescaped_text.title = self.unescaped_title
         self.item_with_unescaped_text.description = self.unescaped_description
 
-        self.guids = [{'guid': 'identifier 1', 'isPermaLink': False},
-                      {'guid': 'identifier 2', 'isPermaLink': True},]
+        self.guids = [{'value': 'identifier 1', 'isPermaLink': False},
+                      {'value': 'identifier 2', 'isPermaLink': True},]
 
         self.items_with_guid = {0: [], 1: []}
 
         item_with_guid = RssItem()
         item_with_guid.title = self.non_empty_title
-        item_with_guid.guid = self.guids[0]['guid']
+        item_with_guid.guid = self.guids[0]['value']
         self.items_with_guid[0].append(item_with_guid)
 
         item_with_guid = RssItem()
@@ -78,7 +78,7 @@ class TestSimpleElements(RssTestCase):
 
         item_with_guid = RssItem()
         item_with_guid.title = self.non_empty_title
-        item_with_guid.guid.guid = self.guids[0]['guid']
+        item_with_guid.guid.value = self.guids[0]['value']
         self.items_with_guid[0].append(item_with_guid)
 
         item_with_guid = RssItem()
@@ -88,7 +88,7 @@ class TestSimpleElements(RssTestCase):
 
         item_with_guid = RssItem()
         item_with_guid.title = self.non_empty_title
-        item_with_guid.guid = self.guids[1]['guid']
+        item_with_guid.guid = self.guids[1]['value']
         item_with_guid.guid.isPermaLink = self.guids[1]['isPermaLink']
         self.items_with_guid[1].append(item_with_guid)
 
@@ -171,8 +171,8 @@ class TestSimpleElements(RssTestCase):
 
         for idx, items in self.items_with_guid.items():
             for item in items:
-                self.assertEqual(item.guid, self.guids[idx]['guid'])
-                self.assertEqual(item.guid.guid, self.guids[idx]['guid'])
+                self.assertEqual(item.guid, self.guids[idx]['value'])
+                self.assertEqual(item.guid.value, self.guids[idx]['value'])
                 self.assertEqual(item.guid.isPermaLink, self.guids[idx]['isPermaLink'])
 
     @parameterized.expand((elem.__class__,) for elem in RssItem().elements.values())

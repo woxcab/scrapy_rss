@@ -194,14 +194,14 @@ It's allowed to set **any** subset of RSS elements (e.g. title only). For exampl
   from datetime import datetime
 
   item1.title = 'RSS item title'  # set value of <title> element
-  title = item1.title.title  # get value of <title> element
+  title = item1.title.value  # get value of <title> element
   item1.description = 'description'
 
   item1.guid = 'item identifier'
   item1.guid.isPermaLink = True  # set value of attribute isPermalink of <guid> element,
                                  # isPermaLink is False by default
   is_permalink = item1.guid.isPermaLink  # get value of attribute isPermalink of <guid> element
-  guid = item1.guid.guid  # get value of element <guid>
+  guid = item1.guid.value  # get value of element <guid>
 
   item1.category = 'single category'
   category = item1.category

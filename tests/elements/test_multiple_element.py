@@ -123,12 +123,12 @@ class TestMultipleElements(RssTestCase):
             MultipleElements(type('some_non_element_class'))
 
         me = MultipleElements(CategoryElement)
-        me.add({'category': self.category_names[0]})
-        self.assertEqual(me.category, self.category_names[0])
+        me.add({'value': self.category_names[0]})
+        self.assertEqual(me.value, self.category_names[0])
 
         me = MultipleElements(CategoryElement)
-        me.add([{'category': cat_name} for cat_name in self.category_names])
-        self.assertSequenceEqual([el.category for el in me], self.category_names)
+        me.add([{'value': cat_name} for cat_name in self.category_names])
+        self.assertSequenceEqual([el.value for el in me], self.category_names)
 
     def test_instances(self):
         self.assertIsInstance(self.item_with_single_category.category, MultipleElements)
@@ -146,14 +146,14 @@ class TestMultipleElements(RssTestCase):
 
     def test_inner_cls_attr(self):
         item = RssItem()
-        item.category = CategoryElement(category=self.category_names[0])
+        item.category = CategoryElement(value=self.category_names[0])
         self.assertEqual(item.category, self.category_names[0])
         for cnt in range(2, 2+len(self.category_names)):
-            item.category = [CategoryElement(category=cat_name)
+            item.category = [CategoryElement(value=cat_name)
                              for cat_name in self.category_names[:cnt]]
             self.assertEqual(item.category, self.category_names[:cnt])
 
-            item.category = CategoryElement(category=self.category_names[0])
+            item.category = CategoryElement(value=self.category_names[0])
             self.assertEqual(item.category, self.category_names[0])
 
             item.category = self.category_names[:cnt]
@@ -165,38 +165,38 @@ class TestMultipleElements(RssTestCase):
     def test_irregular_access(self):
         me = MultipleElements(CategoryElement)
         with six.assertRaisesRegex(self, AttributeError, 'have not been assigned'):
-            me.category
+            me.value
         me.add(['first', 'second'])
         with six.assertRaisesRegex(self, AttributeError, 'Cannot get attribute: more than one elements'):
-            me.category
+            me.value
         with six.assertRaisesRegex(self, AttributeError, 'Cannot set attribute: 2 elements have been assigned'):
-            me.category = 'another'
+            me.value = 'another'
 
         me.clear()
         with six.assertRaisesRegex(self, AttributeError, 'have not been assigned'):
-            me.category
+            me.value
         me.add('single')
-        self.assertEqual(me.category, 'single')
-        me.category = 'another'
-        self.assertEqual(me.category, 'another')
+        self.assertEqual(me.value, 'single')
+        me.value = 'another'
+        self.assertEqual(me.value, 'another')
 
-        me.category = None
+        me.value = None
         with six.assertRaisesRegex(self, AttributeError, 'have not been assigned'):
-            me.category
+            me.value
 
         item = RssItem()
         with six.assertRaisesRegex(self, AttributeError, 'have not been assigned'):
-            item.category.category
+            item.category.value
         item.category = ['first', 'second']
         with six.assertRaisesRegex(self, AttributeError, 'Cannot get attribute: more than one elements'):
-            item.category.category
+            item.category.value
         with six.assertRaisesRegex(self, AttributeError, 'Cannot set attribute: 2 elements have been assigned'):
-            item.category.category = 'other'
+            item.category.value = 'other'
 
         item.category.clear()
-        item.category = 'single'
-        item.category.category = 'another'
-        self.assertEqual(item.category.category, 'another')
+        item.category = 'first'
+        item.category.value = 'another'
+        self.assertEqual(item.category.value, 'another')
 
 
 if __name__ == "__main__":

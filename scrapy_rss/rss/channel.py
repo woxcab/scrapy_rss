@@ -81,8 +81,8 @@ class ChannelElement(meta.Element):
 
     def validate(self, name=None):
         if self.image.assigned:
-            if not self.image.title.title:
-                self.image.title = self.title.title
-            if not self.image.link.link:
-                self.image.link = self.link.link
+            if not self.image.title.value:
+                self.image.title = self.title.value
+            if not self.image.link.value:
+                self.image.link = self.link.value
         super(ChannelElement, self).validate(name)
