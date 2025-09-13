@@ -31,7 +31,7 @@ from scrapy_rss.items import RssItem, FeedItem
 from scrapy_rss.rss.old.items import RssItem as OldRssItem
 from scrapy_rss.meta import Element, ElementAttribute
 from scrapy_rss.exceptions import *
-from scrapy_rss.exporters import RssItemExporter
+from scrapy_rss.exporters import FeedItemExporter, RssItemExporter
 from scrapy_rss.utils import get_tzlocal
 
 import pytest
@@ -49,7 +49,7 @@ if six.PY2:
 
 class CrawlerContext(object):
     default_settings = FrozenDict({'ITEM_PIPELINES':
-                                       {'scrapy_rss.pipelines.RssExportPipeline': 900,},
+                                       {'scrapy_rss.pipelines.FeedExportPipeline': 900,},
                                    'LOG_LEVEL': 'WARNING',
                                    'EXTENSIONS': {
                                        'scrapy.extensions.memusage.MemoryUsage': None,},
@@ -94,7 +94,7 @@ class CrawlerContext(object):
                 failure.raiseException()
 
 
-class FullRssItemExporter(RssItemExporter):
+class FullRssItemExporter(FeedItemExporter):
     def __init__(self, file, channel_title, channel_link, channel_description,
                  language='en-US',
                  copyright='Data',
@@ -190,7 +190,7 @@ class TestExporting(RssTestCase):
                  open(os.path.join(os.path.dirname(__file__), 'expected_rss', 'empty_feed.rss')) as expected:
                 self.assertUnorderedXmlEquivalentOutputs(data.read(), expected.read())
 
-    def test_custom_exporters(self):
+    def test_custom_exporter1(self):
         with FeedSettings() as feed_settings:
             crawler_settings = dict(CrawlerContext.default_settings)
             crawler_settings['FEED_EXPORTER'] = 'tests.test_exporter.FullRssItemExporter'
@@ -203,6 +203,9 @@ class TestExporting(RssTestCase):
                 self.assertUnorderedXmlEquivalentOutputs(data.read(), expected.read(),
                                                          excepted_elements=None)
 
+    def test_custom_exporter2(self):
+        with FeedSettings() as feed_settings:
+            crawler_settings = dict(CrawlerContext.default_settings)
             crawler_settings['FEED_EXPORTER'] = FullRssItemExporter
             with CrawlerContext(crawler_settings=crawler_settings, **feed_settings):
                 pass
@@ -212,7 +215,10 @@ class TestExporting(RssTestCase):
                 self.assertUnorderedXmlEquivalentOutputs(data.read(), expected.read(),
                                                          excepted_elements=None)
 
-            class InvalidRssItemExporter1(RssItemExporter):
+    def test_custom_exporter3(self):
+        with FeedSettings() as feed_settings:
+            crawler_settings = dict(CrawlerContext.default_settings)
+            class InvalidRssItemExporter1(FeedItemExporter):
                 def __init__(self, file, channel_title, channel_link, channel_description,
                              managing_editor='Manager Name',
                              *args, **kwargs):
@@ -225,7 +231,10 @@ class TestExporting(RssTestCase):
                 with CrawlerContext(crawler_settings=crawler_settings, **feed_settings):
                     pass
 
-            class InvalidRssItemExporter2(RssItemExporter):
+    def test_custom_exporter4(self):
+        with FeedSettings() as feed_settings:
+            crawler_settings = dict(CrawlerContext.default_settings)
+            class InvalidRssItemExporter2(FeedItemExporter):
                 def __init__(self, file, channel_title, channel_link, channel_description,
                              webmaster='Webmaster Name',
                              *args, **kwargs):
@@ -238,7 +247,10 @@ class TestExporting(RssTestCase):
                 with CrawlerContext(crawler_settings=crawler_settings, **feed_settings):
                     pass
 
-            class MultipleCategoriesRssItemExporter(RssItemExporter):
+    def test_custom_exporter5(self):
+        with FeedSettings() as feed_settings:
+            crawler_settings = dict(CrawlerContext.default_settings)
+            class MultipleCategoriesRssItemExporter(FeedItemExporter):
                 def __init__(self, file, channel_title, channel_link, channel_description,
                              category=('category 1', 'category 2'),
                              *args, **kwargs):
@@ -254,7 +266,10 @@ class TestExporting(RssTestCase):
                                    'expected_rss', 'empty_feed_with_categories.rss')) as expected:
                 self.assertUnorderedXmlEquivalentOutputs(data.read(), expected.read())
 
-            class NoGeneratorRssItemExporter(RssItemExporter):
+    def test_custom_exporter6(self):
+        with FeedSettings() as feed_settings:
+            crawler_settings = dict(CrawlerContext.default_settings)
+            class NoGeneratorRssItemExporter(FeedItemExporter):
                 def __init__(self, file, channel_title, channel_link, channel_description,
                              generator=None,
                              *args, **kwargs):
@@ -269,6 +284,28 @@ class TestExporting(RssTestCase):
                  open(os.path.join(os.path.dirname(__file__), 'expected_rss', 'empty_feed_without_generator.rss')) as expected:
                 self.assertUnorderedXmlEquivalentOutputs(data.read(), expected.read(), excepted_elements='lastBuildDate')
 
+    def test_custom_exporter7(self):
+        with FeedSettings() as feed_settings:
+            crawler_settings = dict(CrawlerContext.default_settings)
+            class NoGeneratorRssItemExporter2(RssItemExporter):
+                def __init__(self, file, channel_title, channel_link, channel_description,
+                             generator=None,
+                             *args, **kwargs):
+                    super(NoGeneratorRssItemExporter2, self) \
+                        .__init__(file, channel_title, channel_link, channel_description,
+                                  generator=generator, *args, **kwargs)
+
+            crawler_settings['FEED_EXPORTER'] = NoGeneratorRssItemExporter2
+            with pytest.warns(DeprecationWarning, match='Use FeedItemExporter instead'):
+                with CrawlerContext(crawler_settings=crawler_settings, **feed_settings):
+                    pass
+            with open(feed_settings['feed_file']) as data, \
+                 open(os.path.join(os.path.dirname(__file__), 'expected_rss', 'empty_feed_without_generator.rss')) as expected:
+                self.assertUnorderedXmlEquivalentOutputs(data.read(), expected.read(), excepted_elements='lastBuildDate')
+
+    def test_custom_exporter8(self):
+        with FeedSettings() as feed_settings:
+            crawler_settings = dict(CrawlerContext.default_settings)
             class InvalidExporter(object):
                 pass
 
@@ -277,7 +314,10 @@ class TestExporting(RssTestCase):
                 with CrawlerContext(crawler_settings=crawler_settings, **feed_settings):
                     pass
 
-            class BadRssItemExporter(RssItemExporter):
+    def test_custom_exporter9(self):
+        with FeedSettings() as feed_settings:
+            crawler_settings = dict(CrawlerContext.default_settings)
+            class BadRssItemExporter(FeedItemExporter):
                 def __init__(self, *args, **kwargs):
                     super(BadRssItemExporter, self).__init__(*args, **kwargs)
                     self.channel = scrapy.Item()
@@ -286,6 +326,19 @@ class TestExporting(RssTestCase):
             with six.assertRaisesRegex(self, ValueError, 'Argument element must be instance of <Element>'):
                 with CrawlerContext(crawler_settings=crawler_settings, **feed_settings):
                     pass
+
+    def test_deprecated_pipeline(self):
+        with FeedSettings() as feed_settings:
+            crawler_settings = dict(CrawlerContext.default_settings)
+            item = initialized_items.items['full_rss_item']
+            crawler_settings['ITEM_PIPELINES'] = {'scrapy_rss.pipelines.RssExportPipeline': 900}
+            with pytest.warns(DeprecationWarning, match='Use FeedExportPipeline instead'):
+                with CrawlerContext(crawler_settings=crawler_settings, **feed_settings) as context:
+                    context.ipm.process_item(item, context.spider)
+            with open(feed_settings['feed_file']) as data, \
+                    open(os.path.join(os.path.dirname(__file__),
+                                      'expected_rss', 'full_rss_item.rss')) as expected:
+                self.assertUnorderedXmlEquivalentOutputs(data=data.read(), expected=expected.read())
 
 
     @parameterized.expand(((item_cls,) for item_cls in [RssItem, OldRssItem]),

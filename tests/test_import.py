@@ -44,7 +44,7 @@ class TestImport:
         assert old_element is new_element
 
     def test_exporters_module(self):
-        from scrapy_rss.exporters import RssItemExporter
+        from scrapy_rss.exporters import FeedItemExporter, RssItemExporter
 
     def test_items_module(self):
         from scrapy_rss.items import RssItem
@@ -83,6 +83,7 @@ class TestImport:
             old_cls(*args)
 
     def test_pipelines_module(self):
+        from scrapy_rss.pipelines import FeedExportPipeline
         from scrapy_rss.pipelines import RssExportPipeline
 
     def test_utils_module(self):

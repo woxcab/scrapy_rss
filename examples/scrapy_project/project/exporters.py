@@ -1,11 +1,14 @@
 
-from scrapy_rss.exporters import RssItemExporter
+from scrapy_rss.exporters import FeedItemExporter
 
 
-class CustomRssItemExporter(RssItemExporter):
+class CustomRssItemExporter(FeedItemExporter):
     def __init__(self, *args, **kwargs):
-        kwargs['generator'] = kwargs.get('generator', 'Special generator')
-        kwargs['language'] = kwargs.get('language', 'en-us')
         super(CustomRssItemExporter, self).__init__(*args, **kwargs)
+        self.channel.generator = 'Special generator'
+        self.channel.language = 'en-us'
+        self.channel.managingEditor = 'editor@example.com'
+        self.channel.category = ['category 1', 'category 2']
+        self.channel.image.url = 'https://example.com/img.jpg'
 
 

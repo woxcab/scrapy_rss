@@ -5,7 +5,7 @@ BOT_NAME = 'project'
 SPIDER_MODULES = ['project.spiders']
 
 ITEM_PIPELINES = {
-    'scrapy_rss.pipelines.RssExportPipeline': 950,
+    'scrapy_rss.pipelines.FeedExportPipeline': 950,
 }
 
 FEED_FILE = 'feed.rss'

@@ -86,7 +86,7 @@ or to the :code:`custom_settings` attribute of the spider:
 
      ITEM_PIPELINES = {
          # ...
-         'scrapy_rss.pipelines.RssExportPipeline': 900,  # or another priority
+         'scrapy_rss.pipelines.FeedExportPipeline': 900,  # or another priority
          # ...
      }
 
@@ -116,29 +116,29 @@ Feed (Channel) Elements Customization [optionally]
 
 If you want to change other channel parameters (such as language, copyright, managingEditor, webMaster,
 pubDate, lastBuildDate, category, generator, docs, cloud, ttl, image, rating, textInput, skipHours, skipDays)
-then define your own exporter that's inherited from :code:`RssItemExporter` class and, for example,
+then define your own exporter that's inherited from :code:`FeedItemExporter` class and, for example,
 modify :code:`self.channel` `Element <https://github.com/woxcab/scrapy_rss/blob/develop/scrapy_rss/rss/channel.py>`__ (camelCase attributes naming):
 
 .. code:: python
 
-   from scrapy_rss.exporters import RssItemExporter
+   from scrapy_rss.exporters import FeedItemExporter
 
-   class MyRssItemExporter(RssItemExporter):
+   class MyRssItemExporter(FeedItemExporter):
       def __init__(self, *args, **kwargs):
          super(MyRssItemExporter, self).__init__(*args, **kwargs)
          self.channel.generator = 'Special generator'
          self.channel.language = 'en-us'
          self.channel.managingEditor = 'editor@example.com'
          self.channel.category = ['category 1', 'category 2']
-         self.image.url = 'https://example.com/img.jpg'
+         self.channel.image.url = 'https://example.com/img.jpg'
 
 or modify :code:`kwargs` arguments (snake_case arguments naming):
 
 .. code:: python
 
-   from scrapy_rss.exporters import RssItemExporter
+   from scrapy_rss.exporters import FeedItemExporter
 
-   class MyRssItemExporter(RssItemExporter):
+   class MyRssItemExporter(FeedItemExporter):
       def __init__(self, *args, **kwargs):
          kwargs['generator'] = kwargs.get('generator', 'Special generator')
          kwargs['language'] = kwargs.get('language', 'en-us')

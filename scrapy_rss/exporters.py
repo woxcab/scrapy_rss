@@ -12,11 +12,11 @@ from .items import RssItem, FeedItem
 from .rss.channel import ChannelElement
 from .rss.old.items import RssItem as OldRssItem
 from .exceptions import *
-from .utils import get_tzlocal, is_strict_subclass, get_full_class_name
+from .utils import get_tzlocal, is_strict_subclass, get_full_class_name, deprecated_class
 from . import meta
 
 
-class RssItemExporter(XmlItemExporter):
+class FeedItemExporter(XmlItemExporter):
     def __init__(self, file, channel_title, channel_link, channel_description,
                  namespaces=None, item_cls=None,
                  language=None, copyright=None, managing_editor=None, webmaster=None,
@@ -47,7 +47,7 @@ class RssItemExporter(XmlItemExporter):
         """
         kwargs['root_element'] = 'rss'
         kwargs['item_element'] = 'item'
-        super(RssItemExporter, self).__init__(file, **kwargs)
+        super(FeedItemExporter, self).__init__(file, **kwargs)
 
         self.channel_element_name = 'channel'
         self.channel = ChannelElement()
@@ -187,3 +187,8 @@ class RssItemExporter(XmlItemExporter):
             self.xg.endPrefixMapping(ns_prefix)
         self._started_ns_counter -= Counter(self._namespaces.items())
         self.xg.endDocument()
+
+
+@deprecated_class('Use FeedItemExporter instead')
+class RssItemExporter(FeedItemExporter):
+    pass

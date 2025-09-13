@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from scrapy.spiders import CrawlSpider, Rule
-from scrapy.linkextractor import LinkExtractor
+from scrapy.linkextractors import LinkExtractor
 from project.items import ShopItem
 
 
