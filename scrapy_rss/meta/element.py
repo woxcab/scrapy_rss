@@ -218,7 +218,9 @@ class Element(BaseNSComponent):
 
     def __setattr__(self, key, value):
         if self._inited and not hasattr(self, key):
-            raise AttributeError("No attribute {!r}".format(key))
+            raise AttributeError("No attribute {!r}. Supported components: {}"
+                                 .format(key,
+                                         ', '.join(map(repr, map(str, chain(self.attrs, self.children))))))
         super(Element, self).__setattr__(key, value)
 
     def __repr__(self):
