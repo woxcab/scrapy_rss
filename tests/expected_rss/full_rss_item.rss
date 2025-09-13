@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0">
+    <channel>
+        <title>Title</title>
+        <description>Description</description>
+        <link>http://example.com/feed</link>
+        <item>
+            <title>Title of full item</title>
+            <link>http://example.com/item</link>
+            <description>Item description</description>
+            <author>Item author without the at sign</author>
+            <category>Category 1</category>
+            <category>Category 2</category>
+            <comments>http://example.com/item#comments</comments>
+            <enclosure url="http://example.com/content" length="0" type="text/plain"></enclosure>
+            <pubDate>Sat, 01 Jan 2000 00:50:15 +0300</pubDate>
+            <guid isPermaLink="false">Identifier</guid>
+            <source url="https://another.example.com/feed">Another feed title</source>
+        </item>
+    </channel>
+</rss>

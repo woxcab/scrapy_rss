@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from datetime import datetime
 from scrapy_rss.meta import Element, ElementAttribute
 from scrapy_rss import RssItem
 
@@ -142,6 +143,19 @@ class PredefinedItems(object):
         item_with_enclosure.enclosure.length = 0
         item_with_enclosure.enclosure.type = 'text/plain'
 
+        full_rss_item = RssItem()
+        full_rss_item.title = 'Title of full item'
+        full_rss_item.link = 'http://example.com/item'
+        full_rss_item.description = 'Item description'
+        full_rss_item.author = 'Item author without the at sign'
+        full_rss_item.category = ['Category 1', 'Category 2']
+        full_rss_item.comments = 'http://example.com/item#comments'
+        full_rss_item.enclosure = {'url': 'http://example.com/content', 'length': 0, 'type': 'text/plain'}
+        full_rss_item.pubDate = datetime(2000, 1, 1, 0, 50, 15)
+        full_rss_item.guid = {'isPermaLink': False, 'value': 'Identifier'}
+        full_rss_item.source.url = 'https://another.example.com/feed'
+        full_rss_item.source.title = 'Another feed title'
+
         unicode_item = UnicodeItem()
         unicode_item.title = 'Заголовок. Název položky'
         setattr(unicode_item, 'název_elementu1', {
@@ -234,6 +248,7 @@ class PredefinedItems(object):
             'item_with_single_category': item_with_single_category,
             'item_with_multiple_categories': item_with_multiple_categories,
             'item_with_guid': item_with_guid,
+            'full_rss_item': full_rss_item,
             'item_with_unicode': item_with_unicode,
             'item_with_enclosure': item_with_enclosure,
             'item_with_unique_ns': item_with_unique_ns,
