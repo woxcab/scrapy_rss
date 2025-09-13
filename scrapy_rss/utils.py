@@ -66,6 +66,34 @@ def object_to_list(obj):
     return [obj]
 
 
+def is_strict_subclass(cls, base_cls):
+    """
+    Check if class is subclass of some derived class from given
+
+    Parameters
+    ----------
+    cls
+        Class object
+    base_cls
+        Potentially ancestor class object
+
+    Returns
+    -------
+    bool
+        Whether the ``cls`` is subclass of ``base_cls`` and they are not the same
+    """
+    return issubclass(cls, base_cls) and cls != base_cls
+
+
+def get_full_class_name(cls):
+    if not hasattr(cls, '__name__'):
+        raise TypeError("object does not have __name__")
+    fullname = cls.__qualname__ if hasattr(cls, '__qualname__') else cls.__name__
+    if hasattr(cls, '__module__') and cls.__module__ not in ('builtins', '__builtin__'):
+        fullname = cls.__module__ + '.' + fullname
+    return fullname
+
+
 def deprecated_class(reason):
     """
     Decorator which can be used to mark classes

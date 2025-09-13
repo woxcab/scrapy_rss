@@ -4,8 +4,24 @@ import time
 from datetime import datetime, timedelta, tzinfo
 from itertools import product
 import pytest
+import six
 
-from scrapy_rss.utils import format_rfc822, deprecated_module, deprecated_class, deprecated_func
+from scrapy_rss.utils import (format_rfc822, is_strict_subclass, get_full_class_name,
+                              deprecated_module, deprecated_class, deprecated_func)
+
+
+class A0:
+    def foo(self):
+        pass
+    class B0:
+        def bar(self):
+            pass
+
+class C0(A0):
+    pass
+
+class D0(C0):
+    pass
 
 
 @pytest.mark.parametrize("dt,timezone_offset", product([
@@ -65,6 +81,40 @@ def test_tzlocal(tz_offset, tz_name):
             del os.environ['TZ']
         time.tzset()
     assert actual_offset == expected_offset
+
+
+@pytest.mark.parametrize("cls,base_cls,expected", [
+    (int, int, False),
+    (int, float, False),
+    (float, int, False),
+    (A0, A0, False),
+    (C0, A0, True),
+    (A0, C0, False),
+    (D0, A0, True),
+    (D0, C0, True),
+])
+def test_is_strict_subclass(cls, base_cls, expected):
+    assert is_strict_subclass(cls, base_cls) == expected
+
+
+@pytest.mark.parametrize("obj,expected_name",[
+    (int, 'int'),
+    (str, 'str'),
+    (get_full_class_name, 'scrapy_rss.utils.get_full_class_name'),
+    (datetime, 'datetime.datetime'),
+    (A0, 'tests.test_utils.A0'),
+    (A0.foo, 'tests.test_utils.A0.foo' if six.PY3 else 'tests.test_utils.foo'),
+    (A0.B0, 'tests.test_utils.A0.B0' if six.PY3 else 'tests.test_utils.B0'),
+    (A0.B0.bar, 'tests.test_utils.A0.B0.bar' if six.PY3 else 'tests.test_utils.bar'),
+])
+def test_get_full_class_name(obj, expected_name):
+    actual = get_full_class_name(obj)
+    assert actual == expected_name
+
+
+def test_get_full_class_name_with_bad_object():
+    with pytest.raises(TypeError, match='object does not have __name__'):
+        get_full_class_name(None)
 
 
 def test_deprecated_module():

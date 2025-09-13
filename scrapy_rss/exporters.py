@@ -4,15 +4,15 @@ from itertools import chain
 from collections import Counter
 from operator import itemgetter
 
-from packaging import version
 from datetime import datetime
 import scrapy
 from scrapy.exporters import XmlItemExporter
 
-from .items import RssItem
+from .items import RssItem, FeedItem
 from .rss.channel import ChannelElement
+from .rss.old.items import RssItem as OldRssItem
 from .exceptions import *
-from .utils import get_tzlocal
+from .utils import get_tzlocal, is_strict_subclass, get_full_class_name
 from . import meta
 
 
@@ -75,9 +75,10 @@ class RssItemExporter(XmlItemExporter):
 
         if not item_cls:
             item_cls = RssItem
-        elif not issubclass(item_cls, RssItem):
-            raise ValueError('Item class must be RssItem class or its subclass')
+        elif not is_strict_subclass(item_cls, FeedItem):
+            raise ValueError('Item class must be strict subclass of FeedItem')
         self._item_cls = item_cls
+        self._allowed_item_classes = tuple({RssItem, OldRssItem, self._item_cls})
 
         if not namespaces:
             namespaces = {}
@@ -169,9 +170,11 @@ class RssItemExporter(XmlItemExporter):
         self._export_xml_element(self.channel)
 
     def export_item(self, item):
-        if not isinstance(item, RssItem) and not isinstance(getattr(item, 'rss', None), RssItem):
-            raise InvalidFeedItemError("Item must have 'rss' field of type 'RssItem'")
-        if not isinstance(item, RssItem):
+        if (not isinstance(item, self._allowed_item_classes)
+                and not isinstance(getattr(item, 'rss', None), RssItem)):
+            raise InvalidFeedItemError("Item must be type {} or have 'rss' field of type 'RssItem'"
+                                       .format(', '.join(map(repr, map(get_full_class_name, self._allowed_item_classes)))))
+        if not isinstance(item, self._allowed_item_classes):
             item = item.rss
 
         self._export_xml_element(item, (None, self.item_element), attrs_only_namespaces=False)

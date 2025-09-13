@@ -22,12 +22,13 @@ try:
     from scrapy.item import BaseItem
 except ImportError:
     from scrapy.item import Item as BaseItem
-from tests.utils import RaisedItemPipelineManager
+from tests.utils import RaisedItemPipelineManager, full_name_func
 from scrapy.exceptions import NotConfigured, CloseSpider
 from scrapy.utils.misc import load_object
 from scrapy.utils.test import get_crawler
 
 from scrapy_rss.items import RssItem, FeedItem
+from scrapy_rss.rss.old.items import RssItem as OldRssItem
 from scrapy_rss.meta import Element, ElementAttribute
 from scrapy_rss.exceptions import *
 from scrapy_rss.exporters import RssItemExporter
@@ -287,8 +288,10 @@ class TestExporting(RssTestCase):
                     pass
 
 
-    def test_item_validation1(self):
-        item = RssItem()
+    @parameterized.expand(((item_cls,) for item_cls in [RssItem, OldRssItem]),
+                          name_func=full_name_func)
+    def test_item_validation1(self, item_cls):
+        item = item_cls()
         with FeedSettings() as feed_settings:
             with six.assertRaisesRegex(self, InvalidFeedItemComponentsError,
                                        r'Missing one or more required components'):
@@ -345,7 +348,7 @@ class TestExporting(RssTestCase):
 
         with FeedSettings() as feed_settings:
             for invalid_item_cls in (InvalidSuperItem1, InvalidSuperItem2, InvalidSuperItem3):
-                with six.assertRaisesRegex(self, InvalidFeedItemError, "Item must have 'rss'",
+                with six.assertRaisesRegex(self, InvalidFeedItemError, "Item.*? type 'RssItem'",
                                            msg=str(invalid_item_cls)):
                     with CrawlerContext(**feed_settings) as context:
                         context.ipm.process_item(invalid_item_cls(), context.spider)
@@ -537,7 +540,7 @@ class TestExporting(RssTestCase):
             crawler_settings = dict(CrawlerContext.default_settings)
             crawler_settings['FEED_ITEM_CLASS'] = item_cls
 
-            with six.assertRaisesRegex(self, ValueError, 'must be RssItem'):
+            with six.assertRaisesRegex(self, ValueError, 'must be strict subclass of FeedItem'):
                 with CrawlerContext(crawler_settings=crawler_settings, **feed_settings):
                     pass
 
