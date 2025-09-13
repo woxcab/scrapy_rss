@@ -123,8 +123,7 @@ class BaseNSComponent(object):
 
         """
         return (self.__class__ == getattr(other, '__class__', None)
-                and all(getattr(other, s) == getattr(self, s)
-                        for s, v in self.settings.items()))
+                and all(getattr(other, s) == v for s, v in self.settings.items()))
 
     def __repr__(self):
         if not hasattr(self, '_ns_prefix') or not hasattr(self, '_ns_uri'):
