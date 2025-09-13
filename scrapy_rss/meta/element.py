@@ -298,8 +298,8 @@ class MultipleElements(Element):
         self._content_name = base_element_cls._content_name
 
         def serializer():
-            raise NotImplementedError('Class MultipleElements does not support serialization')
-        self.serialize = serializer
+            raise NotImplementedError('Class MultipleElements does not support attributes serialization')
+        self.serialize_attrs = serializer
 
     @property
     def settings(self):

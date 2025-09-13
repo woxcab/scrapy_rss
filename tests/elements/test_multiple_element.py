@@ -37,9 +37,9 @@ class TestMultipleElements(RssTestCase):
         self.assertEqual(len(me), 0)
         self.assertFalse(me.assigned)
         with self.assertRaises(NotImplementedError):
-            me.serialize()
+            me.serialize_attrs()
         with self.assertRaises(NotImplementedError):
-            MultipleElements(CategoryElement).serialize()
+            MultipleElements(CategoryElement).serialize_attrs()
 
         new_item1 = Element()
         new_item2 = Element()
