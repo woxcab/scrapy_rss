@@ -87,7 +87,11 @@ class TestImport:
         from scrapy_rss.pipelines import RssExportPipeline
 
     def test_utils_module(self):
+        from scrapy_rss.utils import get_tzlocal
         from scrapy_rss.utils import format_rfc822
+        from scrapy_rss.utils import object_to_list
+        from scrapy_rss.utils import is_strict_subclass
+        from scrapy_rss.utils import get_full_class_name
         from scrapy_rss.utils import deprecated_module
         from scrapy_rss.utils import deprecated_class
         from scrapy_rss.utils import deprecated_func
