@@ -136,6 +136,8 @@ class Element(BaseNSComponent):
         The dictionary key is a tuple (namespace_uri, attribute_name) for SAX handlers
     """
 
+    _inited = False
+
     def __new__(cls, *args, **kwargs):
         instance = super(Element, cls).__new__(cls)
         new_attrs = {}
@@ -202,6 +204,7 @@ class Element(BaseNSComponent):
                            "Constructor of class '{}' supports only the next named arguments: {}"
                            .format(list(kwargs.keys()), self.__class__.__name__,
                                    [str(a) for a in chain(self.attrs, self.children)]))
+        self._inited = True
 
     @property
     def required(self):
@@ -212,6 +215,11 @@ class Element(BaseNSComponent):
         settings = super(Element, self).settings
         settings['required'] = self._required
         return settings
+
+    def __setattr__(self, key, value):
+        if self._inited and not hasattr(self, key):
+            raise AttributeError("No attribute {!r}".format(key))
+        super(Element, self).__setattr__(key, value)
 
     def __repr__(self):
         super_repr = super(Element, self).__repr__()
@@ -293,9 +301,11 @@ class MultipleElements(Element):
             raise TypeError("Invalid type of elements class: {}".format(base_element_cls))
         self.base_element_cls = base_element_cls
         super(MultipleElements, self).__init__(**kwargs)
+        self._inited = False
         self.elements = []
         self._kwargs = kwargs
         self._content_name = base_element_cls._content_name
+        self._inited = True
 
         def serializer():
             raise NotImplementedError('Class MultipleElements does not support attributes serialization')
@@ -425,9 +435,10 @@ class MultipleElements(Element):
         return getattr(self.elements[0], name)
 
     def __setattr__(self, name, value):
-        if (name != 'base_element_cls'
-            and name in map(str, chain(self.base_element_cls._attrs,
-                                       self.base_element_cls._children))):
+        if (self._inited
+                and name != 'base_element_cls'
+                and name in map(str, chain(self.base_element_cls._attrs,
+                                           self.base_element_cls._children))):
             if value is None:
                 self.clear()
                 return

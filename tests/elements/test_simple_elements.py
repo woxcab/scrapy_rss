@@ -248,6 +248,16 @@ class TestSimpleElements(RssTestCase):
                                          "(element must not have content)".format(elem_cls.__name__)):
             elem_cls(value1, value2)
 
+    @parameterized.expand(((elem_cls,)
+                           for elem in RssItem().elements.values()
+                           for elem_cls in (elem.__class__ if not isinstance(elem, MultipleElements)
+                                            else partial(elem.__class__, base_element_cls=Element),)),
+                          name_func=full_name_func)
+    def test_unknown_attribute_setter(self, elem_cls):
+        elem = elem_cls()
+        with six.assertRaisesRegex(self, AttributeError, 'No attribute'):
+            elem.unknown = 5
+
     @parameterized.expand(((str(elem_name), str(attr_name), value)
                            for elem_name, elem_descr in RssItem().elements.items()
                            for attr_name in elem_descr.attrs
