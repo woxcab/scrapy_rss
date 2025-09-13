@@ -70,3 +70,4 @@ class PubDateElement(meta.Element):
 
 class SourceElement(meta.Element):
     url = meta.ElementAttribute(required=True)
+    title = meta.ElementAttribute(is_content=True)
