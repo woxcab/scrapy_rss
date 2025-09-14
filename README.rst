@@ -206,8 +206,8 @@ It's allowed to set **any** subset of RSS elements (e.g. title only). For exampl
   item1.category = 'single category'
   category = item1.category
   item1.category = ['first category', 'second category']
-  first_category = item1.category[0].category # get value of the element <category> with multiple values
-  all_categories = [cat.category for cat in item1.category]
+  first_category = item1.category[0].value # get value of the element <category> with multiple values
+  all_categories = [cat.value for cat in item1.category]
 
   # direct attributes setting
   item1.enclosure.url = 'http://example.com/file'
@@ -216,7 +216,7 @@ It's allowed to set **any** subset of RSS elements (e.g. title only). For exampl
 
   # or dict based attributes setting
   item1.enclosure = {'url': 'http://example.com/file', 'length': 0, 'type': 'text/plain'}
-  item1.guid = {'guid': 'item identifier', 'isPermaLink': True}
+  item1.guid = {'value': 'item identifier', 'isPermaLink': True}
 
   item1.pubDate = datetime.now()  # correctly works with Python' datetimes
 
