@@ -61,8 +61,8 @@ class TestSimpleElements(RssTestCase):
         self.item_with_unescaped_text.title = self.unescaped_title
         self.item_with_unescaped_text.description = self.unescaped_description
 
-        self.guids = [{'value': 'identifier 1', 'isPermaLink': False},
-                      {'value': 'identifier 2', 'isPermaLink': True},]
+        self.guids = [{'value': 'identifier 1', 'isPermaLink': True},
+                      {'value': 'identifier 2', 'isPermaLink': False}]
 
         self.items_with_guid = {0: [], 1: []}
 

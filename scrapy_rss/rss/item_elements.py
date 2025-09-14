@@ -60,7 +60,7 @@ class GuidElement(meta.Element):
 
         By default, it equals to `true`.
     """
-    isPermaLink = meta.ElementAttribute(required=False, serializer=lambda v: str(v).lower(), value=False)
+    isPermaLink = meta.ElementAttribute(required=False, serializer=lambda v: str(v).lower(), value=True)
     value = meta.ElementAttribute(required=True, is_content=True)
 
 
