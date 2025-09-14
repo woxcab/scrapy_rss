@@ -251,8 +251,8 @@ class Element(BaseNSComponent):
 
         Parameters
         ----------
-        name: str or NSComponentName or None
-            Name of component
+        name: str or NSComponentName or Iterable[str or NSComponentName] or None
+            Name path of component
 
         Raises
         ------
@@ -341,8 +341,10 @@ class MultipleElements(Element):
 
         Parameters
         ----------
-        elem : Element or Mapping[str, Any]
-            New element as Element instance or mapping of components' values {name: value}
+        elem : Element or Mapping[str, Any] or Any
+            New element as Element instance
+            or mapping of components' values {name: value}
+            or content value of element
         """
         self.elements.append(self._check_value(elem))
         self._assigned = True
@@ -353,8 +355,10 @@ class MultipleElements(Element):
 
         Parameters
         ----------
-        iterable : Iterable[Element or Mapping[str, Any]]
-            Iterable of elements as Element instances or mapping of components' values {name: value}
+        iterable : Iterable[Element or Mapping[str, Any] or Any]
+            Iterable of elements as Element instances
+            or mapping of components' values {name: value}
+            or content value of element
         """
         for elem in iterable:
             self.append(elem)

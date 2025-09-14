@@ -18,7 +18,7 @@ class ElementAttribute(BaseNSComponent):
         value : Any
             Default attribute value, None means unassigned
         serializer : callable
-            Function to serialize the attribute value to string for a XML document
+            Function to serialize the attribute value to string for an XML document
         required : bool
              Whether the attribute is required
         is_content : bool

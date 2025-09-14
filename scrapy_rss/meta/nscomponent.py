@@ -3,6 +3,7 @@
 import re
 
 from ..exceptions import NoNamespaceURIError, InvalidComponentError
+from ..utils import Iterable
 
 
 class BaseNSComponent(object):
@@ -151,8 +152,8 @@ class BaseNSComponent(object):
 
         Parameters
         ----------
-        name: str or NSComponentName or None
-            Name of component
+        name: str or NSComponentName or Iterable[str or NSComponentName] or None
+            Name path of component
 
         Raises
         ------
