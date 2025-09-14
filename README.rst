@@ -38,6 +38,7 @@ Table of Contents
     * `Basic usage <#basic-usage>`__
     * `RssItem derivation and namespaces <#rssitem-derivation-and-namespaces>`__
   * `Optional Additional Customization <#feed-channel-elements-customization-optionally>`__
+  * `Backward compatibility notices <#backward-compatibility-notices>`__
 
 * `Scrapy Project Examples <#scrapy-project-examples>`__
 
@@ -361,6 +362,34 @@ or to the :code:`custom_settings` attribute of the spider:
 
    FEED_EXPORTER = 'myproject.exporters.MyRssItemExporter'
 
+
+Backward compatibility notices
+------------------------------
+Since version 1.0.0 some classes have been renamed, but old-named classes have been kept and marked as deprecated
+for bacward compatibility, so they can still be used.
+
+But `some elements <https://github.com/woxcab/scrapy_rss/blob/master/scrapy_rss/rss/item_elements.py>`__
+of :code:`RssItem` have some their attributes renamed in a backward incompatible way:
+almost all **content** attributes (text content of XML tag after exporting)
+are renamed to :code:`value` to enhance code readability.
+
+So if you do not want update your code expressions (such as an old-style :code:`item.title.title`
+to a new-style :code:`item.title.value` or :code:`item.guid.guid` to :code:`item.guid.value`) then
+you can easily import old-style classes
+
+.. code:: python
+
+    # old-style classes
+    from scrapy_rss.rss.old.items import RssItem, RssedItem
+
+instead of new-style ones
+
+.. code:: python
+
+    # new-style classes
+    from scrapy_rss.items import RssItem, RssedItem
+
+respectively.
 
 
 Scrapy Project Examples
