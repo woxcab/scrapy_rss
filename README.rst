@@ -155,8 +155,8 @@ It's allowed to set **any** subset of RSS elements (e.g. title only). For exampl
   item1.description = 'description'
 
   item1.guid = 'item identifier'
-  item1.guid.isPermaLink = True  # set value of attribute isPermalink of <guid> element,
-                                 # isPermaLink is False by default
+  item1.guid.isPermaLink = False  # set value of attribute isPermalink of <guid> element,
+                                  # isPermaLink is True by default
   is_permalink = item1.guid.isPermaLink  # get value of attribute isPermalink of <guid> element
   guid = item1.guid.value  # get value of element <guid>
 
