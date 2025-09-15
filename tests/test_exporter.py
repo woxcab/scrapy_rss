@@ -1,8 +1,12 @@
 # -*- coding: utf-8 -*-
-
 import os
+import re
 from datetime import datetime
 from itertools import chain, combinations
+from functools import partial
+
+from scrapy_rss.rss import channel_elements
+
 try:
     from tempfile import TemporaryDirectory
 except ImportError:
@@ -10,6 +14,7 @@ except ImportError:
 from parameterized import parameterized
 import six
 from lxml import etree
+from packaging.version import Version
 
 import scrapy
 from scrapy import signals
@@ -17,22 +22,24 @@ try:
     from scrapy.item import BaseItem
 except ImportError:
     from scrapy.item import Item as BaseItem
-from tests.utils import RaisedItemPipelineManager
+from tests.utils import RaisedItemPipelineManager, full_name_func
 from scrapy.exceptions import NotConfigured, CloseSpider
 from scrapy.utils.misc import load_object
 from scrapy.utils.test import get_crawler
-from scrapy.core.scraper import Scraper
-from scrapy.crawler import Crawler
-from scrapy.logformatter import LogFormatter
 
-from scrapy_rss.items import RssItem, FeedItem, RssedItem
-from scrapy_rss.meta import ItemElement, ItemElementAttribute
+from scrapy_rss.items import RssItem, FeedItem
+from scrapy_rss.rss.old.items import RssItem as OldRssItem
+from scrapy_rss.meta import Element, ElementAttribute
 from scrapy_rss.exceptions import *
-from scrapy_rss.exporters import RssItemExporter
+from scrapy_rss.exporters import FeedItemExporter, RssItemExporter
+from scrapy_rss.utils import get_tzlocal
 
-import unittest
+import pytest
+from tests import predefined_items
 from tests.utils import RssTestCase, FrozenDict
 
+if Version(scrapy.__version__) >= Version('2.13'):
+    from twisted.internet import reactor # not used but it's required
 
 if six.PY2:
     import sys
@@ -42,7 +49,7 @@ if six.PY2:
 
 class CrawlerContext(object):
     default_settings = FrozenDict({'ITEM_PIPELINES':
-                                       {'scrapy_rss.pipelines.RssExportPipeline': 900,},
+                                       {'scrapy_rss.pipelines.FeedExportPipeline': 900,},
                                    'LOG_LEVEL': 'WARNING',
                                    'EXTENSIONS': {
                                        'scrapy.extensions.memusage.MemoryUsage': None,},
@@ -87,20 +94,44 @@ class CrawlerContext(object):
                 failure.raiseException()
 
 
-class FullRssItemExporter(RssItemExporter):
+class FullRssItemExporter(FeedItemExporter):
     def __init__(self, file, channel_title, channel_link, channel_description,
-                 language='en-US', copyright='Data', managing_editor='m@dot.com (Manager Name)',
+                 language='en-US',
+                 copyright='Data',
+                 managing_editor='m@dot.com (Manager Name)',
                  webmaster='web@dot.com (Webmaster Name)',
-                 pubdate=datetime(2000, 2, 1, 0, 10, 30), last_build_date=datetime(2000, 2, 1, 5, 10, 30),
-                 category='some category', generator='tester',
-                 docs='http://example.com/rss_docs', ttl=60,
+                 pubdate=datetime(2000, 2, 1, 0, 10, 30, tzinfo=get_tzlocal()),
+                 last_build_date=datetime(2000, 2, 1, 5, 10, 30, tzinfo=get_tzlocal()),
+                 category='some category',
+                 generator='tester',
+                 docs='http://example.com/rss_docs',
+                 cloud=FrozenDict({
+                     'domain': 'rpc.sys.com',
+                     'port': '80',
+                     'path': '/RPC2',
+                     'registerProcedure': 'myCloud.rssPleaseNotify',
+                     'protocol': 'xml-rpc'
+                 }),
+                 ttl=60,
+                 image=channel_elements.ImageElement(url='http://example.com/img.jpg',
+                                                     width=54),
+                 rating=4.0,
+                 text_input=channel_elements.TextInputElement(title='Input title',
+                                                              description='Description of input',
+                                                              name='Input name',
+                                                              link='http://example.com/cgi.py'),
+                 skip_hours=(0, 1, 3, 7, 23),
+                 skip_days=14,
                  *args, **kwargs):
         super(FullRssItemExporter, self) \
             .__init__(file, channel_title, channel_link, channel_description,
                       language=language, copyright=copyright, managing_editor=managing_editor,
                       webmaster=webmaster, pubdate=pubdate, last_build_date=last_build_date,
                       category=category, generator=generator,
-                      docs=docs, ttl=ttl, *args, **kwargs)
+                      docs=docs, cloud=cloud, ttl=ttl,
+                      image=image, rating=rating, text_input=text_input,
+                      skip_hours=skip_hours, skip_days=skip_days,
+                      *args, **kwargs)
 
 
 default_feed_settings = FrozenDict({'feed_file': 'feed.rss',
@@ -118,217 +149,11 @@ class FeedSettings(TemporaryDirectory):
         return feed_settings
 
 
-class PredefinedItems(object):
-    def __init__(self, *args, **kwargs):
-        class NSElement0(ItemElement):
-            attr01 = ItemElementAttribute(ns_prefix="prefix01", ns_uri="id01")
-
-        class NSElement1(ItemElement):
-            prefix11__attr11 = ItemElementAttribute(ns_uri="id11")
-            prefix12__attr12 = ItemElementAttribute(ns_prefix="prefix12", ns_uri="id12")
-
-        class NSElement2(ItemElement):
-            attr21 = ItemElementAttribute(is_content=True)
-            pseudo_prefix22__attr22 = ItemElementAttribute(ns_prefix="prefix22", ns_uri="id22")
-
-        class NSElement3(ItemElement):
-            attr31 = ItemElementAttribute(is_content=True)
-            attr32 = ItemElementAttribute(ns_prefix="prefixa", ns_uri="id32")
-
-        class NSElement4(ItemElement):
-            attr41 = ItemElementAttribute()
-            prefix42__attr41 = ItemElementAttribute(ns_uri="id42")
-        
-        class NSItem0(RssItem):
-            elem0 = ItemElement()
-            elem1 = NSElement0(ns_prefix="el_prefix1", ns_uri="el_id1")
-            el_prefix2__elem2 = NSElement1(ns_uri="el_id2")
-            el_prefix3__elem3 = NSElement2(ns_prefix="el_prefix3", ns_uri="el_id3")
-            el_pseudo_prefix4__elem4 = NSElement0(ns_prefix="el_prefix4", ns_uri="el_id4")
-
-        class NSItem1(RssItem):
-            elem1 = NSElement0(ns_prefix="el_prefix1", ns_uri="el_id1")
-            el_prefix__elem2 = NSElement1(ns_uri="el_id2")
-            elem3 = NSElement2(ns_prefix="el_prefix", ns_uri="el_id3")
-            el_pseudo_prefix4__elem4 = NSElement0(ns_prefix="el_prefix4", ns_uri="el_id4")
-
-        class NSItem2(RssItem):
-            elem1 = NSElement3(ns_prefix="prefix", ns_uri="el_id1")
-            prefix__elem2 = NSElement3(ns_uri="el_id2")
-            elem3 = NSElement3(ns_prefix="prefix", ns_uri="el_id3")
-            el_pseudo_prefix4__elem4 = NSElement3(ns_prefix="prefix", ns_uri="el_id4")
-
-        class NSItem3(RssItem):
-            elem1 = NSElement3(ns_uri="el_id1")
-            elem2 = NSElement3(ns_uri="el_id2")
-            elem3 = NSElement3(ns_prefix="prefix", ns_uri="el_id3")
-            el_pseudo_prefix4__elem3 = NSElement3(ns_prefix="prefix2", ns_uri="el_id4")
-            elem4 = NSElement4()
-            elem5 = NSElement4()
-
-        PredefinedItems.NSItem0 = NSItem0
-        PredefinedItems.NSItem1 = NSItem1
-        PredefinedItems.NSItem2 = NSItem2
-        PredefinedItems.NSItem3 = NSItem3
-
-        minimal_item = RssItem()
-        minimal_item.title = 'Title of minimal item'
-
-        minimal_item2 = RssItem()
-        minimal_item2.description = 'Description of minimal item'
-
-        simple_item = RssItem()
-        simple_item.title = 'Title of simple item'
-        simple_item.description = 'Description of simple item'
-
-        item_with_single_category = RssItem()
-        item_with_single_category.title = 'Title of item with single category'
-        item_with_single_category.category = 'Category 1'
-
-        item_with_multiple_categories = RssItem()
-        item_with_multiple_categories.title = 'Title of item with multiple categories'
-        item_with_multiple_categories.category = ['Category 1', 'Category 2']
-
-        item_with_guid = RssItem()
-        item_with_guid.title = 'Title of item with guid'
-        item_with_guid.guid = 'Identifier'
-
-        item_with_unicode = RssItem()
-        item_with_unicode.title = 'Title of item with unicode and special characters'
-        item_with_unicode.description = "[Testing «ταБЬℓσ»: 1<2 & 4+1>3, now 20% off!]"
-
-        item_with_enclosure = RssItem()
-        item_with_enclosure.title = 'Title of item with enclosure'
-        item_with_enclosure.enclosure.url = 'http://example.com/content'
-        item_with_enclosure.enclosure.length = 0
-        item_with_enclosure.enclosure.type = 'text/plain'
-
-        item_with_unique_ns = NSItem0()
-        item_with_unique_ns.title = "Title of item with unique namespaces"
-        item_with_unique_ns.elem1.attr01 = ""
-        item_with_unique_ns.el_prefix2__elem2.prefix11__attr11 = 0
-        item_with_unique_ns.el_prefix2__elem2.prefix12__attr12 = ""
-        item_with_unique_ns.el_prefix3__elem3.attr21 = "value3_21"
-        item_with_unique_ns.el_prefix3__elem3.pseudo_prefix22__attr22 = 42
-        item_with_unique_ns.el_pseudo_prefix4__elem4.attr01 = ""
-
-        item_with_non_unique_ns = NSItem1()
-        item_with_non_unique_ns.title = "Title of item with unique namespaces"
-        item_with_non_unique_ns.elem1.attr01 = "-"
-        item_with_non_unique_ns.el_prefix__elem2.prefix11__attr11 = -1
-        item_with_non_unique_ns.el_prefix__elem2.prefix12__attr12 = "-"
-        item_with_non_unique_ns.elem3.attr21 = "yet another value3_21"
-        item_with_non_unique_ns.elem3.pseudo_prefix22__attr22 = 4224
-        item_with_non_unique_ns.el_pseudo_prefix4__elem4.attr01 = "-"
-
-        item_with_non_unique_ns2 = NSItem1()
-        item_with_non_unique_ns2.title = "Title of item with unique namespaces 2"
-        item_with_non_unique_ns2.elem1.attr01 = "0"
-        item_with_non_unique_ns2.el_prefix__elem2.prefix11__attr11 = -999
-        item_with_non_unique_ns2.elem3.attr21 = "value"
-        item_with_non_unique_ns2.elem3.pseudo_prefix22__attr22 = 42
-        item_with_non_unique_ns2.el_pseudo_prefix4__elem4.attr01 = ""
-
-        item_with_same_ns_prefixes = NSItem2()
-        item_with_same_ns_prefixes.title = "Title of item with same namespace prefixes"
-        item_with_same_ns_prefixes.elem1.attr31 = "Content value 11ё"
-        item_with_same_ns_prefixes.prefix__elem2.attr32 = "Attribute value 22"
-        item_with_same_ns_prefixes.elem3.attr31 = "Content value 11"
-        item_with_same_ns_prefixes.elem3.attr32 = "Attribute value 32"
-        item_with_same_ns_prefixes.el_pseudo_prefix4__elem4.attr32 = ""
-
-        item_with_default_nses = NSItem3()
-        item_with_default_nses.title = "Title of item with default namespaces"
-        item_with_default_nses.elem1.attr31 = "Content value 11ё"
-        item_with_default_nses.elem2.attr32 = "Attribute value 22"
-        item_with_default_nses.elem3.attr31 = "Content value 11"
-        item_with_default_nses.elem3.attr32 = "Attribute value 32"
-        item_with_default_nses.el_pseudo_prefix4__elem3.attr32 = ""
-        item_with_default_nses.elem4.attr41 = "A41 b"
-        item_with_default_nses.elem4.prefix42__attr41 = "0"
-
-        self.items = {
-             'minimal_item': minimal_item,
-             'minimal_item2': minimal_item2,
-             'simple_item': simple_item,
-             'item_with_single_category': item_with_single_category,
-             'item_with_multiple_categories': item_with_multiple_categories,
-             'item_with_guid': item_with_guid,
-             'item_with_unicode': item_with_unicode,
-             'item_with_enclosure': item_with_enclosure,
-             'item_with_unique_ns': item_with_unique_ns,
-             'item_with_non_unique_ns': item_with_non_unique_ns,
-             'item_with_same_ns_prefixes': item_with_same_ns_prefixes,
-             'item_with_default_nses': item_with_default_nses}
-
-        self.ns_items_of_same_cls = [
-            ('item_with_non_unique_ns5', NSItem1, item_with_non_unique_ns),
-            ('item_with_non_unique_ns4', NSItem1, item_with_non_unique_ns2),
-        ]
-        self.ns_items = [
-             ('item_with_unique_ns2',
-              [("el_prefix1", "el_id1"), ("prefix01", "id01"), ("el_prefix2", "el_id2"), ("prefix11", "id11"), ("prefix12", "id12")],
-              None,
-              item_with_unique_ns),
-             ('item_with_unique_ns2',
-              (("el_prefix1", "el_id1"), ("prefix01", "id01"), ("el_prefix2", "el_id2"), ("prefix11", "id11"), ("prefix12", "id12")),
-              tuple(),
-              item_with_unique_ns),
-             ('item_with_unique_ns2',
-              {"el_prefix1": "el_id1","prefix01": "id01", "el_prefix2": "el_id2", "prefix11": "id11", "prefix12": "id12"},
-              None,
-              item_with_unique_ns),
-             ('item_with_unique_ns3', None, NSItem0, item_with_unique_ns),
-             ('item_with_unique_ns3',
-              None, 
-              'tests.test_exporter.NSItem0',
-              item_with_unique_ns),
-             ('item_with_non_unique_ns2',
-              [("el_prefix1", "el_id1"), ("prefix01", "id01"), ("prefix11", "id11"), ("prefix12", "id12"), ("prefix22", "id22"), ("el_prefix4", "el_id4")],
-              None,
-              item_with_non_unique_ns),
-             ('item_with_non_unique_ns3',
-              {"el_prefix1": "el_id1", "prefix01": "id01", "prefix11": "id11", "prefix12": "id12", "prefix22": "id22"},
-              None,
-              item_with_non_unique_ns),
-             ('item_with_non_unique_ns2', None, NSItem1, item_with_non_unique_ns),
-             ('item_with_non_unique_ns2',
-              None,
-              'tests.test_exporter.NSItem1',
-              item_with_non_unique_ns),
-             ('item_with_same_ns_prefixes2',
-              [("prefix", "el_id1"), ("prefixa", "id32"), ("unused_prefix", "id000")],
-              None,
-              item_with_same_ns_prefixes),
-             ('item_with_same_ns_prefixes2',
-              {"prefix": "el_id1", "prefixa": "id32", "unused_prefix": "id000"},
-              None,
-              item_with_same_ns_prefixes),
-             ('item_with_same_ns_prefixes3', None, NSItem2, item_with_same_ns_prefixes),
-             ('item_with_same_ns_prefixes3',
-              None,
-              'tests.test_exporter.NSItem2',
-              item_with_same_ns_prefixes),
-             ('item_with_default_nses3',
-              {'prefixa': 'id32', 'prefix2': 'el_id4'},
-              None,
-              item_with_default_nses),
-             ('item_with_default_nses2',
-              None,
-              'tests.test_exporter.NSItem3',
-              item_with_default_nses),
-             ('item_with_default_nses2',
-              None,
-              NSItem3,
-              item_with_default_nses)
-        ]
-
-
-predefined_items = PredefinedItems()
-NSItem0 = PredefinedItems.NSItem0
-NSItem1 = PredefinedItems.NSItem1
-NSItem2 = PredefinedItems.NSItem2
-NSItem3 = PredefinedItems.NSItem3
+initialized_items = predefined_items.PredefinedItems()
+NSItem0 = predefined_items.NSItem0
+NSItem1 = predefined_items.NSItem1
+NSItem2 = predefined_items.NSItem2
+NSItem3 = predefined_items.NSItem3
 
 
 class TestExporting(RssTestCase):
@@ -365,7 +190,7 @@ class TestExporting(RssTestCase):
                  open(os.path.join(os.path.dirname(__file__), 'expected_rss', 'empty_feed.rss')) as expected:
                 self.assertUnorderedXmlEquivalentOutputs(data.read(), expected.read())
 
-    def test_custom_exporters(self):
+    def test_custom_exporter1(self):
         with FeedSettings() as feed_settings:
             crawler_settings = dict(CrawlerContext.default_settings)
             crawler_settings['FEED_EXPORTER'] = 'tests.test_exporter.FullRssItemExporter'
@@ -378,6 +203,9 @@ class TestExporting(RssTestCase):
                 self.assertUnorderedXmlEquivalentOutputs(data.read(), expected.read(),
                                                          excepted_elements=None)
 
+    def test_custom_exporter2(self):
+        with FeedSettings() as feed_settings:
+            crawler_settings = dict(CrawlerContext.default_settings)
             crawler_settings['FEED_EXPORTER'] = FullRssItemExporter
             with CrawlerContext(crawler_settings=crawler_settings, **feed_settings):
                 pass
@@ -387,7 +215,10 @@ class TestExporting(RssTestCase):
                 self.assertUnorderedXmlEquivalentOutputs(data.read(), expected.read(),
                                                          excepted_elements=None)
 
-            class InvalidRssItemExporter1(RssItemExporter):
+    def test_custom_exporter3(self):
+        with FeedSettings() as feed_settings:
+            crawler_settings = dict(CrawlerContext.default_settings)
+            class InvalidRssItemExporter1(FeedItemExporter):
                 def __init__(self, file, channel_title, channel_link, channel_description,
                              managing_editor='Manager Name',
                              *args, **kwargs):
@@ -396,11 +227,14 @@ class TestExporting(RssTestCase):
                                   managing_editor=managing_editor, *args, **kwargs)
 
             crawler_settings['FEED_EXPORTER'] = InvalidRssItemExporter1
-            with six.assertRaisesRegex(self, ValueError, 'managing_editor'):
+            with six.assertRaisesRegex(self, ValueError, 'managingEditor'):
                 with CrawlerContext(crawler_settings=crawler_settings, **feed_settings):
                     pass
 
-            class InvalidRssItemExporter2(RssItemExporter):
+    def test_custom_exporter4(self):
+        with FeedSettings() as feed_settings:
+            crawler_settings = dict(CrawlerContext.default_settings)
+            class InvalidRssItemExporter2(FeedItemExporter):
                 def __init__(self, file, channel_title, channel_link, channel_description,
                              webmaster='Webmaster Name',
                              *args, **kwargs):
@@ -409,11 +243,14 @@ class TestExporting(RssTestCase):
                                   webmaster=webmaster, *args, **kwargs)
 
             crawler_settings['FEED_EXPORTER'] = InvalidRssItemExporter2
-            with six.assertRaisesRegex(self, ValueError, 'webmaster'):
+            with six.assertRaisesRegex(self, ValueError, 'webMaster'):
                 with CrawlerContext(crawler_settings=crawler_settings, **feed_settings):
                     pass
 
-            class MultipleCategoriesRssItemExporter(RssItemExporter):
+    def test_custom_exporter5(self):
+        with FeedSettings() as feed_settings:
+            crawler_settings = dict(CrawlerContext.default_settings)
+            class MultipleCategoriesRssItemExporter(FeedItemExporter):
                 def __init__(self, file, channel_title, channel_link, channel_description,
                              category=('category 1', 'category 2'),
                              *args, **kwargs):
@@ -429,9 +266,12 @@ class TestExporting(RssTestCase):
                                    'expected_rss', 'empty_feed_with_categories.rss')) as expected:
                 self.assertUnorderedXmlEquivalentOutputs(data.read(), expected.read())
 
-            class NoGeneratorRssItemExporter(RssItemExporter):
+    def test_custom_exporter6(self):
+        with FeedSettings() as feed_settings:
+            crawler_settings = dict(CrawlerContext.default_settings)
+            class NoGeneratorRssItemExporter(FeedItemExporter):
                 def __init__(self, file, channel_title, channel_link, channel_description,
-                             generator='',
+                             generator=None,
                              *args, **kwargs):
                     super(NoGeneratorRssItemExporter, self) \
                         .__init__(file, channel_title, channel_link, channel_description,
@@ -444,6 +284,28 @@ class TestExporting(RssTestCase):
                  open(os.path.join(os.path.dirname(__file__), 'expected_rss', 'empty_feed_without_generator.rss')) as expected:
                 self.assertUnorderedXmlEquivalentOutputs(data.read(), expected.read(), excepted_elements='lastBuildDate')
 
+    def test_custom_exporter7(self):
+        with FeedSettings() as feed_settings:
+            crawler_settings = dict(CrawlerContext.default_settings)
+            class NoGeneratorRssItemExporter2(RssItemExporter):
+                def __init__(self, file, channel_title, channel_link, channel_description,
+                             generator=None,
+                             *args, **kwargs):
+                    super(NoGeneratorRssItemExporter2, self) \
+                        .__init__(file, channel_title, channel_link, channel_description,
+                                  generator=generator, *args, **kwargs)
+
+            crawler_settings['FEED_EXPORTER'] = NoGeneratorRssItemExporter2
+            with pytest.warns(DeprecationWarning, match='Use FeedItemExporter instead'):
+                with CrawlerContext(crawler_settings=crawler_settings, **feed_settings):
+                    pass
+            with open(feed_settings['feed_file']) as data, \
+                 open(os.path.join(os.path.dirname(__file__), 'expected_rss', 'empty_feed_without_generator.rss')) as expected:
+                self.assertUnorderedXmlEquivalentOutputs(data.read(), expected.read(), excepted_elements='lastBuildDate')
+
+    def test_custom_exporter8(self):
+        with FeedSettings() as feed_settings:
+            crawler_settings = dict(CrawlerContext.default_settings)
             class InvalidExporter(object):
                 pass
 
@@ -452,46 +314,278 @@ class TestExporting(RssTestCase):
                 with CrawlerContext(crawler_settings=crawler_settings, **feed_settings):
                     pass
 
-    def test_item_validation(self):
+    def test_custom_exporter9(self):
         with FeedSettings() as feed_settings:
-            invalid_item = RssItem()
-            invalid_item.enclosure.url = 'http://example.com/content'
+            crawler_settings = dict(CrawlerContext.default_settings)
+            class BadRssItemExporter(FeedItemExporter):
+                def __init__(self, *args, **kwargs):
+                    super(BadRssItemExporter, self).__init__(*args, **kwargs)
+                    self.channel = scrapy.Item()
 
-            with six.assertRaisesRegex(self, InvalidRssItemAttributesError,
-                                       r'required attributes .*? not set'):
+            crawler_settings['FEED_EXPORTER'] = BadRssItemExporter
+            with six.assertRaisesRegex(self, ValueError, 'Argument element must be instance of <Element>'):
+                with CrawlerContext(crawler_settings=crawler_settings, **feed_settings):
+                    pass
+
+    def test_deprecated_pipeline(self):
+        with FeedSettings() as feed_settings:
+            crawler_settings = dict(CrawlerContext.default_settings)
+            item = initialized_items.items['full_rss_item']
+            crawler_settings['ITEM_PIPELINES'] = {'scrapy_rss.pipelines.RssExportPipeline': 900}
+            with pytest.warns(DeprecationWarning, match='Use FeedExportPipeline instead'):
+                with CrawlerContext(crawler_settings=crawler_settings, **feed_settings) as context:
+                    context.ipm.process_item(item, context.spider)
+            with open(feed_settings['feed_file']) as data, \
+                    open(os.path.join(os.path.dirname(__file__),
+                                      'expected_rss', 'full_rss_item.rss')) as expected:
+                self.assertUnorderedXmlEquivalentOutputs(data=data.read(), expected=expected.read())
+
+
+    @parameterized.expand(((item_cls,) for item_cls in [RssItem, OldRssItem]),
+                          name_func=full_name_func)
+    def test_item_validation1(self, item_cls):
+        item = item_cls()
+        with FeedSettings() as feed_settings:
+            with six.assertRaisesRegex(self, InvalidFeedItemComponentsError,
+                                       r'Missing one or more required components'):
                 with CrawlerContext(**feed_settings) as context:
-                    context.ipm.process_item(invalid_item, context.spider)
+                    context.ipm.process_item(item, context.spider)
 
-            class NonStandardElement(ItemElement):
-                first_attribute = ItemElementAttribute(required=True, is_content=True)
-                second_attribute = ItemElementAttribute(required=True)
+            item.title = 'Title'
+            item.validate()
+            self.assertTrue(item.is_valid())
+            with CrawlerContext(**feed_settings) as context:
+                context.ipm.process_item(item, context.spider)
 
-            class NonStandardItem(RssItem):
-                element = NonStandardElement()
+            item.enclosure.url = 'http://example.com/content'
+            with six.assertRaisesRegex(self, InvalidFeedItemComponentsError,
+                                       r'Missing one or more required components'):
+                with CrawlerContext(**feed_settings) as context:
+                    context.ipm.process_item(item, context.spider)
 
-            invalid_item = NonStandardItem()
+
+
+    def test_item_validation2(self):
+        class NonStandardElement(Element):
+            first_attribute = ElementAttribute(required=True, is_content=True)
+            second_attribute = ElementAttribute(required=True)
+
+        class NonStandardItem(RssItem):
+            element = NonStandardElement()
+
+        with FeedSettings() as feed_settings:
+            item = NonStandardItem(title='Title')
+            item.validate()
+            self.assertTrue(item.is_valid())
+            with CrawlerContext(**feed_settings) as context:
+                context.ipm.process_item(item, context.spider)
+
             with six.assertRaisesRegex(self, InvalidElementValueError, 'Could not assign'):
-                invalid_item.element = 'valid value'
-            invalid_item.element.first_attribute = 'valid value'
+                item.element = 'valid value'
 
-            with six.assertRaisesRegex(self, InvalidRssItemAttributesError,
-                                       r'required attributes .*? not set'):
+            item.element.first_attribute = 'valid value'
+            with six.assertRaisesRegex(self, InvalidFeedItemComponentsError,
+                                       r'Missing one or more required components'):
                 with CrawlerContext(**feed_settings) as context:
-                    context.ipm.process_item(invalid_item, context.spider)
+                    context.ipm.process_item(item, context.spider)
 
-            class InvalidSuperItem1(FeedItem):
-                pass
+    def test_item_validation3(self):
+        class InvalidSuperItem1(FeedItem):
+            pass
 
-            class InvalidSuperItem2(FeedItem):
-                field = scrapy.Field()
+        class InvalidSuperItem2(FeedItem):
+            field = scrapy.Field()
 
-            class InvalidSuperItem3(FeedItem):
-                rss = scrapy.Field()
+        class InvalidSuperItem3(FeedItem):
+            rss = scrapy.Field()
 
+        with FeedSettings() as feed_settings:
             for invalid_item_cls in (InvalidSuperItem1, InvalidSuperItem2, InvalidSuperItem3):
-                with six.assertRaisesRegex(self, InvalidRssItemError, "Item must have 'rss'"):
+                with six.assertRaisesRegex(self, InvalidFeedItemError, "Item.*? type 'RssItem'",
+                                           msg=str(invalid_item_cls)):
                     with CrawlerContext(**feed_settings) as context:
                         context.ipm.process_item(invalid_item_cls(), context.spider)
+
+
+    def test_item_validation4(self):
+        class Element0(Element):
+            attr = ElementAttribute()
+
+        class Item10(RssItem):
+            req_attr = ElementAttribute(required=True)
+
+        ValidItem10 = partial(Item10, {'req_attr': 0})
+
+
+        class Element10(Element):
+            attr = ElementAttribute()
+            req_attr = ElementAttribute(required=True)
+
+        class Item11(RssItem):
+            elem = Element10()
+
+        InvalidItem11 = partial(Item11, {'elem': {'attr': 1}})
+        ValidItem11 = partial(Item11, {'elem': {'req_attr': True}})
+
+
+        class Item20(RssItem):
+            req_elem = Element(required=True)
+
+
+        class Element20(Element):
+            attr = ElementAttribute()
+            req_elem = Element0(required=True)
+
+        class Item21(RssItem):
+            elem = Element20()
+
+        InvalidItem21 = partial(Item21, {'elem': {'attr': 1}})
+        ValidItem21 = partial(Item21, {'elem': {'attr': 1, 'req_elem': {'attr': 'value'}}})
+
+
+        class Item3(RssItem):
+            req_attr = ElementAttribute(required=True)
+            req_elem = Element(required=True)
+
+
+        with FeedSettings() as feed_settings:
+            for item_cls in (Item10, InvalidItem11, Item20, InvalidItem21, Item3):
+                with six.assertRaisesRegex(self, InvalidFeedItemComponentsError,
+                                           "Missing one or more required components",
+                                           msg=str(item_cls)):
+                    with CrawlerContext(**feed_settings) as context:
+                        context.ipm.process_item(item_cls(title='Title'), context.spider)
+            for item_cls in (ValidItem10, Item11, ValidItem11, Item21, ValidItem21):
+                item = item_cls(title='Title')
+                item.validate()
+                self.assertTrue(item.is_valid())
+                with CrawlerContext(**feed_settings) as context:
+                    context.ipm.process_item(item, context.spider)
+
+    def test_item_validation5(self):
+        class Element0(Element):
+            attr = ElementAttribute()
+
+        class Element1(Element):
+            attr0 = ElementAttribute()
+            elem0 = Element0(required=True)
+
+        class Element2(Element):
+            elem1 = Element1()
+
+        class Item0(RssItem):
+            elem2 = Element2()
+
+        item1 = Item0()
+        with six.assertRaisesRegex(self, InvalidComponentError,
+                                   "Invalid 'title' component value:.*? title or description must be present"):
+            item1.validate()
+        with six.assertRaisesRegex(self, InvalidComponentError,
+                                   "Invalid 'item.title' component value:.*? title or description must be present"):
+            item1.validate('item')
+        self.assertFalse(item1.is_valid())
+
+        item1.description = 'Description'
+        item1.validate()
+        self.assertTrue(item1.is_valid())
+        item1.elem2.elem1.attr0 = 'value'
+        with six.assertRaisesRegex(self, InvalidComponentError,
+                                   "Invalid 'elem2.elem1.elem0' component value"):
+            item1.validate()
+        with six.assertRaisesRegex(self, InvalidComponentError,
+                                   "Invalid 'item.elem2.elem1.elem0' component value"):
+            item1.validate('item')
+        self.assertFalse(item1.is_valid())
+        item1.elem2.elem1.elem0.attr = 5
+        item1.validate()
+        self.assertTrue(item1.is_valid())
+
+        item2 = Item0({'title': 'Title', 'elem2': {'elem1': {'attr0': -5}}})
+        with six.assertRaisesRegex(self, InvalidComponentError,
+                                   "Invalid 'elem2.elem1.elem0' component value"):
+            item2.validate()
+        with six.assertRaisesRegex(self, InvalidComponentError,
+                                   "Invalid 'item.elem2.elem1.elem0' component value"):
+            item2.validate('item')
+        self.assertFalse(item2.is_valid())
+
+        item3 = Item0({'title': 'Title', 'elem2': {'elem1': {'elem0': {'attr': 0}}}})
+        item3.validate()
+        self.assertTrue(item3.is_valid())
+
+        item3.elem2.elem1._ns_prefix = 'prefix'
+        with six.assertRaisesRegex(self, InvalidComponentError,
+                                   "Invalid 'elem2.elem1' component value.*? no namespace URI"):
+            item3.validate()
+        with six.assertRaisesRegex(self, InvalidComponentError,
+                                   "Invalid 'item.elem2.elem1' component value.*? no namespace URI"):
+            item3.validate('item')
+        item3.elem2.elem1.ns_uri = 'id'
+        item3.validate()
+        item3.validate('item')
+        self.assertTrue(item3.is_valid())
+
+
+    def test_item_validation6(self):
+        class Element1(Element):
+            attr1 = ElementAttribute()
+            attr2 = ElementAttribute(required=True)
+
+        class Element2(Element):
+            elem1 = Element1()
+
+        class Item1(RssItem):
+            elem2 = Element2()
+
+        item4 = Item1()
+        with six.assertRaisesRegex(self, InvalidComponentError,
+                                   "Invalid 'title' component value:.*? title or description must be present"):
+            item4.validate()
+        with six.assertRaisesRegex(self, InvalidComponentError,
+                                   "Invalid 'item.title' component value:.*? title or description must be present"):
+            item4.validate('item')
+        self.assertFalse(item4.is_valid())
+        item4.description = 'Description'
+        item4.validate()
+        self.assertTrue(item4.is_valid())
+        item4.elem2.elem1.attr1 = 'value'
+        with six.assertRaisesRegex(self, InvalidComponentError,
+                                   "Invalid 'elem2.elem1.attr2' component value"):
+            item4.validate()
+        with six.assertRaisesRegex(self, InvalidComponentError,
+                                   "Invalid 'item.elem2.elem1.attr2' component value"):
+            item4.validate('item')
+        self.assertFalse(item4.is_valid())
+        item4.elem2.elem1.attr2 = False
+        item4.validate()
+        self.assertTrue(item4.is_valid())
+
+        item5 = Item1({'description': 'Description', 'elem2': {'elem1': {'attr1': -5}}})
+        with six.assertRaisesRegex(self, InvalidComponentError,
+                                   "Invalid 'elem2.elem1.attr2' component value"):
+            item5.validate()
+        with six.assertRaisesRegex(self, InvalidComponentError,
+                                   "Invalid 'item.elem2.elem1.attr2' component value"):
+            item5.validate('item')
+        self.assertFalse(item5.is_valid())
+
+        item6 = Item1({'description': 'Description', 'elem2': {'elem1': {'attr2': -5}}})
+        item6.validate()
+        self.assertTrue(item6.is_valid())
+
+        item6.elem2._ns_prefix = 'prefix'
+        with six.assertRaisesRegex(self, InvalidComponentError,
+                                   "Invalid 'elem2' component value.*? no namespace URI"):
+            item6.validate()
+        with six.assertRaisesRegex(self, InvalidComponentError,
+                                   "Invalid 'item.elem2' component value.*? no namespace URI"):
+            item6.validate('item')
+        self.assertFalse(item6.is_valid())
+        item6.elem2.ns_uri = 'id'
+        item6.validate()
+        item6.validate('item')
+        self.assertTrue(item6.is_valid())
+
 
     @parameterized.expand(zip([scrapy.Item, BaseItem, dict]))
     def test_bad_item_cls(self, item_cls):
@@ -499,11 +593,11 @@ class TestExporting(RssTestCase):
             crawler_settings = dict(CrawlerContext.default_settings)
             crawler_settings['FEED_ITEM_CLASS'] = item_cls
 
-            with six.assertRaisesRegex(self, ValueError, 'must be RssItem'):
+            with six.assertRaisesRegex(self, ValueError, 'must be strict subclass of FeedItem'):
                 with CrawlerContext(crawler_settings=crawler_settings, **feed_settings):
                     pass
 
-    @parameterized.expand(predefined_items.items.items())
+    @parameterized.expand(initialized_items.items.items())
     def test_single_item_in_the_feed(self, item_name, item):
         with FeedSettings() as feed_settings:
             class SuperItem(FeedItem):
@@ -513,23 +607,18 @@ class TestExporting(RssTestCase):
                     super(SuperItem, self).__init__()
                     self.rss = RssItem()
 
-            with CrawlerContext(**feed_settings) as context:
-                context.ipm.process_item(item, context.spider)
-            with open(feed_settings['feed_file']) as data, \
-                 open(os.path.join(os.path.dirname(__file__),
-                                   'expected_rss', '{}.rss'.format(item_name))) as expected:
-                self.assertUnorderedXmlEquivalentOutputs(data=data.read(), expected=expected.read())
-
             super_item = SuperItem()
             super_item.rss = item
-            with CrawlerContext(**feed_settings) as context:
-                context.ipm.process_item(super_item, context.spider)
-            with open(feed_settings['feed_file']) as data, \
-                 open(os.path.join(os.path.dirname(__file__),
-                                   'expected_rss', '{}.rss'.format(item_name))) as expected:
-                self.assertUnorderedXmlEquivalentOutputs(data=data.read(), expected=expected.read())
 
-    @parameterized.expand(predefined_items.ns_items)
+            for current_item in (item, super_item):
+                with CrawlerContext(**feed_settings) as context:
+                    context.ipm.process_item(current_item, context.spider)
+                with open(feed_settings['feed_file']) as data, \
+                     open(os.path.join(os.path.dirname(__file__),
+                                       'expected_rss', '{}.rss'.format(item_name))) as expected:
+                    self.assertUnorderedXmlEquivalentOutputs(data=data.read(), expected=expected.read())
+
+    @parameterized.expand(initialized_items.ns_items)
     def test_single_ns_item_in_the_feed(self, item_name, namespaces, item_cls, item):
         with FeedSettings() as feed_settings:
             class SuperItem(FeedItem):
@@ -562,24 +651,34 @@ class TestExporting(RssTestCase):
                 self.assertUnorderedXmlEquivalentOutputs(data=data.read(), expected=expected.read())
 
     def test_all_items_in_the_single_feed(self):
+        copy_raw_text_for_items = {'full_nested_item'}
+        raw_items_text = ''
         with FeedSettings() as feed_settings:
             with open(os.path.join(os.path.dirname(__file__),
                                    'expected_rss', 'empty_feed.rss'), 'rb') as feed_f:
                 feed_tree = etree.fromstring(feed_f.read())
                 feed_channel = feed_tree.xpath('//channel')[0]
                 with CrawlerContext(**feed_settings) as context:
-                    for item_name, item in predefined_items.items.items():
+                    for item_name, item in initialized_items.items.items():
                         context.ipm.process_item(item, context.spider)
                         with open(os.path.join(os.path.dirname(__file__),
                                                'expected_rss', '{}.rss'.format(item_name)), 'rb') as item_f:
-                            item_tree = etree.fromstring(item_f.read())
-                            feed_channel.extend(item_tree.xpath('//item'))
+                            if item_name in copy_raw_text_for_items:
+                                match = re.search(r'<item.*</item>',
+                                                   item_f.read().decode('utf-8'),
+                                                   flags=re.S)
+                                raw_items_text += match.group(0) + '\n'
+                            else:
+                                item_tree = etree.fromstring(item_f.read())
+                                feed_channel.extend(item_tree.xpath('//item'))
+                expected = etree.tostring(feed_tree, encoding='utf-8').decode('utf-8')
+                expected = expected.replace('</channel>', raw_items_text + '\n</channel>')
                 with open(feed_settings['feed_file']) as data:
-                    self.assertUnorderedXmlEquivalentOutputs(data.read(), feed_tree)
+                    self.assertUnorderedXmlEquivalentOutputs(data.read(), expected)
 
     def test_ns_items_in_the_single_feed(self):
         with FeedSettings() as feed_settings:
-            base_filename, item_cls, _ = predefined_items.ns_items_of_same_cls[0]
+            base_filename, item_cls, _ = initialized_items.ns_items_of_same_cls[0]
             with open(os.path.join(os.path.dirname(__file__),
                                    'expected_rss', '{}.rss'.format(base_filename)), 'rb') as feed_f:
                 feed_tree = etree.fromstring(feed_f.read())
@@ -589,7 +688,7 @@ class TestExporting(RssTestCase):
                 crawler_settings = dict(CrawlerContext.default_settings)
                 crawler_settings['FEED_ITEM_CLS'] = item_cls
                 with CrawlerContext(crawler_settings=crawler_settings, **feed_settings) as context:
-                    for item_name, item_cls, item in predefined_items.ns_items_of_same_cls:
+                    for item_name, item_cls, item in initialized_items.ns_items_of_same_cls:
                         context.ipm.process_item(item, context.spider)
                         with open(os.path.join(os.path.dirname(__file__),
                                                'expected_rss', '{}.rss'.format(item_name)), 'rb') as item_f:
@@ -599,29 +698,6 @@ class TestExporting(RssTestCase):
                     self.assertUnorderedXmlEquivalentOutputs(data.read(), feed_tree)
 
 
-class TestScraper:
-    class MySpider(scrapy.Spider):
-        name = 'spider'
-
-    def test_spider_output_handling(self):
-        spider = self.MySpider()
-        crawler = Crawler(self.MySpider)
-        try:
-            crawler._apply_settings()
-        except AttributeError:
-            pass
-        scraper = Scraper(crawler)
-        scraper.open_spider(spider)
-        scraper.crawler.spider = spider
-        scraper._process_spidermw_output(RssItem(), None, None, None)
-        scraper._process_spidermw_output(NSItem0(), None, None, None)
-        scraper._process_spidermw_output(NSItem1(), None, None, None)
-        scraper._process_spidermw_output(NSItem2(), None, None, None)
-        scraper._process_spidermw_output(FeedItem(), None, None, None)
-        scraper._process_spidermw_output(RssedItem(), None, None, None)
-        scraper.close_spider(spider)
-
-
 if __name__ == '__main__':
-    unittest.main()
+    pytest.main()
 

@@ -6,10 +6,11 @@ from scrapy.exceptions import NotConfigured, CloseSpider
 from scrapy.utils.misc import load_object
 
 from .items import RssItem
-from .exporters import RssItemExporter
+from .exporters import FeedItemExporter
+from .utils import deprecated_class
 
 
-class RssExportPipeline(object):
+class FeedExportPipeline(object):
     def __init__(self):
         self.files = {}
         self.exporters = {}
@@ -45,11 +46,11 @@ class RssExportPipeline(object):
 
         namespaces = spider.settings.get('FEED_NAMESPACES', {})
 
-        feed_exporter = spider.settings.get('FEED_EXPORTER', RssItemExporter)
+        feed_exporter = spider.settings.get('FEED_EXPORTER', FeedItemExporter)
         if isinstance(feed_exporter, six.string_types):
             feed_exporter = load_object(feed_exporter)
-        if not issubclass(feed_exporter, RssItemExporter):
-            raise TypeError("FEED_EXPORTER must be RssItemExporter or its subclass, not '{}'".format(feed_exporter))
+        if not issubclass(feed_exporter, FeedItemExporter):
+            raise TypeError("FEED_EXPORTER must be FeedItemExporter or its subclass, not '{}'".format(feed_exporter))
         self.exporters[spider] = feed_exporter(file, feed_title, feed_link, feed_description,
                                                namespaces=namespaces, item_cls=item_cls)
         self.exporters[spider].start_exporting()
@@ -62,3 +63,8 @@ class RssExportPipeline(object):
     def process_item(self, item, spider):
         self.exporters[spider].export_item(item)
         return item
+
+
+@deprecated_class('Use FeedExportPipeline instead')
+class RssExportPipeline(FeedExportPipeline):
+    pass

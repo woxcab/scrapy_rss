@@ -8,11 +8,35 @@
         <copyright>Data</copyright>
         <managingEditor>m@dot.com (Manager Name)</managingEditor>
         <webMaster>web@dot.com (Webmaster Name)</webMaster>
-        <pubdate>Tue, 01 Feb 2000 00:10:30 </pubdate>
-        <lastBuildDate>Tue, 01 Feb 2000 05:10:30 </lastBuildDate>
+        <pubDate>Tue, 01 Feb 2000 00:10:30 +0300</pubDate>
+        <lastBuildDate>Tue, 01 Feb 2000 05:10:30 +0300</lastBuildDate>
         <generator>tester</generator>
         <category>some category</category>
         <docs>http://example.com/rss_docs</docs>
+        <cloud domain="rpc.sys.com" port="80" path="/RPC2" registerProcedure="myCloud.rssPleaseNotify" protocol="xml-rpc"/>
         <ttl>60</ttl>
+        <image>
+            <url>http://example.com/img.jpg</url>
+            <title>Title</title>
+            <link>http://example.com/feed</link>
+            <width>54</width>
+        </image>
+        <rating>4.0</rating>
+        <textInput>
+            <title>Input title</title>
+            <description>Description of input</description>
+            <name>Input name</name>
+            <link>http://example.com/cgi.py</link>
+        </textInput>
+        <skipHours>
+            <hour>0</hour>
+            <hour>1</hour>
+            <hour>3</hour>
+            <hour>7</hour>
+            <hour>23</hour>
+        </skipHours>
+        <skipDays>
+            <day>14</day>
+        </skipDays>
     </channel>
 </rss>

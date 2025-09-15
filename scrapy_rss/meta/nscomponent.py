@@ -2,10 +2,14 @@
 
 import re
 
-from ..exceptions import NoNamespaceURIError
+from ..exceptions import NoNamespaceURIError, InvalidComponentError
+from ..utils import Iterable
 
 
 class BaseNSComponent(object):
+    _ns_prefix = ''
+    _ns_uri = ''
+
     def __init__(self, ns_prefix=None, ns_uri=None):
         """
         Base class for elements, attributes and its names that can be namespaced
@@ -17,10 +21,10 @@ class BaseNSComponent(object):
         ns_uri : str or None
             a namespace URI
         """
-        if ns_prefix and not ns_uri:
-            raise NoNamespaceURIError("No URI for prefix '{}'".format(ns_prefix))
         self._ns_prefix = ns_prefix or ''
         self._ns_uri = ns_uri or ''
+        if ns_prefix and not ns_uri:
+            raise NoNamespaceURIError(self, None, "No URI for prefix '{}'".format(ns_prefix))
 
     @property
     def ns_prefix(self):
@@ -54,7 +58,7 @@ class BaseNSComponent(object):
         if self._ns_prefix == ns_prefix:
             return
         if not self._ns_uri:
-            raise NoNamespaceURIError("Namespace prefix cannot be set when no namespace URI")
+            raise NoNamespaceURIError(self, None, "namespace prefix cannot be set when no namespace URI, assign URI at first")
         if self._ns_prefix:
             raise ValueError("Namespace prefix is already non-empty")
         self._ns_prefix = ns_prefix
@@ -92,27 +96,87 @@ class BaseNSComponent(object):
             raise ValueError("Namespace URI is already non-empty")
         self._ns_uri = ns_uri
 
-    def __repr__(self):
-        return "{}(ns_prefix={!r}, ns_uri={!r})"\
-            .format(self.__class__.__name__, self._ns_prefix, self._ns_uri)
-
-    def get_namespaces(self, assigned_only=True):
+    @property
+    def settings(self):
         """
-        Get all namespaces of the component and its children
+        Component settings that're defined on initialization.
+
+        Returns
+        -------
+        dict[str, any]
+            Dictionary of settings where keys match the constructor arguments
+
+        """
+        return {'ns_prefix': self._ns_prefix, 'ns_uri': self._ns_uri}
+
+    def compatible_with(self, other):
+        """
+        Check other component compatibility for assignment to this instance
 
         Parameters
         ----------
-        assigned_only : bool
-            whether return namespaces of assigned children only
+        other : any
+
+        Returns
+        -------
+        bool
+        Whether other value is compatible with this instance for assignment
+
+        """
+        return (self.__class__ == getattr(other, '__class__', None)
+                and all(getattr(other, s) == v for s, v in self.settings.items()))
+
+    def __repr__(self):
+        if not hasattr(self, '_ns_prefix') or not hasattr(self, '_ns_uri'):
+            return super(BaseNSComponent, self).__repr__()
+        return "{}(ns_prefix={!r}, ns_uri={!r})"\
+            .format(self.__class__.__name__, self._ns_prefix, self._ns_uri)
+
+    def get_namespaces(self):
+        """
+        Get namespace of the component
 
         Returns
         -------
         set of (str or None, str or None)
-            Set of pairs (namespace_prefix, namespace_uri)
+            Set of pair **(namespace_prefix, namespace_uri)** or empty set
         """
         if self._ns_uri:
             return {(self._ns_prefix, self._ns_uri)}
         return set()
+
+    def validate(self, name=None):
+        """
+        Validate component.
+        Component can be modified during validation.
+
+        Parameters
+        ----------
+        name: str or NSComponentName or Iterable[str or NSComponentName] or None
+            Name path of component
+
+        Raises
+        ------
+        InvalidComponentError
+            If this component is invalid
+        """
+        if self.ns_prefix and not self.ns_uri:
+            raise NoNamespaceURIError(self, name, "no namespace URI for prefix '{}'".format(self.ns_prefix))
+
+    def is_valid(self, name=None):
+        """
+        Validate component.
+
+        Returns
+        -------
+        bool
+            Whether this component is valid
+        """
+        try:
+            self.validate(name)
+        except InvalidComponentError:
+            return False
+        return True
 
 
 class NSComponentName(BaseNSComponent):
@@ -124,13 +188,13 @@ class NSComponentName(BaseNSComponent):
         ----------
         name : str
             the component name that can optionally contain a namespace prefix
-            using delimiter __ (double underscores) such as ns__name
+            using delimiter __ (double underscores) such as nsprefix__name
         ns_prefix : str or None
             a namespace prefix
         ns_uri : str or None
             a namespace URI
         """
-        if '__' in name:
+        if '__' in name.rstrip('_'):
             secondary_ns_prefix, name = name.split('__', 1)
         else: 
             secondary_ns_prefix = None
@@ -142,6 +206,12 @@ class NSComponentName(BaseNSComponent):
         else:
             self._public_fullname = name
         self._private_fullname = '__{}'.format(self._public_fullname) 
+
+    @property
+    def settings(self):
+        settings = super(NSComponentName, self).settings
+        settings['name'] = self._name
+        return settings
 
     @property
     def name(self):
@@ -163,15 +233,15 @@ class NSComponentName(BaseNSComponent):
         Returns
         -------
         (str or None, str)
-            component name in the namespaced SAX format
+            component name in the namespaced SAX format where the second item without trailing underscores
         """
-        return self._ns_uri, self._name
+        return self._ns_uri, self._name.rstrip('_')
 
     @property
     def pub_name(self):
         """
         Get component name with namespace URI in the Python public notation format
-        such as **uri__name** or **name** if no namespace
+        such as **nsprefix__name** or **name** if no namespace
 
         Returns
         -------
@@ -184,7 +254,7 @@ class NSComponentName(BaseNSComponent):
     def priv_name(self):
         """
         Get component name with namespace URI in the Python pseudo-private notation format
-        such as **__uri__name** or **__name** if no namespace
+        such as **__nsprefix__name** or **__name** if no namespace
 
         Returns
         -------
@@ -208,6 +278,9 @@ class NSComponentName(BaseNSComponent):
         raise NotImplementedError("Cannot compare instances of {} and {}".format(self.__class__, other.__class__))
 
     def __repr__(self):
-        s_match = re.match(r'^[^(]+\((.*?)\)$', super(NSComponentName, self).__repr__())
+        super_repr = super(NSComponentName, self).__repr__()
+        if not hasattr(self, '_name'):
+            return super_repr
+        s_match = re.match(r'^[^(]+\((.*?)\)$', super_repr)
         s_repr = ", " + s_match.group(1) if s_match else ''
         return "{}(name={!r}{})".format(self.__class__.__name__, self._name, s_repr)

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from scrapy.spiders import CrawlSpider, Rule
-from scrapy.linkextractor import LinkExtractor
+from scrapy.linkextractors import LinkExtractor
 from project.items import ShopItem
 
 
@@ -10,7 +10,7 @@ class ShopSpider(CrawlSpider):
     allowed_domains = ['woxcab.github.io']
     start_urls = ['https://woxcab.github.io/scrapy_rss/']
     custom_settings = {
-        'FEED_EXPORTER': 'scrapy_rss.exporters.RssItemExporter',
+        'FEED_EXPORTER': 'scrapy_rss.exporters.FeedItemExporter',
         'FEED_FILE': 'feed2.rss'
     }
 
@@ -29,7 +29,7 @@ class ShopSpider(CrawlSpider):
         item['reviews'] = response.css('.ratings p:nth-child(1) ::text').extract_first()
         item['review_dates'] = response.css('.col-md-12 span ::text').extract()
         item.rss.author = 'Shop'
-        item.rss.guid = {'isPermaLink': True, 'guid': response.url}
+        item.rss.guid = {'isPermaLink': True, 'value': response.url}
         item.rss.link = item.rss.comments = response.url
         item.rss.category = response.css('.list-group-item .active ::text')
         item.rss.enclosure.type = 'image/png'

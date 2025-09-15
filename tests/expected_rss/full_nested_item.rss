@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0">
+    <channel>
+        <title>Title</title>
+        <link>http://example.com/feed</link>
+        <description>Description</description>
+        <item 
+              xmlns:el_prefix1="el_id1"
+              xmlns:el_prefix2="el_id2"
+              xmlns:el_prefix3="el_id3"
+              xmlns:el_prefix4="el_id4"
+              xmlns:prefix2="el_id4"
+              xmlns:prefix01="id01"
+              xmlns:prefix11="id11"
+              xmlns:prefix12="id12"
+              xmlns:prefix22="id22"
+              xmlns:prefixa="id32"
+              xmlns:prefix42="id42">
+            <title>Title of NSItemFullNested() instance</title>
+            <elem0>
+                <title>Title of item with unique namespaces</title>
+                <el_prefix1:elem1 prefix01:attr01=""></el_prefix1:elem1>
+                <el_prefix2:elem2 prefix11:attr11="0" prefix12:attr12=""></el_prefix2:elem2>
+                <el_prefix3:elem3 prefix22:attr22="42">value3_21</el_prefix3:elem3>
+                <el_prefix4:elem4 prefix01:attr01=""></el_prefix4:elem4>
+            </elem0>
+            <el_prefix1:elem1>
+                <title>Title of item with unique namespaces</title>
+                <el_prefix1:elem1 prefix01:attr01="-"></el_prefix1:elem1>
+                <el_prefix:elem2 xmlns:el_prefix="el_id2" prefix11:attr11="-1" prefix12:attr12="-"></el_prefix:elem2>
+                <el_prefix:elem3 xmlns:el_prefix="el_id3" prefix22:attr22="4224">yet another value3_21</el_prefix:elem3>
+                <el_prefix4:elem4 prefix01:attr01="-"></el_prefix4:elem4>
+            </el_prefix1:elem1>
+            <el_prefix2:elem2>
+                <title>Title of item with same namespace prefixes</title>
+                <prefix:elem1 xmlns:prefix="el_id1">Content value 11ё</prefix:elem1>
+                <prefix:elem2 xmlns:prefix="el_id2" prefixa:attr32="Attribute value 22"></prefix:elem2>
+                <prefix:elem3 xmlns:prefix="el_id3" prefixa:attr32="Attribute value 32">Content value 11</prefix:elem3>
+                <prefix:elem4 xmlns:prefix="el_id4" prefixa:attr32=""></prefix:elem4>
+            </el_prefix2:elem2>
+            <elem3 xmlns="el_id2">
+                <title>Title of item with default namespaces</title>
+                <elem1 xmlns="el_id1">Content value 11ё</elem1>
+                <elem2 prefixa:attr32="Attribute value 22"></elem2>
+                <prefix:elem3 xmlns:prefix="el_id3" prefixa:attr32="Attribute value 32">Content value 11</prefix:elem3>
+                <prefix2:elem3 prefixa:attr32=""></prefix2:elem3>
+                <elem4 attr41="A41 b" prefix42:attr41="0"></elem4>
+            </elem3>
+        </item>
+    </channel>
+</rss>

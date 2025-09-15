@@ -1,11 +1,11 @@
-version: '3'
-
 x-base: &base
   volumes:
     - .:/home/testuser/scrapy_rss
   user: "$USERID:$GROUPID"
   environment:
     - TOX_PARALLEL_NO_SPINNER=1
+    - FORCE_COLOR=1
+    - PY_COLORS=1
 
 x-build: &default-build
   context: .
@@ -41,6 +41,16 @@ services:
     build:
       <<: *default-build
       target: py36
+  py37:
+    <<: *base
+    build:
+      <<: *default-build
+      target: py37
+  py38:
+    <<: *base
+    build:
+      <<: *default-build
+      target: py38
   py3:
     <<: *base
     build:
@@ -51,4 +61,3 @@ services:
     build:
       <<: *default-build
       target: py314
-

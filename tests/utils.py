@@ -1,22 +1,21 @@
 # -*- coding: utf-8 -*-
 
 from collections import Counter
-import itertools
 
 from unittest.util import safe_repr
 import difflib
-import re
 from os.path import commonprefix
-import sys
 import pprint
 import six
+from lxml.etree import XMLSyntaxError
 
 from twisted.python.failure import Failure
 from scrapy.pipelines import ItemPipelineManager
 from lxml import etree
 from xmlunittest import XmlTestCase
+from parameterized import parameterized
 
-from scrapy_rss.meta import ItemElement, MultipleElements
+from scrapy_rss.meta import Element, MultipleElements, NSComponentName
 from scrapy_rss.items import RssItem
 
 try:
@@ -74,7 +73,78 @@ def get_dict_attr(obj,attr):
     raise AttributeError
 
 
-iteritems = getattr(dict, 'iteritems', dict.items) # py2-3 compatibility
+def _get_all_attributes_paths(root):
+    """
+    Get list of all attributes paths on each nesting level
+
+    Parameters
+    ----------
+    root : Element
+
+    Returns
+    -------
+    List of tuples of str
+    """
+    paths = []
+    current_path = []
+    def traverse_components(element, name):
+        current_path.append(name)
+        for attr_name, attr in element.attrs.items():
+            path = current_path + [attr_name.name]
+            paths.append(path)
+        if element.children:
+            for child_name, child in element.children.items():
+                traverse_components(child, child_name.name)
+        current_path.pop()
+    traverse_components(root, '')
+    return [tuple(path[1:]) for path in paths]
+
+
+def _convert_flat_paths_to_dict_with_values(paths, values):
+    """
+    Convert list of paths to dict
+    ([['a', 'b', 'c'], ['a', 'd']], [0, 1]) -> {'a': {'b': {'c': 0}, 'd': 1}}
+
+    Parameters
+    ----------
+    paths : list of iterables of str
+    values
+        Value for each path in paths
+
+    Returns
+    -------
+    dict
+    """
+    assert len(paths) == len(values)
+    result = {}
+    for path_idx, path in enumerate(paths):
+        current = result
+        for comp_idx, component in enumerate(path):
+            is_attr = (len(path) - 1 == comp_idx)
+            if component not in current:
+                current[component] = values[path_idx] if is_attr else {}
+            if not is_attr:
+                current = current[component]
+    return result
+
+
+def full_name_func(func, num, params):
+    base_name = func.__name__
+    name_suffix = "_%s" %(num, )
+
+    for p in params.args:
+        if isinstance(p, six.string_types):
+            s = p
+        elif isinstance(p, NSComponentName):
+            s = str(p)
+        elif hasattr(p, '__name__'):
+            s = p.__name__
+        elif hasattr(p, '__class__') and type(p).__module__ not in ('builtins', '__builtin__'):
+            s = p.__class__.__name__
+        else:
+            s = repr(p)
+        name_suffix += "__" + parameterized.to_safe_name(s)
+    return base_name + name_suffix
 
 
 class FrozenDict(Mapping):
@@ -110,7 +180,7 @@ class FrozenDict(Mapping):
     def __hash__(self):
         if self._hash is None:
             h = 0
-            for key, value in iteritems(self._dict):
+            for key, value in self._dict.items():
                 h ^= hash((key, value))
             self._hash = h
         return self._hash
@@ -142,7 +212,7 @@ class UnorderedXmlTestCase(XmlTestCase):
 
     @staticmethod
     def _str_to_bytes(data):
-        if isinstance(data, str):
+        if isinstance(data, six.string_types):
             return data.encode(encoding='utf-8')
         if not isinstance(data, bytes):
             raise ValueError("Passing data must be string or bytes array")
@@ -163,15 +233,20 @@ class UnorderedXmlTestCase(XmlTestCase):
     def assertUnorderedXmlEquivalentOutputs(self, data, expected, excepted_elements = ('lastBuildDate', 'generator')):
         """
         Children and text subnodes of each element in XML are considered as unordered set.
-        Therefore if two XML files has different order of same elements then these XMLs are same.
+        Therefore, if two XML files has different order of same elements then these XMLs are same.
         """
         if not excepted_elements:
             excepted_elements = ()
         if isinstance(excepted_elements, six.string_types):
             excepted_elements = (excepted_elements,)
 
-        data = data if isinstance(data, etree._Element) \
-            else etree.fromstring(self._str_to_bytes(data))
+        try:
+            data = data if isinstance(data, etree._Element) \
+                else etree.fromstring(self._str_to_bytes(data))
+        except XMLSyntaxError as e:
+            print('Given invalid XML data: ', data)
+            raise e
+
         for excepted_element in excepted_elements:
             for element in data.xpath('//{}'.format(excepted_element)):
                 element.getparent().remove(element)
@@ -191,7 +266,8 @@ class UnorderedXmlTestCase(XmlTestCase):
                 'Given: {given}\n'
                 'Expected: {expected}'
                 .format(excepted_elements=excepted_elements,
-                        given=etree.tostring(data), expected=etree.tostring(expected)))
+                        given=etree.tostring(data, encoding='utf-8').decode('utf-8'),
+                        expected=etree.tostring(expected, encoding='utf-8').decode('utf-8')))
 
     def assertXmlDocument(self, data):
         data = self._str_to_bytes(data)
@@ -296,16 +372,23 @@ class RssTestCase(UnorderedXmlTestCase):
                 self.addTypeEqualityFunc((elem.__class__, None), self.assertRssElementEqualsToValue)
 
     def assertRssElementEqualsToValue(self, element, value, msg=None):
-        if isinstance(value, ItemElement):
-            raise NotImplemented
-        self.assertEqual(getattr(element, str(element.content_arg)), value, msg)
+        if isinstance(value, Element):
+            raise NotImplementedError
+        if value is None:
+            self.assertFalse(element.assigned)
+        elif not element.content_name:
+            raise ValueError("Element <{}> does not have content attribute, "
+                             "so it's uncomparable with simple value <{!r}>"
+                             .format(element.__class__.__name__, value))
+        else:
+            self.assertEqual(getattr(element, str(element.content_name)), value, msg)
 
     def assertMultipleRssElementsEqualsToValues(self, multiple_element, values, msg=None):
-        if isinstance(values, ItemElement):
-            raise NotImplemented
+        if isinstance(values, Element):
+            raise NotImplementedError
         if len(multiple_element) == 1:
             self.assertRssElementEqualsToValue(multiple_element, values, msg)
+        elif values is None:
+            self.assertEqual(0, len(multiple_element.elements))
         else:
-            self.assertSequenceEqual([getattr(elem, str(elem.content_arg)) for elem in multiple_element], values, msg)
-
-
+            self.assertSequenceEqual([getattr(elem, str(elem.content_name)) for elem in multiple_element], values, msg)

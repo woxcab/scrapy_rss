@@ -1,9 +1,11 @@
 tox
 pytest
 pytest-xdist
-pytest-cov<2.11
-coverage<5
+pytest-cov
+pytest-asyncio;python_version>="3.5"
+coverage
 xmlunittest
 parameterized
+packaging
 enum34;python_version<"3.4"
 backports.tempfile;python_version<"3.2"

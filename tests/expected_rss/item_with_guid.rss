@@ -6,7 +6,7 @@
         <description>Description</description>
         <item>
                <title>Title of item with guid</title>
-               <guid isPermaLink="false">Identifier</guid>
+               <guid isPermaLink="true">Identifier</guid>
         </item>
     </channel>
 </rss>
