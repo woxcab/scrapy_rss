@@ -200,26 +200,26 @@ Namespace URI can be specified using :code:`ns_uri` argument of the constructor.
 
 .. code:: python
 
-    from scrapy_rss.meta import ItemElementAttribute, ItemElement
+    from scrapy_rss.meta import ElementAttribute, Element
     from scrapy_rss.items import RssItem
 
-    class Element0(ItemElement):
+    class Element0(Element):
         # attributes without special namespace
-        attr0 = ItemElementAttribute(is_content=True, required=True)
-        attr1 = ItemElementAttribute()
+        attr0 = ElementAttribute(is_content=True, required=True)
+        attr1 = ElementAttribute()
 
-    class Element1(ItemElement):
+    class Element1(Element):
         # attribute "prefix2:attr2" with namespace xmlns:prefix2="id2"
-        attr2 = ItemElementAttribute(ns_prefix="prefix2", ns_uri="id2")
+        attr2 = ElementAttribute(ns_prefix="prefix2", ns_uri="id2")
 
         # attribute "prefix3:attr3" with namespace xmlns:prefix3="id3"
-        prefix3__attr3 = ItemElementAttribute(ns_uri="id3")
+        prefix3__attr3 = ElementAttribute(ns_uri="id3")
 
         # attribute "prefix4:attr4" with namespace xmlns:prefix4="id4"
-        fake_prefix__attr4 = ItemElementAttribute(ns_prefix="prefix4", ns_uri="id4")
+        fake_prefix__attr4 = ElementAttribute(ns_prefix="prefix4", ns_uri="id4")
 
         # attribute "attr5" with default namespace xmlns="id5"
-        attr5 = ItemElementAttribute(ns_uri="id5")
+        attr5 = ElementAttribute(ns_uri="id5")
 
     class MyXMLItem(RssItem):
         # element <elem1> without namespace
