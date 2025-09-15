@@ -20,7 +20,7 @@ RUN apk update && apk add build-base libffi-dev openssl-dev libxml2 libxml2-dev 
     addgroup -g $GROUPID $UNAME && \
     adduser -u $USERID -S -s /bin/sh $UNAME $UNAME && \
     pip3 install --disable-pip-version-check -U pip==10.0.1 incremental==17.5.0 setuptools==39.2.0 wheel==0.29.0 cffi==1.12.3 pycparser==2.14 && \
-    pip3 install --disable-pip-version-check tox==2.9.1 virtualenv==15.2.0 py==1.4.34 packaging==16.8 Automat==0.7.0 PyDispatcher==2.0.5 PyHamcrest==1.8.5 Twisted==17.9.0 asn1crypto==0.24.0 attrs==18.2.0 constantly==15.1.0 coverage==4.5.3 cryptography==2.1.4 cssselect==1.0.1 frozendict==1.2 hyperlink==19.0.0 idna==2.7 lxml==4.2.6 nose==1.3.7 parsel==1.2.0 py==1.4.34 pyOpenSSL==16.2.0 pyasn1==0.4.5 pyasn1-modules==0.2.5 pytest==3.2.5 pytest-cov==2.5.1 python-dateutil==2.9.0.post0 queuelib==1.5.0 service-identity==14.0.0 six==1.12.0 w3lib==1.19.0 xmlunittest==0.5.0 zope.interface==4.4.3
+    pip3 install --disable-pip-version-check tox==2.9.1 virtualenv==15.2.0 py==1.4.34 packaging==16.8 Automat==0.7.0 PyDispatcher==2.0.5 PyHamcrest==1.8.5 Twisted==17.9.0 asn1crypto==0.24.0 attrs==18.2.0 constantly==15.1.0 coverage==4.5.3 cryptography==1.9 cssselect==1.0.1 frozendict==1.2 hyperlink==19.0.0 idna==2.7 lxml==4.2.6 nose==1.3.7 parsel==1.2.0 py==1.4.34 pyOpenSSL==16.2.0 pyasn1==0.4.5 pyasn1-modules==0.2.5 pytest==3.2.5 pytest-cov==2.5.1 python-dateutil==2.9.0.post0 queuelib==1.5.0 service-identity==14.0.0 six==1.12.0 w3lib==1.19.0 xmlunittest==0.5.0 zope.interface==4.4.3
 USER $UNAME
 WORKDIR $WORKDIR
 
