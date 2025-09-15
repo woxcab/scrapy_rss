@@ -57,6 +57,7 @@ RUN apk update && \
     apk add build-base python3 python3-dev openssl-dev py3-lxml libffi-dev tzdata && \
     addgroup -g $GROUPID $UNAME && \
     adduser -u $USERID -S -s /bin/sh $UNAME $UNAME 
+ENV CRYPTOGRAPHY_ALLOW_OPENSSL_102=1
 RUN python3 get-pip.py --no-setuptools --no-wheel "pip < 21" && rm -f get-pip.py && \
     pip3 install --disable-pip-version-check setuptools==39.2.0 && \
     pip3 install --disable-pip-version-check cryptography==3.2.1 distlib==0.3.7 filelock==3.2.1 idna==2.2 importlib-metadata==2.1.3 importlib-resources==3.2.1 lxml==3.6.4 packaging==20.9 platformdirs==2.0.2 pluggy==0.13.1 py==1.4.31 pyasn1==0.1.9 pycparser==2.14 pyparsing==2.4.7 pytest==3.0.3 python-dateutil==2.8.2 six==1.16.0 toml==0.10.2 tox==3.28.0 virtualenv==20.15.1 zipp==1.2.0 wheel==0.37.1
