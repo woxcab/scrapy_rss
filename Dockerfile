@@ -152,22 +152,22 @@ RUN git clone https://github.com/pyenv/pyenv.git ~/.pyenv && \
     echo 'eval "$(pyenv init --path)"' >> ~/.profile && \
     echo 'eval "$(pyenv init -)"' >> ~/.profile && \
     source ~/.profile && \
-    for v in 3.10 3.11 3.12 3.13; do pyenv install "$v:latest"; done && \
+    for v in 3.10 3.11 3.12 3.13 3.14; do pyenv install "$v:latest"; done && \
     pyenv versions --bare | tee ~/.pyenv/version .python-version && \
-    for v in 3.10 3.11 3.12 3.13; do pip$v install -U pip; done && \
-    pip3.9 install tox
+    for v in 3.10 3.11 3.12 3.13 3.14; do pip$v install -U pip; done && \
+    pip3.14 install tox
 ENTRYPOINT ["/bin/runcmd"]
 CMD ["echo", "py3 is built"]
 
 
-FROM fedora:latest AS py314
+FROM fedora:latest AS py315
 ADD https://bootstrap.pypa.io/get-pip.py /get-pip.py
 ARG UNAME
 ARG USERID
 ARG GROUPID
 ARG WORKDIR
 RUN dnf -y update && \
-    dnf -y install make automake gcc gcc-c++ glibc-langpack-en kernel-devel gnupg ca-certificates libffi-devel libxml2-devel libxslt-devel python3.14 python3.14-devel && \
+    dnf -y install make automake gcc gcc-c++ glibc-langpack-en kernel-devel gnupg ca-certificates libffi-devel libxml2-devel libxslt-devel python3.15 python3.15-devel && \
     python3.14 /get-pip.py && rm -f /get-pip.py && \
     groupadd -g $GROUPID -o $UNAME && \
     useradd -m -u $USERID -g $GROUPID -s /bin/bash $UNAME
