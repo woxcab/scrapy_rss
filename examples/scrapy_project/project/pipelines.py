@@ -5,7 +5,7 @@ import dateparser
 
 
 class FillPipeline:
-    def process_item(self, item, spider):
+    def process_item(self, item, spider=None):
         if isinstance(item, scrapy_rss.RssedItem):
             item.rss.title = '{} [{}] [{}] [{}]'.format(item['name'], item['rating'],
                                                         item['reviews'], item['price'])
