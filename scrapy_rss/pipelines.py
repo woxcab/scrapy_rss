@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 
-from packaging.version import Version
 import six
 import scrapy
 from scrapy import signals
