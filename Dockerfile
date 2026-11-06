@@ -113,7 +113,7 @@ USER $UNAME
 WORKDIR $WORKDIR
 
 FROM alpine:3.15 AS py39
-ADD https://bootstrap.pypa.io/pip/3.8/get-pip.py /get-pip.py
+ADD https://bootstrap.pypa.io/pip/3.9/get-pip.py /get-pip.py
 ARG UNAME
 ARG USERID
 ARG GROUPID
@@ -123,6 +123,22 @@ RUN apk update && \
     addgroup -g $GROUPID $UNAME && \
     adduser -u $USERID -S -s /bin/sh $UNAME $UNAME
 RUN python3 get-pip.py --no-setuptools --no-wheel "pip <= 26.0" && rm -f get-pip.py && \
+    pip3 install --disable-pip-version-check tox
+USER $UNAME
+WORKDIR $WORKDIR
+
+
+FROM alpine:3.17 AS py310
+ADD https://bootstrap.pypa.io/pip/3.10/get-pip.py /get-pip.py
+ARG UNAME
+ARG USERID
+ARG GROUPID
+ARG WORKDIR
+RUN apk update && \
+    apk add build-base python3 python3-dev openssl-dev py3-lxml py3-cryptography py3-cffi libffi-dev tzdata &&  \
+    addgroup -g $GROUPID $UNAME && \
+    adduser -u $USERID -S -s /bin/sh $UNAME $UNAME
+RUN python3 get-pip.py --no-setuptools --no-wheel "pip < 27.0" && rm -f get-pip.py && \
     pip3 install --disable-pip-version-check tox
 USER $UNAME
 WORKDIR $WORKDIR
@@ -152,10 +168,10 @@ RUN git clone https://github.com/pyenv/pyenv.git ~/.pyenv && \
     echo 'eval "$(pyenv init --path)"' >> ~/.profile && \
     echo 'eval "$(pyenv init -)"' >> ~/.profile && \
     source ~/.profile && \
-    for v in 3.10 3.11 3.12 3.13 3.14; do pyenv install "$v:latest"; done && \
+    for v in 3.11 3.12 3.13 3.14; do pyenv install "$v:latest"; done && \
     pyenv versions --bare | tee ~/.pyenv/version .python-version && \
-    for v in 3.10 3.11 3.12 3.13 3.14; do pip$v install -U pip; done && \
     pip3.14 install tox
+    for v in 3.11 3.12 3.13 3.14; do pip$v install -U pip; done && \
 ENTRYPOINT ["/bin/runcmd"]
 CMD ["echo", "py3 is built"]
 
