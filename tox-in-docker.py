@@ -47,7 +47,7 @@ class DuplicateOutput:
         self.file = file
 
     def write(self, text):
-        print(text, end='\r')
+        print(text, end='')
         sys.stdout.flush()
         self.file.write(self.ansi_escape.sub('', text))
         self.file.flush()
@@ -95,9 +95,12 @@ def main(docker_logfile, pytest_logfile):
                              + ' are not defined in the Tox configuration file')
     sysenv = os.environ.copy()
     sysenv["USERID"], sysenv["GROUPID"] = str(os.getuid()), str(os.getgid())
+    sysenv["COMPOSE_PROGRESS"] = "plain"
+    sysenv["BUILDKIT_PROGRESS"] = "plain"
 
     summary = []
     summary_title = None
+    tests_executed = False
     failed = False
     return_code = 0
 
@@ -121,7 +124,7 @@ def main(docker_logfile, pytest_logfile):
         pytest_args = filtered_pytest_argv
         if pytest_ini:
             pytest_args = ['-c', pytest_ini] + pytest_args
-        with subprocess.Popen(['docker', 'compose', 'run', '--remove-orphans', container, 'tox',
+        with subprocess.Popen(['docker', 'compose', 'run', '--remove-orphans', '--no-TTY', container, 'tox',
                                *specialargs, *filtered_argv, '-e', ','.join(envlist),
                                '--', *pytest_args],
                               env=sysenv,
@@ -130,6 +133,7 @@ def main(docker_logfile, pytest_logfile):
                               bufsize=1) as container_process:
             try:
                 summary_reached = False
+                tests_executed = True
                 while container_process.poll() is None:
                     line = container_process.stdout.readline()
                     if re.search(r'(congratulations|evaluation failed)', line):
@@ -166,10 +170,11 @@ def main(docker_logfile, pytest_logfile):
         pytest_logger.write(summary_title)
     for summary_line in summary:
         pytest_logger.write(summary_line)
-    pytest_logger.write('evaluation failed :(\n' if failed else 'congratulations :)\n')
+    if tests_executed:
+        pytest_logger.write('evaluation failed :(\n' if failed else 'congratulations :)\n')
 
     if containers:
-        subprocess.run(['docker-compose', 'down'],
+        subprocess.run(['docker', 'compose', 'down'],
                        env=sysenv,
                        stdout=docker_logfile, text=True, bufsize=1)
 
