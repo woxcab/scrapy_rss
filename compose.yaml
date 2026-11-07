@@ -66,8 +66,8 @@ services:
     build:
       <<: *default-build
       target: py3
-  py315:
+  py316:
     <<: *base
     build:
       <<: *default-build
-      target: py315
+      target: py316

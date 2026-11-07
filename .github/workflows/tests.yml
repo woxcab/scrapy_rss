@@ -31,6 +31,8 @@ jobs:
             python-version: '3.13'
           - platform: 'ubuntu-latest'
             python-version: '3.14'
+          - platform: 'ubuntu-latest'
+            python-version: '3.15'
     runs-on: ${{ matrix.env.platform }}
     steps:
     - uses: actions/checkout@v4
@@ -73,10 +75,10 @@ jobs:
         pattern: coverage-*
         path: .cov
         merge-multiple: true
-    - name: Set up Python 3.14
+    - name: Set up Python 3.15
       uses: actions/setup-python@v5
       with:
-        python-version: '3.14'
+        python-version: '3.15'
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip

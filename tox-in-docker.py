@@ -54,8 +54,8 @@ class DuplicateOutput:
 
 
 def main(docker_logfile, pytest_logfile):
-    upcoming_python = 'py315'
     deprecated_pythons = {'py27', 'py33', 'py34', 'py35', 'py36', 'py37', 'py38', 'py39', 'py310'}
+    upcoming_python = 'py316'
     nonparallel_pythons = {'py27', 'py33', 'py34'}
     nonstandard_pythons = deprecated_pythons | {upcoming_python}
     pyfactor2container = lambda pyf: pyf if pyf in nonstandard_pythons else 'py3'
