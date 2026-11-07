@@ -14,9 +14,9 @@ tox-in-docker.py
 tox-in-docker.py --recreate
 tox-in-docker.py -f py310 -f py39
 tox-in-docker.py -m latest  # run tests with latest Scrapy on each Python version
-tox-in-docker.py -m deprecated_latest  # run tests with latest Scrapy on each deprecated Python version
-tox-in-docker.py -m actual_latest  # run tests with latest Scrapy on each actual Python version
-tox-in-docker.py -m single_latest  # run tests with latest Scrapy on latest Python version
+tox-in-docker.py -m deprecated-latest  # run tests with latest Scrapy on each deprecated Python version
+tox-in-docker.py -m actual-latest  # run tests with latest Scrapy on each actual Python version
+tox-in-docker.py -m single-latest  # run tests with latest Scrapy on latest Python version
 tox-in-docker.py -e py38-scrapy260
 tox-in-docker.py -e py38-scrapy260,py310-scrapy290
 tox-in-docker.py -e py312-scrapy2.13.0 -e py313-scrapy2.13.0
