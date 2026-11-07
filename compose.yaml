@@ -6,6 +6,9 @@ x-base: &base
     - TOX_PARALLEL_NO_SPINNER=1
     - FORCE_COLOR=1
     - PY_COLORS=1
+    - HTTP_PROXY
+    - HTTPS_PROXY
+    - NO_PROXY
 
 x-build: &default-build
   context: .
@@ -14,6 +17,9 @@ x-build: &default-build
     USERID: "$USERID"
     GROUPID: "$GROUPID"
     WORKDIR: "/home/testuser/scrapy_rss"
+    HTTP_PROXY: "${HTTP_PROXY:-}"
+    HTTPS_PROXY: "${HTTPS_PROXY:-}"
+    NO_PROXY: "${NO_PROXY:-}"
 
 services:
   py27:
