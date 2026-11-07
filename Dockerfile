@@ -129,7 +129,7 @@ WORKDIR $WORKDIR
 
 
 FROM alpine:3.17 AS py310
-ADD https://bootstrap.pypa.io/pip/3.10/get-pip.py /get-pip.py
+ADD https://bootstrap.pypa.io/pip/3.9/get-pip.py /get-pip.py
 ARG UNAME
 ARG USERID
 ARG GROUPID
@@ -150,7 +150,7 @@ ARG USERID
 ARG GROUPID
 ARG WORKDIR
 RUN apk update && \
-    apk add curl git bash build-base libffi-dev openssl-dev bzip2-dev zlib-dev xz-dev readline-dev sqlite-dev tzdata && \
+    apk add curl git bash build-base libffi-dev openssl-dev bzip2-dev zlib-dev xz-dev readline-dev sqlite-dev tzdata zstd-dev && \
     addgroup -g $GROUPID $UNAME && \
     adduser -u $USERID -S -s /bin/bash $UNAME $UNAME && \
     printf $'#!/bin/bash\n\

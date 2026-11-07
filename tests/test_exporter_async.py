@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from packaging.version import Version
+import sys
 import os
 import re
 from itertools import chain, combinations
@@ -25,7 +26,9 @@ from tests.exporter_utils import CrawlerContext, default_feed_settings, FeedSett
 
 
 if Version(scrapy.__version__) >= Version('2.14'):
-    from twisted.internet import reactor # not used but it's required
+    import asyncio
+    import twisted
+    from twisted.internet.asyncioreactor import AsyncioSelectorReactor
     from unittest import IsolatedAsyncioTestCase
 
     initialized_items = predefined_items.PredefinedItems()
@@ -36,6 +39,31 @@ if Version(scrapy.__version__) >= Version('2.14'):
 
 
     class TestExporting(IsolatedAsyncioTestCase, RssTestCase):
+        async def asyncSetUp(self):
+            await super().asyncSetUp()
+            self._orig_reactor_mod = sys.modules.get("twisted.internet.reactor")
+            self._orig_reactor_attr = getattr(twisted.internet, "reactor", None)
+
+            loop = asyncio.get_running_loop()
+            asyncio_reactor = AsyncioSelectorReactor(eventloop=loop)
+
+            sys.modules["twisted.internet.reactor"] = asyncio_reactor
+            twisted.internet.reactor = asyncio_reactor
+
+        async def asyncTearDown(self):
+            if self._orig_reactor_mod is None:
+                sys.modules.pop("twisted.internet.reactor", None)
+            else:
+                sys.modules["twisted.internet.reactor"] = self._orig_reactor_mod
+
+            if self._orig_reactor_attr is None:
+                if hasattr(twisted.internet, "reactor"):
+                    delattr(twisted.internet, "reactor")
+            else:
+                twisted.internet.reactor = self._orig_reactor_attr
+
+            await super().asyncTearDown()
+
         @parameterized.expand(zip(chain.from_iterable(
             combinations(default_feed_settings.items(), r)
             for r in range(1, len(default_feed_settings)))))

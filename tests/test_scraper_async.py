@@ -19,9 +19,10 @@ if Version(scrapy.__version__) >= Version('2.13'):
             custom_settings = {}
 
         @pytest.mark.parametrize("twisted_reactor,init_reactor", [
-            (None, False),
-            ('twisted.internet.epollreactor.EPollReactor', False),
             ('twisted.internet.asyncioreactor.AsyncioSelectorReactor', True),
+            *(args for args in ((None, False),
+                                ('twisted.internet.epollreactor.EPollReactor', True),)
+              if Version(scrapy.__version__) < Version('2.20'))
         ])
         async def test_spider_output_handling(self, twisted_reactor, init_reactor):
             spider = self.MySpider()
